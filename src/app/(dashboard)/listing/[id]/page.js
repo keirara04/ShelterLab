@@ -48,28 +48,28 @@ export default function ListingDetailPage() {
 
       setListing(listingData)
 
-      // Fetch seller info
-      const { data: sellerData, error: sellerError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', listingData.seller_id)
-        .single()
+      // Fetch seller info and reviews in parallel
+      const [sellerResult, reviewsResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', listingData.seller_id)
+          .single(),
+        supabase
+          .from('reviews')
+          .select('*')
+          .eq('seller_id', listingData.seller_id)
+          .order('created_at', { ascending: false }),
+      ])
 
-      if (!sellerError && sellerData) {
-        setSeller(sellerData)
+      if (!sellerResult.error && sellerResult.data) {
+        setSeller(sellerResult.data)
       }
 
-      // Fetch reviews for the seller
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from('reviews')
-        .select('*')
-        .eq('seller_id', listingData.seller_id)
-        .order('created_at', { ascending: false })
-
-      if (!reviewsError && reviewsData) {
-        setReviews(reviewsData)
-        if (reviewsData.length > 0) {
-          const avg = reviewsData.reduce((sum, review) => sum + review.rating, 0) / reviewsData.length
+      if (!reviewsResult.error && reviewsResult.data) {
+        setReviews(reviewsResult.data)
+        if (reviewsResult.data.length > 0) {
+          const avg = reviewsResult.data.reduce((sum, review) => sum + review.rating, 0) / reviewsResult.data.length
           setAverageRating(parseFloat(avg.toFixed(1)))
         }
       }
