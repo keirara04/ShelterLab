@@ -1,5 +1,6 @@
 import { AuthProvider } from '@/context/AuthContext'
 import LayoutWrapper from '@/components/LayoutWrapper'
+import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 export const metadata = {
@@ -16,6 +17,7 @@ export default function RootLayout({ children }) {
             {children}
           </LayoutWrapper>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   )
