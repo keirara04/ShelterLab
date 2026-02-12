@@ -7,12 +7,52 @@ import { CATEGORIES, CONDITIONS } from '@/lib/constants'
 import { validateImageFile } from '@/lib/helpers'
 import Link from 'next/link'
 
+// Image compression function
+const compressImage = async (file) => {
+    return new Promise((resolve) => {
+        const reader = new FileReader()
+        reader.readAsDataURL(file)
+        reader.onload = (event) => {
+            const img = new Image()
+            img.src = event.target.result
+            img.onload = () => {
+                const canvas = document.createElement('canvas')
+                let width = img.width
+                let height = img.height
+
+                // Resize if larger than 1920px
+                if (width > 1920) {
+                    height = (height * 1920) / width
+                    width = 1920
+                }
+
+                canvas.width = width
+                canvas.height = height
+
+                const ctx = canvas.getContext('2d')
+                ctx.drawImage(img, 0, 0, width, height)
+
+                canvas.toBlob(
+                    (blob) => {
+                        resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }))
+                    },
+                    'image/jpeg',
+                    0.8
+                )
+            }
+        }
+    })
+}
+
 export default function SellPage() {
     const router = useRouter()
     const { user, isAuthenticated } = useAuth()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [uploadingImages, setUploadingImages] = useState(false)
+    const [uploadProgress, setUploadProgress] = useState(0)
+    const [pricingSuggestion, setPricingSuggestion] = useState(null)
+    const [loadingPriceSuggestion, setLoadingPriceSuggestion] = useState(false)
     const fileInputRef = useRef(null)
 
     // Store files + their previews together to keep them in sync
@@ -52,7 +92,7 @@ export default function SellPage() {
         )
     }
 
-    const handleImageSelect = (e) => {
+    const handleImageSelect = async (e) => {
         const files = Array.from(e.target.files || [])
         if (files.length === 0) return
 
@@ -68,10 +108,17 @@ export default function SellPage() {
                 setError(validation.error)
                 continue
             }
-            newEntries.push({
-                file,
-                preview: URL.createObjectURL(file),
-            })
+
+            // Compress image
+            try {
+                const compressedFile = await compressImage(file)
+                newEntries.push({
+                    file: compressedFile,
+                    preview: URL.createObjectURL(compressedFile),
+                })
+            } catch (err) {
+                setError(`Failed to compress image: ${file.name}`)
+            }
         }
 
         if (newEntries.length > 0) {
@@ -93,38 +140,82 @@ export default function SellPage() {
     }
 
     const uploadImages = async () => {
-        if (imageFiles.length === 0) {
-            setError('Please add at least one image')
-            return null
-        }
+        setUploadProgress(0)
+        setError(null)
+        setUploadingImages(true)
 
         try {
-            setUploadingImages(true)
-            setError(null)
-
             const body = new FormData()
             for (const entry of imageFiles) {
                 body.append('files', entry.file)
             }
             body.append('userId', user.id)
 
-            const response = await fetch('/api/upload', {
-                method: 'POST',
-                body,
+            // Use XMLHttpRequest to track upload progress
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest()
+
+                xhr.upload.addEventListener('progress', (event) => {
+                    if (event.lengthComputable) {
+                        const percentComplete = (event.loaded / event.total) * 100
+                        setUploadProgress(Math.round(percentComplete))
+                    }
+                })
+
+                xhr.addEventListener('load', () => {
+                    if (xhr.status === 200) {
+                        const data = JSON.parse(xhr.responseText)
+                        resolve(data.urls || [])
+                    } else {
+                        const data = JSON.parse(xhr.responseText)
+                        reject(new Error(data.error || 'Upload failed'))
+                    }
+                })
+
+                xhr.addEventListener('error', () => {
+                    reject(new Error('Upload failed'))
+                })
+
+                xhr.open('POST', '/api/upload')
+                xhr.send(body)
             })
-
-            if (!response.ok) {
-                const data = await response.json()
-                throw new Error(data.error || 'Failed to upload images')
-            }
-
-            const data = await response.json()
-            return data.urls || []
         } catch (err) {
             setError(`Upload failed: ${err.message}`)
             return null
         } finally {
             setUploadingImages(false)
+            setUploadProgress(0)
+        }
+    }
+
+    // Get pricing suggestions from AI
+    const fetchPricingSuggestion = async () => {
+        if (formData.categories.length === 0) {
+            setPricingSuggestion(null)
+            return
+        }
+
+        setLoadingPriceSuggestion(true)
+        try {
+            const response = await fetch('/api/pricing-suggestion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: formData.title,
+                    description: formData.description,
+                    category: formData.categories[0],
+                    condition: formData.condition,
+                }),
+            })
+
+            if (response.ok) {
+                const data = await response.json()
+                setPricingSuggestion(data)
+            }
+        } catch (err) {
+            console.error('Error fetching price suggestion:', err)
+        } finally {
+            setLoadingPriceSuggestion(false)
         }
     }
 
@@ -209,10 +300,10 @@ export default function SellPage() {
             <div className="max-w-2xl mx-auto">
                 {/* Back Button */}
                 <button
-                    onClick={() => router.push('/')}
+                    onClick={() => router.back()}
                     className="text-teal-400 hover:text-teal-300 active:text-teal-200 font-bold mb-6 inline-block cursor-pointer py-2 touch-manipulation text-base min-h-[44px]"
                 >
-                    ← Back to Home
+                    ← Return
                 </button>
 
                 {/* Header */}
@@ -264,67 +355,53 @@ export default function SellPage() {
                             <textarea
                                 placeholder="Describe the condition, features, and any defects..."
                                 value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                onChange={(e) => {
+                                    const value = e.target.value
+                                    if (value.length <= 1000) {
+                                        setFormData({ ...formData, description: value })
+                                    }
+                                }}
                                 className="w-full px-4 py-4 rounded-xl text-white outline-none transition-all duration-200 placeholder-gray-500 h-40 resize-none focus:ring-2 focus:ring-teal-500/50 text-base"
                                 style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                                 required
                             />
-                            <p className="text-xs text-gray-500 mt-1">10-2000 characters</p>
-                        </div>
-
-                        {/* Price */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-300 mb-2">
-                                Price ({'\u20A9'}) *
-                            </label>
-                            <input
-                                type="number"
-                                placeholder="0"
-                                value={formData.price}
-                                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                className="w-full px-4 py-4 rounded-xl text-white outline-none transition-all duration-200 placeholder-gray-500 focus:ring-2 focus:ring-teal-500/50 text-base"
-                                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-                                required
-                            />
+                            <p className="text-xs text-gray-500 mt-1">{formData.description.length}/1000 characters</p>
                         </div>
 
                         {/* Categories */}
                         <div>
                             <label className="block text-sm font-bold text-gray-300 mb-3">
-                                Categories * (Select all that apply)
+                                Category *
                             </label>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                 {CATEGORIES.filter((cat) => cat.id !== 'all').map((cat) => (
                                     <label
                                         key={cat.id}
                                         className={`flex items-center gap-3 p-4 rounded-xl cursor-pointer transition-all duration-200 touch-manipulation min-h-[56px] ${
-                                            formData.categories?.includes(cat.id)
+                                            formData.categories?.[0] === cat.id
                                                 ? 'text-white'
                                                 : 'text-gray-300 hover:text-white active:text-white'
                                         }`}
                                         style={{
-                                            background: formData.categories?.includes(cat.id)
+                                            background: formData.categories?.[0] === cat.id
                                                 ? 'rgba(20, 184, 166, 0.15)'
                                                 : 'rgba(255,255,255,0.04)',
-                                            border: formData.categories?.includes(cat.id)
+                                            border: formData.categories?.[0] === cat.id
                                                 ? '2px solid rgba(20, 184, 166, 0.4)'
                                                 : '1px solid rgba(255,255,255,0.08)',
                                         }}
                                     >
                                         <input
-                                            type="checkbox"
-                                            checked={formData.categories?.includes(cat.id) || false}
+                                            type="radio"
+                                            name="category"
+                                            checked={formData.categories?.[0] === cat.id || false}
                                             onChange={(e) => {
                                                 if (e.target.checked) {
                                                     setFormData({
                                                         ...formData,
-                                                        categories: [...(formData.categories || []), cat.id],
+                                                        categories: [cat.id],
                                                     })
-                                                } else {
-                                                    setFormData({
-                                                        ...formData,
-                                                        categories: (formData.categories || []).filter((c) => c !== cat.id),
-                                                    })
+                                                    setTimeout(fetchPricingSuggestion, 100)
                                                 }
                                             }}
                                             className="w-4 h-4 cursor-pointer accent-teal-500"
@@ -334,9 +411,11 @@ export default function SellPage() {
                                     </label>
                                 ))}
                             </div>
-                            <p className="text-xs text-gray-500 mt-2">
-                                Selected: {formData.categories?.length || 0} categories
-                            </p>
+                            {formData.categories?.length > 0 && (
+                                <p className="text-xs text-gray-500 mt-2">
+                                    Selected: {formData.categories[0]}
+                                </p>
+                            )}
                         </div>
 
                         {/* Condition */}
@@ -346,7 +425,10 @@ export default function SellPage() {
                             </label>
                             <select
                                 value={formData.condition}
-                                onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
+                                onChange={(e) => {
+                                    setFormData({ ...formData, condition: e.target.value })
+                                    setTimeout(fetchPricingSuggestion, 100)
+                                }}
                                 className="w-full px-4 py-4 rounded-xl text-white outline-none transition-all duration-200 focus:ring-2 focus:ring-teal-500/50 text-base"
                                 style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                             >
@@ -363,6 +445,19 @@ export default function SellPage() {
                             <label className="block text-sm font-bold text-gray-300 mb-2">
                                 Images * (Max 5)
                             </label>
+                            {/* Upload Progress */}
+                            {uploadingImages && uploadProgress > 0 && (
+                                <div className="mb-4 glass rounded-xl p-4" style={{ borderColor: 'rgba(20,184,166,0.2)' }}>
+                                    <p className="text-sm text-teal-300 font-semibold mb-2">Uploading Images...</p>
+                                    <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+                                        <div
+                                            className="bg-gradient-to-r from-teal-400 to-cyan-400 h-full transition-all duration-300"
+                                            style={{ width: `${uploadProgress}%` }}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-400 mt-2">{uploadProgress}% complete</p>
+                                </div>
+                            )}
 
                             {/* Image Previews */}
                             {imageFiles.length > 0 && (
@@ -423,7 +518,48 @@ export default function SellPage() {
 
                         {/* Contact Methods */}
                         <div className="space-y-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                            <label className="block text-sm font-bold text-gray-300 mb-4">
+                            {/* Price */}
+                            <div>
+                                <label className="block text-sm font-bold text-gray-300 mb-2">
+                                    Price ({'\u20A9'}) *
+                                </label>
+                                <input
+                                    type="number"
+                                    placeholder="0"
+                                    max="9999999"
+                                    value={formData.price}
+                                    onChange={(e) => {
+                                        const value = e.target.value
+                                        if (value.length <= 7) {
+                                            setFormData({ ...formData, price: value })
+                                        }
+                                    }}
+                                    className="w-full px-4 py-4 rounded-xl text-white outline-none transition-all duration-200 placeholder-gray-500 focus:ring-2 focus:ring-teal-500/50 text-base"
+                                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                                    required
+                                />
+                                <p className="text-xs text-gray-500 mt-1">(Max. ₩9,999,999)</p>
+                            </div>
+
+                            {/* Pricing Suggestion */}
+                            {pricingSuggestion && (
+                                <div className="glass rounded-xl p-4" style={{ borderColor: 'rgba(20,184,166,0.3)' }}>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="text-xs text-teal-300 font-semibold">
+                                            {loadingPriceSuggestion ? '⏳ Analyzing price...' : 'Price Suggestion'}
+                                        </p>
+                                        {pricingSuggestion.source === 'ai' && <span className="text-xs text-cyan-300 bg-cyan-500/20 px-2 py-1 rounded">AI Powered</span>}
+                                    </div>
+                                    <p className="text-sm text-gray-200 mb-2">
+                                        Suggested range: <span className="text-teal-300 font-bold">₩{pricingSuggestion.minPrice?.toLocaleString()} - ₩{pricingSuggestion.maxPrice?.toLocaleString()}</span>
+                                    </p>
+                                    <p className="text-xs text-amber-400" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '8px' }}>
+                                        ⚠️ This is an estimate and may not be 100% accurate. Please verify based on item condition and market prices.
+                                    </p>
+                                </div>
+                            )}
+
+                            <label className="block text-sm font-bold text-gray-300 mb-4 pt-2">
                                 How should people contact you?
                             </label>
 

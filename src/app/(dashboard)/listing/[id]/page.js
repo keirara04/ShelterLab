@@ -479,73 +479,7 @@ export default function ListingDetailPage() {
               </div>
 
               {/* Review Form Toggle */}
-              {user && user.id !== listing.seller_id && (
-                <button
-                  onClick={() => setShowReviewForm(!showReviewForm)}
-                  className="w-full py-3 px-4 bg-blue-600/20 hover:bg-blue-600/30 active:bg-blue-600/40 text-blue-300 rounded-lg font-bold transition text-base touch-manipulation min-h-[44px]"
-                >
-                  {showReviewForm ? 'Cancel' : 'Leave a Review'}
-                </button>
-              )}
-
-              {!user && (
-                <p className="text-xs text-gray-400 text-center py-2">
-                  <Link href="/login" className="text-blue-400 hover:text-blue-300">
-                    Log in
-                  </Link>
-                  {' '}to leave a review
-                </p>
-              )}
-
-              {/* Review Form */}
-              {showReviewForm && user && user.id !== listing.seller_id && (
-                <form onSubmit={handleSubmitReview} className="space-y-3 pt-3 border-t border-white/10">
-                  {reviewError && (
-                    <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3 text-red-300 text-sm">
-                      {reviewError}
-                    </div>
-                  )}
-
-                  {/* Rating */}
-                  <div>
-                    <label className="block text-xs font-bold text-gray-400 mb-2">
-                      Rating
-                    </label>
-                    <select
-                      value={reviewFormData.rating}
-                      onChange={(e) => setReviewFormData({ ...reviewFormData, rating: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white outline-none focus:border-blue-500 focus:bg-white/20 transition text-sm"
-                    >
-                      <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
-                      <option value="4">⭐⭐⭐⭐ Good</option>
-                      <option value="3">⭐⭐⭐ Average</option>
-                      <option value="2">⭐⭐ Poor</option>
-                      <option value="1">⭐ Very Poor</option>
-                    </select>
-                  </div>
-
-                  {/* Review Content */}
-                  <div>
-                    <label className="block text-xs font-bold text-gray-400 mb-2">
-                      Your Review (min 3 characters)
-                    </label>
-                    <textarea
-                      value={reviewFormData.content}
-                      onChange={(e) => setReviewFormData({ ...reviewFormData, content: e.target.value })}
-                      placeholder="Share your experience with this seller..."
-                      className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white outline-none focus:border-blue-500 focus:bg-white/20 transition text-sm resize-none h-20"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={submittingReview}
-                    className="w-full py-4 px-4 bg-green-600/20 hover:bg-green-600/30 active:bg-green-600/40 disabled:bg-gray-600/20 disabled:cursor-not-allowed text-green-300 rounded-lg font-bold transition text-base touch-manipulation min-h-[48px]"
-                  >
-                    {submittingReview ? 'Posting...' : 'Post Review'}
-                  </button>
-                </form>
-              )}
+              {/* Removed: Leave a Review button */}
 
               {/* Reviews List */}
               {reviews.length > 0 && (
