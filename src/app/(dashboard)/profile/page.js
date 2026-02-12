@@ -424,6 +424,12 @@ export default function ProfilePage() {
                   View All
                 </Link>
                 <Link
+                  href="/my-sold-items"
+                  className="px-4 py-2 rounded-xl font-bold text-sm text-white bg-white/10 hover:bg-white/20 transition-all duration-200"
+                >
+                  Sold Items
+                </Link>
+                <Link
                   href="/sell"
                   className="px-4 py-2 rounded-xl font-bold text-sm text-white transition-all duration-200"
                   style={{ background: 'linear-gradient(135deg, #14b8a6, #06b6d4)' }}

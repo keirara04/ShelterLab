@@ -86,22 +86,32 @@ export default function MyListingsPage() {
     if (!confirm(message)) return
 
     try {
-      const { error } = await supabase
-        .from('listings')
-        .update({ is_sold: newStatus })
-        .eq('id', listingId)
-        .eq('seller_id', user?.id)
+      const response = await fetch(`/api/listings/${listingId}/mark-sold`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+      })
 
-      if (error) throw error
+      const data = await response.json()
 
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update status')
+      }
+
+      // Update local state with the response data directly
       setListings((prev) =>
         prev.map((l) =>
-          l.id === listingId ? { ...l, is_sold: newStatus } : l
+          l.id === listingId ? data.data : l
         )
       )
+      
+      // Refetch after a short delay to ensure DB replication
+      setTimeout(() => {
+        fetchMyListings()
+      }, 500)
     } catch (err) {
       console.error('Error toggling sold status:', err)
-      alert('Failed to update status')
+      alert('Failed to update status: ' + err.message)
     }
   }
 
@@ -128,7 +138,7 @@ export default function MyListingsPage() {
           <p className="text-gray-400">Manage your items for sale</p>
         </div>
 
-        {/* Filter Tabs - Disabled for now */}
+        {/* Filter Tabs */}
         {/* <div className="flex gap-3 mb-8 border-b border-white/10 pb-4">
           {[
             { id: 'all', label: 'All Listings' },
@@ -179,11 +189,7 @@ export default function MyListingsPage() {
           // Empty State
           <div className="text-center py-16">
             <h2 className="text-2xl font-black text-white mb-2">No listings yet</h2>
-            <p className="text-gray-400 mb-6">
-              {filter === 'sold'
-                ? 'You haven\'t sold any items yet'
-                : 'Create your first listing to get started'}
-            </p>
+            <p className="text-gray-400 mb-6">Create your first listing to get started</p>
             <Link
               href="/sell"
               className="inline-block px-6 py-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-lg transition touch-manipulation min-h-[48px] text-base"

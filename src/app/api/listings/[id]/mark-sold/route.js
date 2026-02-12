@@ -3,7 +3,7 @@ import { supabaseServer } from '@/lib/supabaseServer'
 
 export async function POST(request, { params }) {
   try {
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const { userId } = body
 
@@ -37,12 +37,16 @@ export async function POST(request, { params }) {
 
     // Toggle the is_sold field
     const newSoldStatus = !listing.is_sold
+    console.log(`Updating listing ${id}: is_sold from ${listing.is_sold} to ${newSoldStatus}`)
+    
     const { data, error: updateError } = await supabaseServer
       .from('listings')
       .update({ is_sold: newSoldStatus })
       .eq('id', id)
       .select()
       .single()
+
+    console.log('Update response:', { data, error: updateError })
 
     if (updateError) {
       console.error('Update error:', updateError)

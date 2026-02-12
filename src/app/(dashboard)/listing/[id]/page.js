@@ -80,6 +80,11 @@ export default function ListingDetailPage() {
   }
 
   const handleToggleSold = async () => {
+    if (!user) {
+      alert('You must be logged in to update listing status')
+      return
+    }
+
     const newStatus = !listing.is_sold
     const message = newStatus
       ? 'Mark this listing as sold?'
@@ -90,17 +95,21 @@ export default function ListingDetailPage() {
     try {
       setMarkingSold(true)
 
-      const { error } = await supabase
-        .from('listings')
-        .update({ is_sold: newStatus })
-        .eq('id', listing.id)
-        .eq('seller_id', user?.id)
+      const response = await fetch(`/api/listings/${id}/mark-sold`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+      })
 
-      if (error) throw error
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update status')
+      }
 
       // Update local state
-      setListing({ ...listing, is_sold: newStatus })
-      alert(newStatus ? 'Listing marked as sold!' : 'Listing marked as available!')
+      setListing({ ...listing, is_sold: data.data.is_sold })
+      alert(data.data.is_sold ? 'Listing marked as sold!' : 'Listing marked as available!')
     } catch (err) {
       console.error('Error toggling sold status:', err)
       alert('Failed to update status: ' + err.message)
