@@ -17,6 +17,20 @@ export default function HomePage() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [selectedListingId, setSelectedListingId] = useState(null)
   const [showCategoryPicker, setShowCategoryPicker] = useState(false)
+  const [showHeader, setShowHeader] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
+
+  // Hide/show header on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      setShowHeader(currentScrollY < lastScrollY || currentScrollY < 10)
+      setLastScrollY(currentScrollY)
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [lastScrollY])
 
   // Default filter to user's university once profile loads
   useEffect(() => {
@@ -69,22 +83,49 @@ export default function HomePage() {
       }}
     >
       {/* Header */}
-      <div className="bg-white/5 border-b border-white/10 sticky top-0 z-40 backdrop-blur-2xl">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
-          <div className="flex items-center justify-between gap-2">
-            <button
-              onClick={() => window.location.reload()}
-              className="flex items-center gap-2 sm:gap-3 group cursor-pointer touch-manipulation"
-            >
-              <img
-                src="/logo.png"
-                alt="ShelterLab"
-                className="w-8 h-8 sm:w-10 sm:h-10 object-contain group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300"
-              />
-            </button>
+      <div className={`bg-white/5 border-b border-white/10 fixed top-0 left-0 right-0 z-50 backdrop-blur-2xl transition-transform duration-300 ${showHeader ? 'translate-y-0' : '-translate-y-full'}`}>
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-3">
+          {/* Warning Banner for Mobile */}
+          <div className="flex sm:hidden items-start gap-2 mb-2 pb-2 border-b border-white/10">
+            <span className="text-sm flex-shrink-0">⚠️</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-yellow-200">Testing Phase</p>
+              <p className="text-xs text-yellow-200/70">Lag & bugs possible. <a href="mailto:hakeemiridza@gmail.com?subject=ShelterLab%20Bug%20Report" className="underline hover:text-yellow-100">Report</a></p>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            {/* Left side - Logo + Warning */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                onClick={() => window.location.reload()}
+                className="flex items-center gap-2 sm:gap-3 group cursor-pointer touch-manipulation flex-shrink-0"
+              >
+                <img
+                  src="/logo.png"
+                  alt="ShelterLab"
+                  className="w-8 h-8 sm:w-10 sm:h-10 object-contain group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300"
+                />
+              </button>
+              
+              {/* Warning Text - Desktop only */}
+              <div className="hidden sm:flex items-center gap-3 text-xs">
+                <span>⚠️</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-yellow-200 font-semibold">Testing Phase:</span>
+                  <span className="text-yellow-200/80">Site in development. May experience lag, bugs, or data loss.</span>
+                  <a
+                    href="mailto:hakeemiridza@gmail.com?subject=ShelterLab%20Bug%20Report"
+                    className="text-yellow-300 hover:text-yellow-100 underline transition font-semibold flex-shrink-0"
+                  >
+                    Report Bug
+                  </a>
+                </div>
+              </div>
+            </div>
 
             {/* Right side actions - Desktop only */}
-            <div className="hidden lg:flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-6">
               {isAuthenticated ? (
                 <Link
                   href="/sell"
@@ -127,7 +168,7 @@ export default function HomePage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12 pb-36 lg:pb-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12 pb-36 lg:pb-24 pt-32 sm:pt-32 md:pt-36">
         {/* Hero Section */}
         <div className="text-center mb-8 sm:mb-12">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-3 sm:mb-4">ShelterLab</h2>
