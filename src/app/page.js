@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import { CATEGORIES, UNIVERSITIES, UNIVERSITY_LOGOS } from '@/lib/constants'
@@ -17,6 +17,8 @@ export default function HomePage() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [selectedListingId, setSelectedListingId] = useState(null)
   const [showCategoryPicker, setShowCategoryPicker] = useState(false)
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
+  const categoryDropdownRef = useRef(null)
   const [showHeader, setShowHeader] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
 
@@ -31,6 +33,17 @@ export default function HomePage() {
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [lastScrollY])
+
+  // Close category dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target)) {
+        setShowCategoryDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   // Default filter to user's university once profile loads
   useEffect(() => {
@@ -125,7 +138,77 @@ export default function HomePage() {
             </div>
 
             {/* Right side actions - Desktop only */}
-            <div className="hidden lg:flex items-center gap-6">
+            <div className="hidden lg:flex items-center gap-4">
+              {/* Category Dropdown */}
+              <div className="relative" ref={categoryDropdownRef}>
+                <button
+                  onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full text-white font-bold text-sm transition-all duration-200 cursor-pointer"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    backdropFilter: 'blur(24px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                    border: '1px solid rgba(255,255,255,0.18)',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
+                  }}
+                >
+                  <span>{CATEGORIES.find(c => c.id === selectedCategory)?.name || 'All'}</span>
+                  <svg className={`w-3.5 h-3.5 opacity-60 transition-transform duration-200 ${showCategoryDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {showCategoryDropdown && (
+                  <div
+                    className="absolute top-full right-0 mt-2 w-48 rounded-2xl overflow-hidden py-1.5"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      backdropFilter: 'blur(40px) saturate(200%)',
+                      WebkitBackdropFilter: 'blur(40px) saturate(200%)',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      boxShadow: '0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)',
+                    }}
+                  >
+                    {CATEGORIES.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => {
+                          setSelectedCategory(cat.id)
+                          setShowCategoryDropdown(false)
+                        }}
+                        className="w-full text-left px-4 py-2.5 text-sm font-bold transition-all duration-150 flex items-center gap-2 cursor-pointer"
+                        style={
+                          selectedCategory === cat.id
+                            ? { background: 'rgba(59, 130, 246, 0.25)', color: 'rgba(147, 197, 253, 1)' }
+                            : { color: 'rgba(255, 255, 255, 0.75)' }
+                        }
+                        onMouseEnter={(e) => {
+                          if (selectedCategory !== cat.id) {
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.1)'
+                            e.currentTarget.style.color = 'white'
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (selectedCategory !== cat.id) {
+                            e.currentTarget.style.background = 'transparent'
+                            e.currentTarget.style.color = 'rgba(255, 255, 255, 0.75)'
+                          }
+                        }}
+                      >
+                        {cat.icon && <span>{cat.icon}</span>}
+                        <span>{cat.name}</span>
+                        {selectedCategory === cat.id && (
+                          <svg className="w-4 h-4 ml-auto" style={{ color: 'rgba(147, 197, 253, 1)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="w-px h-6 bg-white/15" />
+
               {isAuthenticated ? (
                 <Link
                   href="/sell"
@@ -168,7 +251,7 @@ export default function HomePage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12 pb-36 lg:pb-24 pt-32 sm:pt-32 md:pt-36">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12 pb-36 lg:pb-12 pt-32 sm:pt-32 md:pt-36">
         {/* Hero Section */}
         <div className="text-center mb-8 sm:mb-12">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-3 sm:mb-4">ShelterLab</h2>
@@ -358,32 +441,36 @@ export default function HomePage() {
         )}
       </div>
 
+      {/* Footer - Desktop only */}
+      <footer className="hidden lg:block border-t border-white/10 mt-12">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10">
+          {/* Top: Logo + Support links on same row */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <img src="/logo.png" alt="ShelterLab" className="w-10 h-10 object-contain" />
+              <span className="text-white font-black text-xl">ShelterLab</span>
+            </div>
+            <div className="flex items-center gap-8">
+              <Link href="/help-center" className="text-gray-400 text-sm cursor-pointer hover:text-white transition">Help Center</Link>
+              <Link href="/contact" className="text-gray-400 text-sm cursor-pointer hover:text-white transition">Contact Us</Link>
+              <Link href="/terms" className="text-gray-400 text-sm cursor-pointer hover:text-white transition">Terms of Use</Link>
+              <Link href="/privacy" className="text-gray-400 text-sm cursor-pointer hover:text-white transition">Privacy Policy</Link>
+            </div>
+          </div>
+
+          {/* Bottom divider + copyright */}
+          <div className="border-t border-white/5 pt-6">
+            <p className="text-gray-600 text-xs">© 2025 ShelterLab. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+
       {/* Auth Modal */}
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         redirectPath={selectedListingId ? `/listing/${selectedListingId}` : null}
       />
-
-      {/* Floating Category Bar - Desktop */}
-      <div className="hidden lg:flex fixed bottom-4 left-0 right-0 z-40 justify-center px-4 pointer-events-none">
-        <div className="bg-gray-900/80 backdrop-blur-2xl border border-white/15 rounded-full px-3 py-2 flex gap-1.5 overflow-x-auto pointer-events-auto shadow-2xl max-w-2xl w-full scrollbar-hide">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full font-bold text-xs transition-all duration-200 whitespace-nowrap ${
-                selectedCategory === cat.id
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                  : 'text-gray-400 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <span>{cat.icon}</span>
-              <span>{cat.name}</span>
-            </button>
-          ))}
-        </div>
-      </div>
 
       {/* Floating Category Button - Mobile */}
       {!showCategoryPicker && (
