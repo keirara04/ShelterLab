@@ -109,32 +109,57 @@ export default function HomePage() {
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             {/* Left side - Logo + Warning */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <button
-                onClick={() => window.location.reload()}
-                className="flex items-center gap-2 sm:gap-3 group cursor-pointer touch-manipulation flex-shrink-0"
-              >
-                <img
-                  src="/logo.png"
-                  alt="ShelterLab"
-                  className="w-8 h-8 sm:w-10 sm:h-10 object-contain group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300"
-                />
-              </button>
-              
-              {/* Warning Text - Desktop only */}
-              <div className="hidden sm:flex items-center gap-3 text-xs">
-                <span>⚠️</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-yellow-200 font-semibold">Testing Phase:</span>
-                  <span className="text-yellow-200/80">Site in development. May experience lag, bugs, or data loss.</span>
-                  <a
-                    href="mailto:hakeemiridza@gmail.com?subject=ShelterLab%20Bug%20Report"
-                    className="text-yellow-300 hover:text-yellow-100 underline transition font-semibold flex-shrink-0"
-                  >
-                    Report Bug
-                  </a>
+            <div className="flex items-center justify-between w-full sm:w-auto">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="flex items-center gap-2 sm:gap-3 group cursor-pointer touch-manipulation flex-shrink-0"
+                >
+                  <img
+                    src="/logo.png"
+                    alt="ShelterLab"
+                    className="w-8 h-8 sm:w-10 sm:h-10 object-contain group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300"
+                  />
+                </button>
+
+                {/* Warning Text - Desktop only */}
+                <div className="hidden sm:flex items-center gap-3 text-xs">
+                  <span>⚠️</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-200 font-semibold">Testing Phase:</span>
+                    <span className="text-yellow-200/80">Site in development. May experience lag, bugs, or data loss.</span>
+                    <a
+                      href="mailto:hakeemiridza@gmail.com?subject=ShelterLab%20Bug%20Report"
+                      className="text-yellow-300 hover:text-yellow-100 underline transition font-semibold flex-shrink-0"
+                    >
+                      Report Bug
+                    </a>
+                  </div>
                 </div>
               </div>
+
+              {/* Category Button - Mobile only */}
+              <button
+                onClick={() => setShowCategoryPicker(true)}
+                className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white font-bold text-xs touch-manipulation"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                }}
+              >
+                {(() => {
+                  const cat = CATEGORIES.find(c => c.id === selectedCategory) || CATEGORIES[0]
+                  return (
+                    <>
+                      {cat.icon && <span>{cat.icon}</span>}
+                      <span>{cat.name}</span>
+                      <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </>
+                  )
+                })()}
+              </button>
             </div>
 
             {/* Right side actions - Desktop only */}
@@ -441,26 +466,29 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* Footer - Desktop only */}
-      <footer className="hidden lg:block border-t border-white/10 mt-12">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10">
-          {/* Top: Logo + Support links on same row */}
-          <div className="flex items-center justify-between mb-8">
+      {/* Footer - Minimalist & Clean */}
+      <footer className="border-t border-white/10 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* Simple Layout */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-8">
+            {/* Brand */}
             <div className="flex items-center gap-3">
               <img src="/logo.png" alt="ShelterLab" className="w-10 h-10 object-contain" />
-              <span className="text-white font-black text-xl">ShelterLab</span>
+              <span className="text-white font-black text-2xl bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">ShelterLab</span>
             </div>
-            <div className="flex items-center gap-8">
-              <Link href="/help-center" className="text-gray-400 text-sm cursor-pointer hover:text-white transition">Help Center</Link>
-              <Link href="/contact" className="text-gray-400 text-sm cursor-pointer hover:text-white transition">Contact Us</Link>
-              <Link href="/terms" className="text-gray-400 text-sm cursor-pointer hover:text-white transition">Terms of Use</Link>
-              <Link href="/privacy" className="text-gray-400 text-sm cursor-pointer hover:text-white transition">Privacy Policy</Link>
+
+            {/* Links - Horizontal */}
+            <div className="flex items-center gap-6 sm:gap-8">
+              <Link href="/help-center" className="text-gray-400 text-sm hover:text-teal-400 transition">Help Center</Link>
+              <Link href="/contact" className="text-gray-400 text-sm hover:text-teal-400 transition">Contact Us</Link>
+              <Link href="/terms" className="text-gray-400 text-sm hover:text-teal-400 transition">Terms of Use</Link>
+              <Link href="/privacy" className="text-gray-400 text-sm hover:text-teal-400 transition">Privacy Policy</Link>
             </div>
           </div>
 
-          {/* Bottom divider + copyright */}
-          <div className="border-t border-white/5 pt-6">
-            <p className="text-gray-600 text-xs">© 2025 ShelterLab. All rights reserved.</p>
+          {/* Copyright - Simple */}
+          <div className="border-t border-white/5 mt-8 pt-8">
+            <p className="text-gray-600 text-xs text-center">© 2025 ShelterLab. All rights reserved.</p>
           </div>
         </div>
       </footer>
@@ -471,36 +499,6 @@ export default function HomePage() {
         onClose={() => setShowAuthModal(false)}
         redirectPath={selectedListingId ? `/listing/${selectedListingId}` : null}
       />
-
-      {/* Floating Category Button - Mobile */}
-      {!showCategoryPicker && (
-        <div className="lg:hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-40">
-          <button
-            onClick={() => setShowCategoryPicker(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-white font-bold text-sm touch-manipulation whitespace-nowrap"
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(24px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15)',
-            }}
-          >
-            {(() => {
-              const cat = CATEGORIES.find(c => c.id === selectedCategory) || CATEGORIES[0]
-              return (
-                <>
-                  {cat.icon && <span>{cat.icon}</span>}
-                  <span>{cat.name}</span>
-                  <svg className="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </>
-              )
-            })()}
-          </button>
-        </div>
-      )}
 
       {/* Category Picker Sheet - Mobile */}
       {showCategoryPicker && (
