@@ -37,41 +37,24 @@ export default function ListingDetailPage() {
       setLoading(true)
       setError(null)
 
-      // Fetch listing
-      const { data: listingData, error: listingError } = await supabase
-        .from('listings')
-        .select('*')
-        .eq('id', id)
-        .single()
+      // Fetch listing, seller, and reviews via server API (bypasses RLS)
+      const res = await fetch(`/api/listings/${id}`)
+      const data = await res.json()
 
-      if (listingError) throw listingError
-
-      setListing(listingData)
-
-      // Fetch seller info and reviews in parallel
-      const [sellerResult, reviewsResult] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', listingData.seller_id)
-          .single(),
-        supabase
-          .from('reviews')
-          .select('*')
-          .eq('seller_id', listingData.seller_id)
-          .order('created_at', { ascending: false }),
-      ])
-
-      if (!sellerResult.error && sellerResult.data) {
-        setSeller(sellerResult.data)
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to fetch listing')
       }
 
-      if (!reviewsResult.error && reviewsResult.data) {
-        setReviews(reviewsResult.data)
-        if (reviewsResult.data.length > 0) {
-          const avg = reviewsResult.data.reduce((sum, review) => sum + review.rating, 0) / reviewsResult.data.length
-          setAverageRating(parseFloat(avg.toFixed(1)))
-        }
+      setListing(data.listing)
+
+      if (data.seller) {
+        setSeller(data.seller)
+      }
+
+      if (data.reviews && data.reviews.length > 0) {
+        setReviews(data.reviews)
+        const avg = data.reviews.reduce((sum, review) => sum + review.rating, 0) / data.reviews.length
+        setAverageRating(parseFloat(avg.toFixed(1)))
       }
     } catch (err) {
       console.error('Error fetching listing:', err)

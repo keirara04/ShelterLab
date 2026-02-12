@@ -36,45 +36,20 @@ export default function SellerProfilePage() {
       setLoading(true)
       setError(null)
 
-      // Fetch seller profile
-      const { data: sellerData, error: sellerError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', sellerId)
-        .single()
+      const res = await fetch(`/api/profile/${sellerId}?role=seller`)
+      const data = await res.json()
 
-      if (sellerError) throw sellerError
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to fetch seller profile')
+      }
 
-      setSeller(sellerData)
+      setSeller(data.profile)
+      setListings(data.listings || [])
 
-      // Fetch seller's listings
-      const { data: listingsData, error: listingsError } = await supabase
-        .from('listings')
-        .select('*')
-        .eq('seller_id', sellerId)
-        .order('created_at', { ascending: false })
-
-      if (listingsError) throw listingsError
-
-      setListings(listingsData || [])
-
-      // Fetch reviews for the seller (is_seller_review = true)
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from('reviews')
-        .select(`
-          *,
-          reviewer:profiles!reviews_reviewer_id_fkey(full_name, avatar_url)
-        `)
-        .eq('reviewee_id', sellerId)
-        .eq('is_seller_review', true)
-        .order('created_at', { ascending: false })
-
-      if (!reviewsError && reviewsData) {
-        setReviews(reviewsData)
-        if (reviewsData.length > 0) {
-          const avg = reviewsData.reduce((sum, review) => sum + review.rating, 0) / reviewsData.length
-          setAverageRating(parseFloat(avg.toFixed(1)))
-        }
+      if (data.reviews && data.reviews.length > 0) {
+        setReviews(data.reviews)
+        const avg = data.reviews.reduce((sum, review) => sum + review.rating, 0) / data.reviews.length
+        setAverageRating(parseFloat(avg.toFixed(1)))
       }
     } catch (err) {
       console.error('Error fetching seller data:', err)

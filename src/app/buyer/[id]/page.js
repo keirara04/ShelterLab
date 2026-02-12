@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/lib/constants'
 
@@ -35,34 +34,19 @@ export default function BuyerProfilePage() {
       setLoading(true)
       setError(null)
 
-      // Fetch buyer profile
-      const { data: buyerData, error: buyerError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', buyerId)
-        .single()
+      const res = await fetch(`/api/profile/${buyerId}?role=buyer`)
+      const data = await res.json()
 
-      if (buyerError) throw buyerError
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to fetch buyer profile')
+      }
 
-      setBuyer(buyerData)
+      setBuyer(data.profile)
 
-      // Fetch reviews for the buyer (is_seller_review = false)
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from('reviews')
-        .select(`
-          *,
-          reviewer:profiles!reviews_reviewer_id_fkey(full_name, avatar_url)
-        `)
-        .eq('reviewee_id', buyerId)
-        .eq('is_seller_review', false)
-        .order('created_at', { ascending: false })
-
-      if (!reviewsError && reviewsData) {
-        setReviews(reviewsData)
-        if (reviewsData.length > 0) {
-          const avg = reviewsData.reduce((sum, review) => sum + review.rating, 0) / reviewsData.length
-          setAverageRating(parseFloat(avg.toFixed(1)))
-        }
+      if (data.reviews && data.reviews.length > 0) {
+        setReviews(data.reviews)
+        const avg = data.reviews.reduce((sum, review) => sum + review.rating, 0) / data.reviews.length
+        setAverageRating(parseFloat(avg.toFixed(1)))
       }
     } catch (err) {
       console.error('Error fetching buyer data:', err)

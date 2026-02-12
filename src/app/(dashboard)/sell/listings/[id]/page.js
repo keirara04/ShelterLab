@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
-import { supabase } from '@/lib/supabase'
 
 export default function ListingDetailPage() {
   const params = useParams()
@@ -29,24 +28,17 @@ export default function ListingDetailPage() {
       setLoading(true)
       setError(null)
 
-      const { data: listingData, error: listingError } = await supabase
-        .from('listings')
-        .select('*')
-        .eq('id', id)
-        .single()
+      const res = await fetch(`/api/listings/${id}`)
+      const data = await res.json()
 
-      if (listingError) throw listingError
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to fetch listing')
+      }
 
-      setListing(listingData)
+      setListing(data.listing)
 
-      const { data: sellerData, error: sellerError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', listingData.seller_id)
-        .single()
-
-      if (!sellerError && sellerData) {
-        setSeller(sellerData)
+      if (data.seller) {
+        setSeller(data.seller)
       }
     } catch (err) {
       console.error('Error fetching listing:', err)
