@@ -414,30 +414,31 @@ export default function ProfilePage() {
         {/* Listings Tab */}
         {activeTab === 'listings' && (
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-black text-white">Recent Items</h2>
-              <div className="flex gap-2">
+            <div className="mb-6">
+              <div className="flex flex-col md:flex-row gap-2">
                 <Link
                   href="/my-listings"
-                  className="px-4 py-2 rounded-xl font-bold text-sm text-white bg-white/10 hover:bg-white/20 transition-all duration-200"
+                  className="px-4 py-2 rounded-xl font-bold text-sm text-white bg-white/10 hover:bg-white/20 transition-all duration-200 text-center"
                 >
                   View All
                 </Link>
                 <Link
                   href="/my-sold-items"
-                  className="px-4 py-2 rounded-xl font-bold text-sm text-white bg-white/10 hover:bg-white/20 transition-all duration-200"
+                  className="px-4 py-2 rounded-xl font-bold text-sm text-white bg-white/10 hover:bg-white/20 transition-all duration-200 text-center"
                 >
                   Sold Items
                 </Link>
                 <Link
                   href="/sell"
-                  className="px-4 py-2 rounded-xl font-bold text-sm text-white transition-all duration-200"
+                  className="px-4 py-2 rounded-xl font-bold text-sm text-white transition-all duration-200 text-center"
                   style={{ background: 'linear-gradient(135deg, #14b8a6, #06b6d4)' }}
                 >
                   + New Listing
                 </Link>
               </div>
             </div>
+
+            <h2 className="text-lg font-black text-white mb-4">Recent Items</h2>
 
             {myListings.length === 0 ? (
               <div className="glass rounded-2xl p-10 text-center">
