@@ -14,6 +14,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedUniversity, setSelectedUniversity] = useState('all')
+  const [currentPage, setCurrentPage] = useState(1)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [selectedListingId, setSelectedListingId] = useState(null)
   const [showCategoryPicker, setShowCategoryPicker] = useState(false)
@@ -52,6 +53,16 @@ export default function HomePage() {
     }
   }, [profile?.university])
 
+  // Scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [currentPage])
+
+  // Reset to page 1 when filters or search changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [selectedCategory, searchQuery, selectedUniversity])
+
   // Fetch listings on mount and when filters change
   useEffect(() => {
     fetchListings()
@@ -64,8 +75,9 @@ export default function HomePage() {
 
       const params = new URLSearchParams()
       if (selectedCategory !== 'all') params.set('category', selectedCategory)
-      if (searchQuery.trim()) params.set('search', searchQuery.trim())
       if (selectedUniversity !== 'all') params.set('university', selectedUniversity)
+      params.set('limit', 100) // Fetch up to 100 listings for pagination
+      // Don't send search to API, we'll filter on frontend for better UX
 
       const response = await fetch(`/api/listings?${params}`)
       const result = await response.json()
@@ -80,6 +92,25 @@ export default function HomePage() {
       setLoading(false)
     }
   }
+
+  // Filter listings on frontend for search (category, seller, title)
+  const filteredListings = listings.filter((listing) => {
+    if (!searchQuery.trim()) return true
+    
+    const query = searchQuery.toLowerCase()
+    const title = listing.title?.toLowerCase() || ''
+    const seller = listing.profiles?.full_name?.toLowerCase() || ''
+    const category = listing.categories?.[0]?.toLowerCase() || ''
+    
+    return title.includes(query) || seller.includes(query) || category.includes(query)
+  })
+
+  // Pagination
+  const ITEMS_PER_PAGE = 12
+  const totalPages = Math.ceil(filteredListings.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const paginatedListings = filteredListings.slice(startIndex, endIndex)
 
   const openAuthModal = (listingId) => {
     setSelectedListingId(listingId)
@@ -289,14 +320,20 @@ export default function HomePage() {
           <p className="text-gray-400 text-base sm:text-lg mb-6 sm:mb-8 px-4">Find what you need, leave what you don't.</p>
 
           {/* Search Bar */}
-          <div className="max-w-2xl mx-auto mb-4 px-4">
-            <input
-              type="text"
-              placeholder="Search the marketplace..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-3 sm:px-6 sm:py-4 rounded-full bg-white/10 border border-white/20 text-white placeholder-gray-500 outline-none focus:border-blue-500 focus:bg-white/20 transition text-sm sm:text-base"
-            />
+          <div className="max-w-2xl mx-auto mb-6 sm:mb-8 px-4">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-full blur-lg group-focus-within:blur-xl transition-all duration-300 opacity-0 group-focus-within:opacity-100"></div>
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  placeholder="Search the shelter..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 sm:px-6 py-3 sm:py-4 rounded-full bg-white/10 border border-white/20 text-white placeholder-gray-500 outline-none focus:border-blue-400 focus:bg-white/15 transition duration-300 backdrop-blur-xl text-sm sm:text-base"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2 text-center">Search items by name, category, or seller</p>
           </div>
 
           {/* University Filter */}
@@ -345,12 +382,12 @@ export default function HomePage() {
 
         {/* Grid */}
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {listings.map((listing) => {
-            const cardClass = "group w-full text-left bg-white/8 border border-white/15 rounded-xl overflow-hidden transition-all duration-300 backdrop-blur-xl"
+          {paginatedListings.map((listing) => {
+            const cardClass = "group w-full text-left bg-white/8 border border-white/15 rounded-xl overflow-hidden transition-all duration-300 backdrop-blur-xl hover:bg-white/12 hover:border-white/25 hover:shadow-2xl hover:shadow-blue-500/10"
             const cardInner = (
               <>
                 {/* Image Container */}
-                <div className="relative aspect-square bg-gray-800 overflow-hidden">
+                <div className="relative aspect-square bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden">
                   {listing.image_urls && listing.image_urls.length > 0 ? (
                     <>
                       <img
@@ -358,10 +395,11 @@ export default function HomePage() {
                         alt={listing.title}
                         width={400}
                         height={400}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       {listing.image_urls.length > 1 && (
-                        <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-xs text-white font-bold">
+                        <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-lg text-xs text-white font-bold border border-white/20 shadow-lg">
                           +{listing.image_urls.length - 1}
                         </div>
                       )}
@@ -386,12 +424,13 @@ export default function HomePage() {
                 </div>
 
                 {/* Card Content */}
-                <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
-                  <h3 className="font-bold text-white text-sm sm:text-base line-clamp-2 group-hover:text-blue-400 transition">
+                <div className="p-3 sm:p-4 space-y-2.5 sm:space-y-3">
+                  <h3 className="font-bold text-white text-sm sm:text-base line-clamp-2 group-hover:text-blue-300 transition duration-300">
                     {listing.title}
                   </h3>
-                  <div className="text-xl sm:text-2xl font-black text-green-400">
-                    ₩{listing.price.toLocaleString()}
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl sm:text-3xl font-black text-emerald-400">₩</span>
+                    <span className="text-xl sm:text-2xl font-black text-emerald-400">{listing.price.toLocaleString()}</span>
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     <span className="px-2 py-1 rounded bg-blue-500/30 text-blue-300 text-xs font-bold">
@@ -451,6 +490,70 @@ export default function HomePage() {
           })}
         </div>
 
+        {/* Page Info */}
+        {!loading && !error && filteredListings.length > 0 && (
+          <div className="flex flex-col items-center gap-3 mt-8 mb-4">
+            <p className="text-center text-xs text-gray-500 h-4">
+              Showing {startIndex + 1} to {Math.min(endIndex, filteredListings.length)} of {filteredListings.length}
+            </p>
+
+            {/* Pagination Controls - iPhone Sheet Style */}
+            {totalPages > 1 && (
+              <div 
+                className="flex items-center justify-center gap-2 p-3 rounded-full backdrop-blur-xl"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
+                }}
+              >
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="p-1.5 rounded-full transition disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/20 text-white"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                
+                <div className="flex items-center gap-0.5 px-2">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-6 h-6 rounded-full text-xs font-semibold transition duration-200 ${
+                        currentPage === page
+                          ? 'bg-blue-500 text-white'
+                          : 'text-gray-300 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-1.5 rounded-full transition disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/20 text-white"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* No Search Results State */}
+        {!loading && listings.length > 0 && filteredListings.length === 0 && !error && (
+          <div className="text-center py-12">
+            <h3 className="text-2xl font-black text-white mb-4">No results found</h3>
+            <p className="text-gray-400">Try searching by item name, category, or seller</p>
+          </div>
+        )}
 
         {/* Empty State */}
         {!loading && listings.length === 0 && !error && (
