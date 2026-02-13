@@ -214,7 +214,6 @@ export default function ProfilePage() {
               <h1 className="text-3xl font-black text-white mb-1">
                 {profile?.full_name || user?.email || 'User'}
               </h1>
-              <p className="text-gray-400 text-sm">{user?.email}</p>
               {profile?.university && (
                 <p className="text-teal-400 text-sm font-bold mt-1 mb-1">
                   🎓 {UNIVERSITIES.find(u => u.id === profile.university)?.name || profile.university}
@@ -222,8 +221,8 @@ export default function ProfilePage() {
               )}
               <p className="text-gray-500 text-xs mb-4">
                 Wrong university?{' '}
-                <a href="mailto:keira@korea.ac.kr" className="text-blue-400 hover:text-blue-300 transition">
-                  Contact keira@korea.ac.kr
+                <a href="mailto:admin@shelterlab.shop" className="text-blue-400 hover:text-blue-300 transition">
+                  Contact admin@shelterlab.shop
                 </a>
               </p>
 

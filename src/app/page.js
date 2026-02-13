@@ -101,7 +101,7 @@ export default function HomePage() {
             <span className="text-sm flex-shrink-0">⚠️</span>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-yellow-200">Testing Phase</p>
-              <p className="text-xs text-yellow-200/70">Lag & bugs possible. <a href="mailto:hakeemiridza@gmail.com?subject=ShelterLab%20Bug%20Report" className="underline hover:text-yellow-100">Report</a></p>
+              <p className="text-xs text-yellow-200/70">Lag & bugs possible. <a href="mailto:admin@shelterlab.shop?subject=ShelterLab%20Bug%20Report" className="underline hover:text-yellow-100">Report</a></p>
             </div>
           </div>
 
@@ -127,7 +127,7 @@ export default function HomePage() {
                     <span className="text-yellow-200 font-semibold">Testing Phase:</span>
                     <span className="text-yellow-200/80">Site in development. May experience lag, bugs, or data loss.</span>
                     <a
-                      href="mailto:hakeemiridza@gmail.com?subject=ShelterLab%20Bug%20Report"
+                      href="mailto:admin@shelterlab.shop?subject=ShelterLab%20Bug%20Report"
                       className="text-yellow-300 hover:text-yellow-100 underline transition font-semibold flex-shrink-0"
                     >
                       Report Bug
@@ -334,12 +334,6 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Results Count */}
-        {!loading && !error && (
-          <p className="text-gray-400 text-sm mb-6">
-            Found {listings.length} listing{listings.length !== 1 ? 's' : ''}
-          </p>
-        )}
 
         {/* Grid */}
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -446,6 +440,7 @@ export default function HomePage() {
             )
           })}
         </div>
+
 
         {/* Empty State */}
         {!loading && listings.length === 0 && !error && (
