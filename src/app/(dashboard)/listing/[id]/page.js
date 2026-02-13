@@ -25,6 +25,7 @@ export default function ListingDetailPage() {
   const [reviewFormData, setReviewFormData] = useState({ rating: 5, content: '' })
   const [submittingReview, setSubmittingReview] = useState(false)
   const [reviewError, setReviewError] = useState(null)
+  const [showReportModal, setShowReportModal] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -318,7 +319,17 @@ export default function ListingDetailPage() {
           <div className="space-y-4 sm:space-y-6">
             {/* Title & Price */}
             <div className="bg-white/5 border border-white/10 rounded-xl p-4 sm:p-6 space-y-3 sm:space-y-4">
-              <h1 className="text-2xl sm:text-3xl font-black text-white">{listing.title}</h1>
+              <div className="flex items-start justify-between gap-3">
+                <h1 className="text-2xl sm:text-3xl font-black text-white flex-1">{listing.title}</h1>
+                {!isOwner && (
+                  <button
+                    onClick={() => setShowReportModal(true)}
+                    className="px-3 py-2 text-red-300 hover:text-red-200 active:text-red-100 rounded-lg font-bold transition text-lg touch-manipulation min-h-[44px] flex items-center justify-center cursor-pointer"
+                  >
+                    ⚠️
+                  </button>
+                )}
+              </div>
 
               <div className="text-3xl sm:text-4xl font-black text-green-400">
                 ₩{listing.price.toLocaleString()}
@@ -524,6 +535,32 @@ export default function ListingDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900/80 border border-white/10 rounded-xl p-6 max-w-sm w-full space-y-4">
+            <h2 className="text-2xl text-center">⚠️</h2>
+            <p className="text-gray-300 text-sm">
+              Feels like this items are against our Terms of Use
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="flex-1 py-3 px-4 bg-gray-600/30 hover:bg-gray-600/40 active:bg-gray-600/50 text-gray-300 rounded-lg font-bold transition touch-manipulation"
+              >
+                No
+              </button>
+              <a
+                href={`mailto:admin@shelterlab.shop?subject=${encodeURIComponent('Report Post/User')}&body=${encodeURIComponent(`Reported User: ${seller?.full_name || 'Unknown'}\n\nListing Title: ${listing?.title || 'N/A'}\n\nListing Image: ${listing?.image_urls?.[0] || 'N/A'}\n\nReason for Report:\n`)}`}
+                className="flex-1 py-3 px-4 bg-red-500/30 hover:bg-red-500/40 active:bg-red-500/50 text-red-300 rounded-lg font-bold transition touch-manipulation text-center flex items-center justify-center cursor-pointer"
+              >
+                Yes
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

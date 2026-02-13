@@ -24,6 +24,7 @@ export default function SellerProfilePage() {
   const [submitting, setSubmitting] = useState(false)
   const [reviewError, setReviewError] = useState(null)
   const [showAllListings, setShowAllListings] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
 
   useEffect(() => {
     if (sellerId) {
@@ -139,7 +140,12 @@ export default function SellerProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{
+          backgroundColor: '#000000'
+        }}
+      >
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-400">Loading seller profile...</p>
@@ -150,7 +156,12 @@ export default function SellerProfilePage() {
 
   if (error || !seller) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+      <div
+        className="min-h-screen flex items-center justify-center p-4"
+        style={{
+          backgroundColor: '#000000'
+        }}
+      >
         <div className="text-center">
           <h1 className="text-3xl font-black text-white mb-4">Profile Not Found</h1>
           <p className="text-gray-400 mb-6">{error || 'This seller profile does not exist'}</p>
@@ -166,7 +177,12 @@ export default function SellerProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12">
+    <div
+      className="min-h-screen py-12"
+      style={{
+        backgroundColor: '#000000'
+      }}
+    >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back Button */}
         <Link href="/" className="text-blue-400 hover:text-blue-300 active:text-blue-200 font-bold mb-6 inline-block py-2 touch-manipulation text-base sm:text-base">
@@ -191,7 +207,17 @@ export default function SellerProfilePage() {
 
             {/* Info */}
             <div className="flex-1 text-center sm:text-left w-full">
-              <h1 className="text-2xl sm:text-4xl font-black text-white mb-2">{seller.full_name}</h1>
+              <div className="flex items-center justify-center sm:justify-start gap-2">
+                <h1 className="text-2xl sm:text-4xl font-black text-white">{seller.full_name}</h1>
+                {isAuthenticated && user?.id !== sellerId && (
+                  <button
+                    onClick={() => setShowReportModal(true)}
+                    className="px-3 py-2 text-gray-400 hover:text-gray-300 active:text-gray-200 rounded-lg font-bold transition text-lg touch-manipulation min-h-[44px] flex items-center justify-center cursor-pointer"
+                  >
+                    ⚠️
+                  </button>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4">
                 <div className="bg-white/5 rounded-lg p-3 sm:p-4">
                   <p className="text-xs text-gray-400 uppercase font-bold mb-1">Trust Score</p>
@@ -437,6 +463,32 @@ export default function SellerProfilePage() {
             </div>
           )}
         </div>
+
+        {/* Report Modal */}
+        {showReportModal && (
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-900/80 border border-white/10 rounded-xl p-6 max-w-sm w-full space-y-4">
+              <h2 className="text-2xl text-center">⚠️</h2>
+              <p className="text-gray-300 text-sm">
+                Feels like this items are against our Terms of Use
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowReportModal(false)}
+                  className="flex-1 py-3 px-4 bg-gray-600/30 hover:bg-gray-600/40 active:bg-gray-600/50 text-gray-300 rounded-lg font-bold transition touch-manipulation"
+                >
+                  No
+                </button>
+                <a
+                  href={`mailto:admin@shelterlab.shop?subject=${encodeURIComponent('Report Post/User')}&body=${encodeURIComponent(`Reported User: ${seller?.full_name || 'Unknown'}\n\nReason for Report:\n`)}`}
+                  className="flex-1 py-3 px-4 bg-red-500/30 hover:bg-red-500/40 active:bg-red-500/50 text-red-300 rounded-lg font-bold transition touch-manipulation text-center flex items-center justify-center cursor-pointer"
+                >
+                  Yes
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
