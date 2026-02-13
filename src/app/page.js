@@ -88,11 +88,9 @@ export default function HomePage() {
 
   return (
     <div 
-      className="min-h-screen bg-cover bg-center bg-fixed"
+      className="min-h-screen"
       style={{
-        backgroundImage: 'url(/background.png)',
-        backgroundColor: 'rgba(17, 24, 39, 0.95)',
-        backgroundBlendMode: 'overlay'
+        backgroundColor: '#000000',
       }}
     >
       {/* Header */}

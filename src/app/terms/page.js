@@ -5,11 +5,9 @@ import Link from 'next/link'
 export default function TermsPage() {
   return (
     <div
-      className="min-h-screen bg-cover bg-center bg-fixed"
+      className="min-h-screen"
       style={{
-        backgroundImage: 'url(/background.png)',
-        backgroundColor: 'rgba(17, 24, 39, 0.95)',
-        backgroundBlendMode: 'overlay',
+        backgroundColor: '#000000',
       }}
     >
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24">

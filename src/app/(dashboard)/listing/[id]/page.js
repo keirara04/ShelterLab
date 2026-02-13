@@ -178,11 +178,9 @@ export default function ListingDetailPage() {
   if (loading) {
     return (
       <div
-        className="min-h-screen bg-cover bg-center bg-fixed flex items-center justify-center"
+        className="min-h-screen flex items-center justify-center"
         style={{
-          backgroundImage: 'url(/background.png)',
-          backgroundColor: 'rgba(17, 24, 39, 0.95)',
-          backgroundBlendMode: 'overlay'
+          backgroundColor: '#000000'
         }}
       >
         <div className="text-center">
@@ -196,11 +194,9 @@ export default function ListingDetailPage() {
   if (error || !listing) {
     return (
       <div
-        className="min-h-screen bg-cover bg-center bg-fixed flex items-center justify-center p-4"
+        className="min-h-screen flex items-center justify-center p-4"
         style={{
-          backgroundImage: 'url(/background.png)',
-          backgroundColor: 'rgba(17, 24, 39, 0.95)',
-          backgroundBlendMode: 'overlay'
+          backgroundColor: '#000000'
         }}
       >
         <div className="text-center">
@@ -221,11 +217,9 @@ export default function ListingDetailPage() {
 
   return (
     <div
-      className="min-h-screen bg-cover bg-center bg-fixed py-12"
+      className="min-h-screen py-12"
       style={{
-        backgroundImage: 'url(/background.png)',
-        backgroundColor: 'rgba(17, 24, 39, 0.95)',
-        backgroundBlendMode: 'overlay'
+        backgroundColor: '#000000'
       }}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

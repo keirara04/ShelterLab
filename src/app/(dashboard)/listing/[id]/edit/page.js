@@ -118,9 +118,7 @@ export default function EditListingPage() {
 
   const handleCategoryChange = (category) => {
     setFormData((prev) => {
-      const categories = prev.categories.includes(category)
-        ? prev.categories.filter((c) => c !== category)
-        : [...prev.categories, category]
+      const categories = prev.categories.includes(category) ? [] : [category]
       return { ...prev, categories }
     })
   }
@@ -128,11 +126,9 @@ export default function EditListingPage() {
   if (loading) {
     return (
       <div
-        className="min-h-screen bg-cover bg-center bg-fixed flex items-center justify-center"
+        className="min-h-screen flex items-center justify-center"
         style={{
-          backgroundImage: 'url(/background.png)',
-          backgroundColor: 'rgba(17, 24, 39, 0.95)',
-          backgroundBlendMode: 'overlay'
+          backgroundColor: '#000000'
         }}
       >
         <div className="text-center">
@@ -147,11 +143,9 @@ export default function EditListingPage() {
   if (error && !listing) {
     return (
       <div
-        className="min-h-screen bg-cover bg-center bg-fixed flex items-center justify-center p-4"
+        className="min-h-screen flex items-center justify-center p-4"
         style={{
-          backgroundImage: 'url(/background.png)',
-          backgroundColor: 'rgba(17, 24, 39, 0.95)',
-          backgroundBlendMode: 'overlay'
+          backgroundColor: '#000000'
         }}
       >
         <div className="text-center">
@@ -170,11 +164,9 @@ export default function EditListingPage() {
 
   return (
     <div
-      className="min-h-screen bg-cover bg-center bg-fixed py-12"
+      className="min-h-screen py-12"
       style={{
-        backgroundImage: 'url(/background.png)',
-        backgroundColor: 'rgba(17, 24, 39, 0.95)',
-        backgroundBlendMode: 'overlay'
+        backgroundColor: '#000000'
       }}
     >
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">

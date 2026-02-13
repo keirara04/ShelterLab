@@ -92,14 +92,12 @@ export default function ListingDetailPage() {
   }
 
   const bgStyle = {
-    backgroundImage: 'url(/background.png)',
-    backgroundColor: 'rgba(8, 20, 28, 0.88)',
-    backgroundBlendMode: 'overlay',
+    backgroundColor: '#000000',
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-cover bg-center bg-fixed flex items-center justify-center" style={bgStyle}>
+      <div className="min-h-screen flex items-center justify-center" style={bgStyle}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500 mx-auto mb-4"></div>
           <p className="text-gray-400">Loading listing...</p>
@@ -110,7 +108,7 @@ export default function ListingDetailPage() {
 
   if (error || !listing) {
     return (
-      <div className="min-h-screen bg-cover bg-center bg-fixed flex items-center justify-center p-4" style={bgStyle}>
+      <div className="min-h-screen flex items-center justify-center p-4" style={bgStyle}>
         <div className="glass-strong rounded-3xl p-8 text-center">
           <h1 className="text-3xl font-black text-white mb-4">Oops!</h1>
           <p className="text-gray-400 mb-6">{error || 'Listing not found'}</p>
@@ -129,7 +127,7 @@ export default function ListingDetailPage() {
   const isOwner = user?.id === listing.seller_id
 
   return (
-    <div className="min-h-screen bg-cover bg-center bg-fixed py-12" style={bgStyle}>
+    <div className="min-h-screen py-12" style={bgStyle}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back Button */}
         <Link href="/" className="text-teal-400 hover:text-teal-300 font-bold mb-6 inline-block">

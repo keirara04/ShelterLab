@@ -155,11 +155,9 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center bg-fixed"
+        className="min-h-screen flex items-center justify-center p-4"
         style={{
-          backgroundImage: 'url(/background.png)',
-          backgroundColor: 'rgba(8, 20, 28, 0.88)',
-          backgroundBlendMode: 'overlay',
+          backgroundColor: '#000000',
         }}
       >
         <div className="glass-strong rounded-3xl p-8 text-center">
@@ -174,11 +172,9 @@ export default function ProfilePage() {
 
   return (
     <div
-      className="min-h-screen pt-20 pb-16 relative bg-cover bg-center bg-fixed"
+      className="min-h-screen pt-20 pb-16 relative"
       style={{
-        backgroundImage: 'url(/background.png)',
-        backgroundColor: 'rgba(8, 20, 28, 0.88)',
-        backgroundBlendMode: 'overlay',
+        backgroundColor: '#000000',
       }}
     >
       <div className="max-w-4xl mx-auto px-4 relative z-10">

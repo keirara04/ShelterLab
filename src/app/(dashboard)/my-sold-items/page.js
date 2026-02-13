@@ -50,11 +50,9 @@ export default function MySoldItemsPage() {
 
   return (
     <div
-      className="min-h-screen bg-cover bg-center bg-fixed py-12"
+      className="min-h-screen py-12"
       style={{
-        backgroundImage: 'url(/background.png)',
-        backgroundColor: 'rgba(17, 24, 39, 0.95)',
-        backgroundBlendMode: 'overlay'
+        backgroundColor: '#000000'
       }}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
