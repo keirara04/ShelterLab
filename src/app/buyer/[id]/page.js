@@ -253,7 +253,7 @@ export default function BuyerProfilePage() {
                         onClick={() => setReviewRating(star)}
                         className={`text-2xl sm:text-3xl transition touch-manipulation p-1 ${
                           star <= reviewRating ? 'text-yellow-400' : 'text-gray-600'
-                        } hover:text-yellow-300 active:scale-110`}
+                        } hover:text-yellow-300 active:brightness-125`}
                         aria-label={`Rate ${star} stars`}
                       >
                         ⭐

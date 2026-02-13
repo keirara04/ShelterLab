@@ -48,7 +48,7 @@ export default function Navbar({ selectedCategory, setSelectedCategory }) {
                 width={40}
                 height={40}
                 priority
-                className="group-hover:scale-110 transition"
+                className="group-hover:brightness-110 transition"
               />
               <div className="hidden sm:block">
                 <h1 className="text-lg font-black text-white group-hover:text-blue-400 transition">

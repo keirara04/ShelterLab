@@ -108,7 +108,7 @@ export default function BottomNav() {
                 }}
               >
                 {item.name === 'Profile' && profile ? (
-                  <div className={`${isActive ? 'scale-110' : ''} transition-transform`}>
+                  <div className="transition-colors">
                     {profile.avatar_url ? (
                       <img
                         src={profile.avatar_url}
@@ -122,7 +122,7 @@ export default function BottomNav() {
                     )}
                   </div>
                 ) : (
-                  <div className={isActive ? 'scale-110' : ''}>{item.icon}</div>
+                  <div>{item.icon}</div>
                 )}
                 <span className="text-xs font-bold">{item.name}</span>
               </Link>

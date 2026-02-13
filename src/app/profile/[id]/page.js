@@ -370,7 +370,7 @@ export default function SellerProfilePage() {
                         onClick={() => setReviewRating(star)}
                         className={`text-3xl sm:text-3xl transition touch-manipulation p-2 min-w-[44px] min-h-[44px] flex items-center justify-center ${
                           star <= reviewRating ? 'text-yellow-400' : 'text-gray-600'
-                        } hover:text-yellow-300 active:scale-110 active:text-yellow-200`}
+                        } hover:text-yellow-300 active:brightness-125 active:text-yellow-200`}
                         aria-label={`Rate ${star} stars`}
                       >
                         ⭐

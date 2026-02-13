@@ -118,7 +118,7 @@ export default function HomePage() {
                     alt="ShelterLab"
                     width={40}
                     height={40}
-                    className="w-8 h-8 sm:w-10 sm:h-10 object-contain group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300"
+                    className="w-8 h-8 sm:w-10 sm:h-10 object-contain group-hover:brightness-110 group-hover:rotate-6 transition-all duration-300"
                   />
                 </button>
 

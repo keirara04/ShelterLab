@@ -132,11 +132,11 @@ export default function Sidebar({ selectedCategory, setSelectedCategory }) {
               item.highlight
                 ? isExpanded
                   ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg shadow-blue-500/30'
-                  : 'text-white hover:scale-110'
+                  : 'text-white hover:brightness-110'
                 : 'text-gray-400 hover:text-white hover:bg-white/10'
             }`}
           >
-            <span className={`text-lg flex-shrink-0 transition-all ${item.highlight && !isExpanded ? 'scale-110' : ''}`}>
+            <span className={`text-lg flex-shrink-0 transition-all ${item.highlight && !isExpanded ? 'brightness-125' : ''}`}>
               {item.icon}
             </span>
             {isExpanded && (
@@ -205,7 +205,7 @@ export default function Sidebar({ selectedCategory, setSelectedCategory }) {
             <Link
               key={item.id}
               href={item.href}
-              className={`text-2xl transition-all hover:scale-110 ${
+              className={`text-2xl transition-all hover:brightness-110 ${
                 item.highlight ? 'opacity-100' : 'opacity-60 hover:opacity-100'
               }`}
               title={item.label}
