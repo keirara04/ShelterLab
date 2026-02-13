@@ -1,5 +1,13 @@
-import LoadingScreen from '@/components/LoadingScreen'
+import { ProfileHeaderSkeleton, GridSkeleton } from '@/components/SkeletonLoader'
 
 export default function Loading() {
-  return <LoadingScreen />
+  return (
+    <div className="space-y-6">
+      <ProfileHeaderSkeleton />
+      <div className="space-y-4">
+        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4 animate-pulse"></div>
+        <GridSkeleton count={4} />
+      </div>
+    </div>
+  )
 }

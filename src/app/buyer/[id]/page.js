@@ -1,10 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/lib/constants'
+import { SchemaScript } from '@/components/SchemaScript'
+import { generateProfileSchema } from '@/lib/schema'
 
 export default function BuyerProfilePage() {
   const params = useParams()
@@ -158,8 +160,14 @@ export default function BuyerProfilePage() {
     )
   }
 
+  const profileSchema = useMemo(
+    () => generateProfileSchema(buyer, averageRating, reviews.length),
+    [buyer, averageRating, reviews.length]
+  )
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12">
+      <SchemaScript data={profileSchema} />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back Button */}
         <Link href="/" className="text-blue-400 hover:text-blue-300 font-bold mb-6 inline-block">

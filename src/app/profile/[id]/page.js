@@ -1,10 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
+import { SchemaScript } from '@/components/SchemaScript'
+import { generateProfileSchema } from '@/lib/schema'
 
 export default function SellerProfilePage() {
   const params = useParams()
@@ -176,6 +178,11 @@ export default function SellerProfilePage() {
     )
   }
 
+  const profileSchema = useMemo(
+    () => generateProfileSchema(seller, averageRating, reviews.length),
+    [seller, averageRating, reviews.length]
+  )
+
   return (
     <div
       className="min-h-screen py-12"
@@ -183,6 +190,7 @@ export default function SellerProfilePage() {
         backgroundColor: '#000000'
       }}
     >
+      <SchemaScript data={profileSchema} />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back Button */}
         <Link href="/" className="text-blue-400 hover:text-blue-300 active:text-blue-200 font-bold mb-6 inline-block py-2 touch-manipulation text-base sm:text-base">
