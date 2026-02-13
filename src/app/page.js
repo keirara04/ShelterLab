@@ -20,6 +20,7 @@ export default function HomePage() {
   const [showCategoryPicker, setShowCategoryPicker] = useState(false)
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
   const categoryDropdownRef = useRef(null)
+  const abortControllerRef = useRef(null)
   const [showHeader, setShowHeader] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
 
@@ -66,10 +67,25 @@ export default function HomePage() {
   // Fetch listings on mount and when filters change
   useEffect(() => {
     fetchListings()
-  }, [selectedCategory, searchQuery, selectedUniversity])
+
+    // Cleanup: abort any pending requests when component unmounts or filters change
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [selectedCategory, selectedUniversity])
 
   const fetchListings = async () => {
     try {
+      // Cancel previous request if it exists
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+      
+      // Create new abort controller for this request
+      abortControllerRef.current = new AbortController()
+      
       setLoading(true)
       setError(null)
 
@@ -79,15 +95,20 @@ export default function HomePage() {
       params.set('limit', 100) // Fetch up to 100 listings for pagination
       // Don't send search to API, we'll filter on frontend for better UX
 
-      const response = await fetch(`/api/listings?${params}`)
+      const response = await fetch(`/api/listings?${params}`, {
+        signal: abortControllerRef.current.signal
+      })
       const result = await response.json()
 
       if (!response.ok) throw new Error(result.error || 'Failed to load listings')
 
       setListings(result.data || [])
     } catch (err) {
-      console.error('Error fetching listings:', err)
-      setError('Failed to load listings')
+      // Only handle non-abort errors
+      if (err.name !== 'AbortError') {
+        console.error('Error fetching listings:', err)
+        setError('Failed to load listings')
+      }
     } finally {
       setLoading(false)
     }
