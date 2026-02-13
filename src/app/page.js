@@ -20,7 +20,6 @@ export default function HomePage() {
   const [showCategoryPicker, setShowCategoryPicker] = useState(false)
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
   const categoryDropdownRef = useRef(null)
-  const abortControllerRef = useRef(null)
   const [showHeader, setShowHeader] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
 
@@ -67,25 +66,10 @@ export default function HomePage() {
   // Fetch listings on mount and when filters change
   useEffect(() => {
     fetchListings()
-
-    // Cleanup: abort any pending requests when component unmounts or filters change
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
-      }
-    }
-  }, [selectedCategory, selectedUniversity])
+  }, [selectedCategory, searchQuery, selectedUniversity])
 
   const fetchListings = async () => {
     try {
-      // Cancel previous request if it exists
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
-      }
-      
-      // Create new abort controller for this request
-      abortControllerRef.current = new AbortController()
-      
       setLoading(true)
       setError(null)
 
@@ -95,20 +79,15 @@ export default function HomePage() {
       params.set('limit', 100) // Fetch up to 100 listings for pagination
       // Don't send search to API, we'll filter on frontend for better UX
 
-      const response = await fetch(`/api/listings?${params}`, {
-        signal: abortControllerRef.current.signal
-      })
+      const response = await fetch(`/api/listings?${params}`)
       const result = await response.json()
 
       if (!response.ok) throw new Error(result.error || 'Failed to load listings')
 
       setListings(result.data || [])
     } catch (err) {
-      // Only handle non-abort errors
-      if (err.name !== 'AbortError') {
-        console.error('Error fetching listings:', err)
-        setError('Failed to load listings')
-      }
+      console.error('Error fetching listings:', err)
+      setError('Failed to load listings')
     } finally {
       setLoading(false)
     }
@@ -149,11 +128,12 @@ export default function HomePage() {
       <div className={`bg-white/5 border-b border-white/10 fixed top-0 left-0 right-0 z-50 backdrop-blur-2xl transition-transform duration-300 ${showHeader ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-3">
           {/* Warning Banner for Mobile */}
-          <div className="flex sm:hidden items-start gap-2 mb-2 pb-2 border-b border-white/10">
-            <span className="text-sm flex-shrink-0">⚠️</span>
-            <div className="flex-1 min-w-0">
+          <div className="flex sm:hidden gap-2 mb-2 pb-2 border-b border-white/10">
+            <span className="text-sm flex-shrink-0 mt-0.5">⚠️</span>
+            <div className="flex-1 min-w-0 flex flex-col gap-1">
               <p className="text-xs font-bold text-yellow-200">Testing Phase</p>
               <p className="text-xs text-yellow-200/70">Lag & bugs possible. <a href="mailto:admin@shelterlab.shop?subject=ShelterLab%20Bug%20Report" className="underline hover:text-yellow-100">Report</a></p>
+              <p className="text-xs text-gray-400">Best experience on desktop</p>
             </div>
           </div>
 
@@ -177,18 +157,21 @@ export default function HomePage() {
                 </button>
 
                 {/* Warning Text - Desktop only */}
-                <div className="hidden sm:flex items-center gap-3 text-xs">
-                  <span>⚠️</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-yellow-200 font-semibold">Testing Phase:</span>
-                    <span className="text-yellow-200/80">Site in development. May experience lag, bugs, or data loss.</span>
-                    <a
-                      href="mailto:admin@shelterlab.shop?subject=ShelterLab%20Bug%20Report"
-                      className="text-yellow-300 hover:text-yellow-100 underline transition font-semibold flex-shrink-0"
-                    >
-                      Report Bug
-                    </a>
+                <div className="hidden sm:flex flex-col gap-1">
+                  <div className="flex items-center gap-3 text-xs">
+                    <span>⚠️</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-yellow-200 font-semibold">Testing Phase:</span>
+                      <span className="text-yellow-200/80">Site in development. May experience lag, bugs, or data loss.</span>
+                      <a
+                        href="mailto:admin@shelterlab.shop?subject=ShelterLab%20Bug%20Report"
+                        className="text-yellow-300 hover:text-yellow-100 underline transition font-semibold flex-shrink-0"
+                      >
+                        Report Bug
+                      </a>
+                    </div>
                   </div>
+
                 </div>
               </div>
 
@@ -217,8 +200,7 @@ export default function HomePage() {
             </div>
 
             {/* Right side actions - Desktop only */}
-            <div className="hidden lg:flex items-center gap-4">
-              {/* Category Dropdown */}
+            <div className="hidden lg:flex items-center gap-4">              {/* Category Dropdown */}
               <div className="relative" ref={categoryDropdownRef}>
                 <button
                   onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
