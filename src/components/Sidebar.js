@@ -53,11 +53,13 @@ export default function Sidebar({ selectedCategory, setSelectedCategory }) {
           <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-white/10 rounded-2xl p-4">
             <div className="flex items-center gap-3 mb-3">
               {profile.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt={profile.full_name}
-                  className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                />
+                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                  <img
+                    src={profile.avatar_url}
+                    alt={profile.full_name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               ) : (
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                   {profile.full_name.charAt(0)}

@@ -113,13 +113,15 @@ export default function HomePage() {
                   onClick={() => window.location.reload()}
                   className="flex items-center gap-2 sm:gap-3 group cursor-pointer touch-manipulation flex-shrink-0"
                 >
-                  <img
-                    src="/logo.png"
-                    alt="ShelterLab"
-                    width={40}
-                    height={40}
-                    className="w-8 h-8 sm:w-10 sm:h-10 object-contain group-hover:brightness-110 group-hover:rotate-6 transition-all duration-300"
-                  />
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center">
+                    <img
+                      src="/logo.png"
+                      alt="ShelterLab"
+                      width={40}
+                      height={40}
+                      className="w-full h-full object-contain group-hover:brightness-110 group-hover:rotate-6 transition-all duration-300"
+                    />
+                  </div>
                 </button>
 
                 {/* Warning Text - Desktop only */}
@@ -184,7 +186,7 @@ export default function HomePage() {
                 </button>
                 {showCategoryDropdown && (
                   <div
-                    className="absolute top-full right-0 mt-2 w-48 rounded-2xl overflow-hidden py-1.5"
+                    className="absolute top-full right-0 mt-2 w-48 rounded-2xl overflow-hidden py-1.5 opacity-100 pointer-events-auto transition-opacity duration-150"
                     style={{
                       background: 'rgba(255, 255, 255, 0.08)',
                       backdropFilter: 'blur(40px) saturate(200%)',
@@ -258,13 +260,15 @@ export default function HomePage() {
                   className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center hover:ring-2 hover:ring-teal-400/50 transition touch-manipulation flex-shrink-0"
                 >
                   {profile?.avatar_url ? (
-                    <img
-                      src={profile.avatar_url}
-                      alt={profile.full_name || 'Profile'}
-                      width={36}
-                      height={36}
-                      className="w-9 h-9 rounded-full object-cover"
-                    />
+                    <div className="w-9 h-9 flex items-center justify-center">
+                      <img
+                        src={profile.avatar_url}
+                        alt={profile.full_name || 'Profile'}
+                        width={36}
+                        height={36}
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    </div>
                   ) : (
                     <div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
                       {profile?.full_name?.charAt(0).toUpperCase() || '?'}

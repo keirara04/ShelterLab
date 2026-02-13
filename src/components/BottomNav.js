@@ -110,11 +110,13 @@ export default function BottomNav() {
                 {item.name === 'Profile' && profile ? (
                   <div className="transition-colors">
                     {profile.avatar_url ? (
-                      <img
-                        src={profile.avatar_url}
-                        alt={profile.full_name || 'Profile'}
-                        className="w-6 h-6 rounded-full object-cover border-2 border-current"
-                      />
+                      <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center">
+                        <img
+                          src={profile.avatar_url}
+                          alt={profile.full_name || 'Profile'}
+                          className="w-full h-full object-cover border-2 border-current"
+                        />
+                      </div>
                     ) : (
                       <div className="w-6 h-6 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-current">
                         {profile.full_name?.charAt(0).toUpperCase() || '?'}
