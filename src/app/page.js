@@ -116,6 +116,8 @@ export default function HomePage() {
                   <img
                     src="/logo.png"
                     alt="ShelterLab"
+                    width={40}
+                    height={40}
                     className="w-8 h-8 sm:w-10 sm:h-10 object-contain group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300"
                   />
                 </button>
@@ -259,6 +261,8 @@ export default function HomePage() {
                     <img
                       src={profile.avatar_url}
                       alt={profile.full_name || 'Profile'}
+                      width={36}
+                      height={36}
                       className="w-9 h-9 rounded-full object-cover"
                     />
                   ) : (
@@ -313,7 +317,7 @@ export default function HomePage() {
                     : 'bg-white/5 hover:bg-white/10 text-gray-300'
                 }`}
               >
-                <img src={UNIVERSITY_LOGOS[u.id]} alt="" className="w-5 h-5 object-contain rounded-full" />
+                <img src={UNIVERSITY_LOGOS[u.id]} alt="" width={20} height={20} className="w-5 h-5 object-contain rounded-full" />
                 {u.name}
               </button>
             ))}
@@ -342,12 +346,14 @@ export default function HomePage() {
             const cardInner = (
               <>
                 {/* Image Container */}
-                <div className="relative h-40 sm:h-48 bg-gray-800 overflow-hidden">
+                <div className="relative aspect-square bg-gray-800 overflow-hidden">
                   {listing.image_urls && listing.image_urls.length > 0 ? (
                     <>
                       <img
                         src={listing.image_urls[0]}
                         alt={listing.title}
+                        width={400}
+                        height={400}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       {listing.image_urls.length > 1 && (
@@ -394,7 +400,7 @@ export default function HomePage() {
                     )}
                     {listing.profiles?.university && (
                       <span className="flex items-center gap-1 px-2 py-1 rounded bg-teal-500/20 text-teal-300 text-xs font-bold">
-                        <img src={UNIVERSITY_LOGOS[listing.profiles.university]} alt="" className="w-3.5 h-3.5 object-contain rounded-full" />
+                        <img src={UNIVERSITY_LOGOS[listing.profiles.university]} alt="" width={14} height={14} className="w-3.5 h-3.5 object-contain rounded-full" />
                         {UNIVERSITIES.find(u => u.id === listing.profiles.university)?.name || listing.profiles.university}
                       </span>
                     )}
@@ -466,7 +472,7 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-8">
             {/* Brand */}
             <div className="flex items-center gap-3">
-              <img src="/logo.png" alt="ShelterLab" className="w-10 h-10 object-contain" />
+              <img src="/logo.png" alt="ShelterLab" width={40} height={40} className="w-10 h-10 object-contain" />
               <span className="text-white font-black text-2xl bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">ShelterLab</span>
             </div>
 

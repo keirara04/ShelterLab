@@ -199,6 +199,8 @@ export default function ProfilePage() {
                   <img
                     src={profile.avatar_url}
                     alt={profile.full_name}
+                    width={112}
+                    height={112}
                     className="w-28 h-28 rounded-full object-cover ring-4 ring-teal-500/30"
                   />
                 ) : (
@@ -270,12 +272,16 @@ export default function ProfilePage() {
                       <img
                         src={avatarPreview}
                         alt="Preview"
+                        width={80}
+                        height={80}
                         className="w-20 h-20 rounded-full object-cover ring-2 ring-teal-500/40"
                       />
                     ) : profile?.avatar_url ? (
                       <img
                         src={profile.avatar_url}
                         alt={profile.full_name}
+                        width={80}
+                        height={80}
                         className="w-20 h-20 rounded-full object-cover ring-2 ring-white/10"
                       />
                     ) : (
@@ -456,6 +462,8 @@ export default function ProfilePage() {
                         <img
                           src={listing.image_urls[0]}
                           alt={listing.title}
+                          width={56}
+                          height={56}
                           className="w-14 h-14 rounded-xl object-cover ring-1 ring-white/10"
                         />
                       ) : (

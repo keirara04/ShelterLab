@@ -204,12 +204,14 @@ export default function MyListingsPage() {
                 className="bg-white/8 border border-white/15 rounded-xl overflow-hidden hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 backdrop-blur-xl"
               >
                 {/* Image */}
-                <div className="relative h-40 sm:h-48 bg-gray-800 overflow-hidden">
+                <div className="relative aspect-square bg-gray-800 overflow-hidden">
                   {listing.image_urls && listing.image_urls.length > 0 ? (
                     <>
                       <img
                         src={listing.image_urls[0]}
                         alt={listing.title}
+                        width={400}
+                        height={400}
                         className="w-full h-full object-cover"
                       />
                       {listing.image_urls.length > 1 && (

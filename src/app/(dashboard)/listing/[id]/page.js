@@ -242,6 +242,8 @@ export default function ListingDetailPage() {
                   <img
                     src={listing.image_urls[currentImageIndex]}
                     alt={listing.title}
+                    width={600}
+                    height={600}
                     className="w-full h-full object-cover"
                   />
 
@@ -307,6 +309,8 @@ export default function ListingDetailPage() {
                     <img
                       src={img}
                       alt={`Thumbnail ${idx}`}
+                      width={96}
+                      height={96}
                       className="w-full h-full object-cover"
                     />
                   </button>
@@ -376,6 +380,8 @@ export default function ListingDetailPage() {
                     <img
                       src={seller.avatar_url}
                       alt={seller.full_name}
+                      width={48}
+                      height={48}
                       className="w-12 h-12 rounded-full object-cover border-2 border-blue-500"
                     />
                   ) : (
@@ -391,7 +397,7 @@ export default function ListingDetailPage() {
                     </p>
                     {seller.university && (
                       <div className="flex items-center gap-1.5 mt-1">
-                        <img src={UNIVERSITY_LOGOS[seller.university]} alt="" className="w-4 h-4 object-contain rounded-full" />
+                        <img src={UNIVERSITY_LOGOS[seller.university]} alt="" width={16} height={16} className="w-4 h-4 object-contain rounded-full" />
                         <span className="text-xs text-teal-400 font-bold">
                           {UNIVERSITIES.find(u => u.id === seller.university)?.name || seller.university}
                         </span>
