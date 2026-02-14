@@ -10,7 +10,7 @@ import Link from 'next/link'
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { user, profile, logout, updateProfile } = useAuth()
+  const { user, profile, logout, updateProfile, refreshProfile } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
@@ -33,6 +33,7 @@ export default function ProfilePage() {
   const [univOtpSent, setUnivOtpSent] = useState(false)
   const [univOtp, setUnivOtp] = useState('')
   const [univLoading, setUnivLoading] = useState(false)
+  const [univSending, setUnivSending] = useState(false)
   const [univError, setUnivError] = useState(null)
   const [univSuccess, setUnivSuccess] = useState(null)
   const [formData, setFormData] = useState({
@@ -235,6 +236,7 @@ export default function ProfilePage() {
     setUnivError(null)
     setUnivSuccess(null)
     setUnivLoading(true)
+    setUnivSending(true)
     setUnivOtpSent(true) // switch to OTP form immediately
     try {
       const { data: { session } } = await supabase.auth.getSession()
@@ -254,6 +256,7 @@ export default function ProfilePage() {
       setUnivError(err.message)
     } finally {
       setUnivLoading(false)
+      setUnivSending(false)
     }
   }
 
@@ -273,8 +276,8 @@ export default function ProfilePage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      setUnivSuccess('University email verified! Refreshing...')
-      setTimeout(() => window.location.reload(), 1200)
+      await refreshProfile()
+      setShowVerifyModal(false)
     } catch (err) {
       setUnivError(err.message)
     } finally {
@@ -367,7 +370,7 @@ export default function ProfilePage() {
               </form>
             ) : (
               <form onSubmit={handleConfirmUnivOtp} className="space-y-4">
-                {univLoading && !univSuccess && !univError && (
+                {univSending && (
                   <p className="text-gray-500 text-xs text-center animate-pulse">Sending code to your university email...</p>
                 )}
                 {univSuccess && <p className="text-emerald-400 text-sm">{univSuccess}</p>}

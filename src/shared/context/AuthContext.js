@@ -251,6 +251,15 @@ export function AuthProvider({ children }) {
     }
   }
 
+  const refreshProfile = async () => {
+    if (!user) return
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+    if (data && data.length > 0) setProfile(data[0])
+  }
+
   const value = {
     user,
     profile,
@@ -260,6 +269,7 @@ export function AuthProvider({ children }) {
     login,
     logout,
     updateProfile,
+    refreshProfile,
     isAuthenticated: !!user,
     isAdmin: profile?.is_admin || false,
   }
