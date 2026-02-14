@@ -22,8 +22,8 @@ export async function POST(request) {
 
     const { otp } = await request.json()
 
-    if (!otp || otp.length !== 6) {
-      return Response.json({ error: 'Please enter the 6-digit code' }, { status: 400 })
+    if (!otp || otp.length !== 8) {
+      return Response.json({ error: 'Please enter the 8-digit code' }, { status: 400 })
     }
 
     // Get the pending university email from this user's profile

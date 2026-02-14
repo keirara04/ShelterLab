@@ -235,6 +235,7 @@ export default function ProfilePage() {
     setUnivError(null)
     setUnivSuccess(null)
     setUnivLoading(true)
+    setUnivOtpSent(true) // switch to OTP form immediately
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/verify-university-email', {
@@ -247,9 +248,9 @@ export default function ProfilePage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      setUnivOtpSent(true)
       setUnivSuccess('Verification code sent! Check your university email.')
     } catch (err) {
+      setUnivOtpSent(false) // revert on error
       setUnivError(err.message)
     } finally {
       setUnivLoading(false)
@@ -366,18 +367,22 @@ export default function ProfilePage() {
               </form>
             ) : (
               <form onSubmit={handleConfirmUnivOtp} className="space-y-4">
+                {univLoading && !univSuccess && !univError && (
+                  <p className="text-gray-500 text-xs text-center animate-pulse">Sending code to your university email...</p>
+                )}
                 {univSuccess && <p className="text-emerald-400 text-sm">{univSuccess}</p>}
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">6-Digit Code</label>
+                  <label className="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">8-Digit Code</label>
                   <input
                     type="text"
                     inputMode="numeric"
-                    maxLength={6}
+                    maxLength={8}
                     value={univOtp}
                     onChange={(e) => setUnivOtp(e.target.value.replace(/\D/g, ''))}
-                    placeholder="123456"
+                    placeholder="12345678"
                     required
-                    className="w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none placeholder-gray-600 tracking-widest font-mono text-center"
+                    disabled={univLoading}
+                    className="w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none placeholder-gray-600 tracking-widest font-mono text-center disabled:opacity-40"
                     style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                   />
                   <p className="text-gray-600 text-xs mt-1.5">Check your university inbox for the code</p>
@@ -385,7 +390,7 @@ export default function ProfilePage() {
                 <div className="flex gap-2">
                   <button
                     type="submit"
-                    disabled={univLoading || univOtp.length !== 6}
+                    disabled={univLoading || univOtp.length !== 8}
                     className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer disabled:opacity-50"
                     style={{ background: 'rgba(45,212,191,0.12)', border: '1px solid rgba(45,212,191,0.25)', color: '#2dd4bf' }}
                   >
