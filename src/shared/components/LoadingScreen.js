@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/shared/context/AuthContext'
 
 const UNIVERSITY_LOGOS = {
   'Korea University': '/KoreaUniversityLogo.png',

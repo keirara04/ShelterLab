@@ -3,10 +3,10 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/context/AuthContext'
-import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/lib/constants'
-import { SchemaScript } from '@/components/SchemaScript'
-import { generateProfileSchema } from '@/lib/schema'
+import { useAuth } from '@/shared/context/AuthContext'
+import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
+import { SchemaScript } from '@/shared/components/SchemaScript'
+import { generateProfileSchema } from '@/schema'
 
 export default function BuyerProfilePage() {
   const params = useParams()

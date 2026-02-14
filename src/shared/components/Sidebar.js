@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useAuth } from '@/context/AuthContext'
-import { CATEGORIES } from '@/lib/constants'
+import { useAuth } from '@/shared/context/AuthContext'
+import { CATEGORIES } from '@/services/utils/constants'
 
 export default function Sidebar({ selectedCategory, setSelectedCategory }) {
   const { user, profile, logout, isAuthenticated } = useAuth()

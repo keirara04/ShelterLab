@@ -1,4 +1,4 @@
-import { ProfileHeaderSkeleton, GridSkeleton } from '@/components/SkeletonLoader'
+import { ProfileHeaderSkeleton, GridSkeleton } from '@/shared/components/SkeletonLoader'
 
 export default function Loading() {
   return (

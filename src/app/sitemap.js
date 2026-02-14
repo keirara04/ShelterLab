@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/lib/supabaseServer';
+import { supabaseServer } from '@/services/supabaseServer';
 
 export default async function sitemap() {
   const supabase = supabaseServer;

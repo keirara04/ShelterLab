@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/shared/context/AuthContext'
 
 export default function ListingDetailPage() {
   const params = useParams()

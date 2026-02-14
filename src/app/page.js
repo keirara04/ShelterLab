@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { useAuth } from '@/context/AuthContext'
-import { CATEGORIES, UNIVERSITIES, UNIVERSITY_LOGOS } from '@/lib/constants'
-import AuthModal from '@/components/AuthModal'
+import { useAuth } from '@/shared/context/AuthContext'
+import { CATEGORIES, UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
+import AuthModal from '@/shared/components/AuthModal'
 
 export default function HomePage() {
   const { isAuthenticated, profile, user } = useAuth()

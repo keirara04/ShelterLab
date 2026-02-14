@@ -1,5 +1,5 @@
 // src/app/api/listings/route.js
-import { supabaseServer } from '@/lib/supabaseServer'
+import { supabaseServer } from '@/services/supabaseServer'
 
 export async function GET(request) {
   try {

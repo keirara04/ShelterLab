@@ -3,10 +3,10 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/context/AuthContext'
-import { SchemaScript } from '@/components/SchemaScript'
-import { generateProfileSchema } from '@/lib/schema'
+import { supabase } from '@/services/supabase'
+import { useAuth } from '@/shared/context/AuthContext'
+import { SchemaScript } from '@/shared/components/SchemaScript'
+import { generateProfileSchema } from '@/schema'
 
 export default function SellerProfilePage() {
   const params = useParams()

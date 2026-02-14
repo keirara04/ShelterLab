@@ -2,7 +2,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/services/supabase'
 
 export const useListings = (filters = {}) => {
   const [listings, setListings] = useState([])

@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/shared/context/AuthContext'
 import { useRouter } from 'next/navigation'
-import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/lib/constants'
+import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
 
 export default function AuthModal({ isOpen, onClose, redirectPath = null }) {
   const router = useRouter()

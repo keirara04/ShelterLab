@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useAuth } from '@/context/AuthContext'
-import AuthModal from '@/components/AuthModal'
+import { useAuth } from '@/shared/context/AuthContext'
+import AuthModal from '@/shared/components/AuthModal'
 
 export default function BottomNav() {
   const pathname = usePathname()

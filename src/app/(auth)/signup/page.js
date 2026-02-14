@@ -2,8 +2,8 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useAuth } from '@/context/AuthContext'
-import { UNIVERSITIES } from '@/lib/constants'
+import { useAuth } from '@/shared/context/AuthContext'
+import { UNIVERSITIES } from '@/services/utils/constants'
 import Image from 'next/image'
 import Link from 'next/link'
 

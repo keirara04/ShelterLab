@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/context/AuthContext'
-import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/shared/context/AuthContext'
+import { supabase } from '@/services/supabase'
 
 export default function MyListingsPage() {
   const router = useRouter()

@@ -2,8 +2,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/context/AuthContext'
+import { supabase } from '@/services/supabase'
+import { useAuth } from '@/shared/context/AuthContext'
 
 export const useFavorites = () => {
   const { user } = useAuth()

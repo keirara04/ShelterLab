@@ -1,5 +1,5 @@
 // src/app/api/listings/[id]/mark-sold/route.js
-import { supabaseServer } from '@/lib/supabaseServer'
+import { supabaseServer } from '@/services/supabaseServer'
 
 export async function POST(request, { params }) {
   try {

@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useAuth } from '@/context/AuthContext'
-import { supabase } from '@/lib/supabase'
-import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/lib/constants'
+import { useAuth } from '@/shared/context/AuthContext'
+import { supabase } from '@/services/supabase'
+import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
 
 export default function ListingDetailPage() {
   const params = useParams()

@@ -1,5 +1,5 @@
 // src/app/api/reviews/route.js
-import { supabaseServer } from '@/lib/supabaseServer'
+import { supabaseServer } from '@/services/supabaseServer'
 import { requireAuth } from '@/lib/auth'
 
 export async function GET(request) {

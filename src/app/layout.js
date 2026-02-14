@@ -1,5 +1,5 @@
-import { AuthProvider } from '@/context/AuthContext'
-import LayoutWrapper from '@/components/LayoutWrapper'
+import { AuthProvider } from '@/shared/context/AuthContext'
+import LayoutWrapper from '@/shared/components/LayoutWrapper'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 

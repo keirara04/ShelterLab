@@ -1,4 +1,4 @@
-import { GridSkeleton } from '@/components/SkeletonLoader'
+import { GridSkeleton } from '@/shared/components/SkeletonLoader'
 
 export default function Loading() {
   return (

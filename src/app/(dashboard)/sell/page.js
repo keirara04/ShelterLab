@@ -2,8 +2,8 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/context/AuthContext'
-import { CATEGORIES, CONDITIONS } from '@/lib/constants'
+import { useAuth } from '@/shared/context/AuthContext'
+import { CATEGORIES, CONDITIONS } from '@/services/utils/constants'
 import { validateImageFile } from '@/lib/helpers'
 import Link from 'next/link'
 

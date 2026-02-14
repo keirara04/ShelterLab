@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { supabaseServer } from '@/lib/supabaseServer'
+import { supabaseServer } from '@/services/supabaseServer'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY

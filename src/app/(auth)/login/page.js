@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/shared/context/AuthContext'
 import Image from 'next/image'
 import Link from 'next/link'
 
