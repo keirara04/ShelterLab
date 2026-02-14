@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/shared/context/AuthContext'
 import { supabase } from '@/services/supabase'
-import { createClient } from '@supabase/supabase-js'
 import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
 import Link from 'next/link'
 
@@ -90,21 +89,33 @@ export default function ProfilePage() {
     setNotificationSuccess(null)
 
     try {
-      // Create Supabase client to get session
-      const supabaseClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      )
+      // Get current session from the imported supabase client
+      let { data: { session } } = await supabase.auth.getSession()
 
-      // Get current session
-      let { data: { session }, error: sessionError } = await supabaseClient.auth.getSession()
+      // If no session, try to refresh it
+      if (!session) {
+        const { data: refreshData } = await supabase.auth.refreshSession()
+        session = refreshData?.session
+      }
 
+      // Fallback to localStorage
       if (!session) {
         try {
           const storedSession = localStorage.getItem('sb-xehylbvuqnwrgocgqelm-auth-token')
           if (storedSession) {
             const parsed = JSON.parse(storedSession)
             session = parsed.session || parsed
+            
+            // Try to restore the session
+            if (session?.access_token && session?.refresh_token) {
+              const { data: restored } = await supabase.auth.setSession({
+                access_token: session.access_token,
+                refresh_token: session.refresh_token,
+              })
+              if (restored?.session) {
+                session = restored.session
+              }
+            }
           }
         } catch (e) {
           console.error('Error parsing stored session:', e)
@@ -112,7 +123,7 @@ export default function ProfilePage() {
       }
 
       if (!session || !session.access_token) {
-        throw new Error('Session not found. Please log out and log back in.')
+        throw new Error('Session expired. Please log out and log back in.')
       }
 
       const response = await fetch('/api/notifications', {
@@ -238,8 +249,16 @@ export default function ProfilePage() {
     setUnivLoading(true)
     setUnivSending(true)
     setUnivOtpSent(true) // switch to OTP form immediately
+    
+    // Create AbortController for timeout
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+    
     try {
       const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error('Session expired. Please refresh and try again.')
+      }
       const res = await fetch('/api/verify-university-email', {
         method: 'POST',
         headers: {
@@ -247,14 +266,21 @@ export default function ProfilePage() {
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ university_email: univEmail }),
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setUnivSuccess('Verification code sent! Check your university email.')
     } catch (err) {
       setUnivOtpSent(false) // revert on error
-      setUnivError(err.message)
+      if (err.name === 'AbortError') {
+        setUnivError('Request timed out. Please check your connection and try again.')
+      } else {
+        setUnivError(err.message || 'Failed to send code. Please try again.')
+      }
     } finally {
+      clearTimeout(timeoutId)
       setUnivLoading(false)
       setUnivSending(false)
     }
@@ -264,8 +290,16 @@ export default function ProfilePage() {
     e.preventDefault()
     setUnivError(null)
     setUnivLoading(true)
+    
+    // Create AbortController for timeout
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+    
     try {
       const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error('Session expired. Please refresh and try again.')
+      }
       const res = await fetch('/api/verify-university-email/confirm', {
         method: 'POST',
         headers: {
@@ -273,14 +307,25 @@ export default function ProfilePage() {
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ otp: univOtp }),
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       await refreshProfile()
       setShowVerifyModal(false)
+      // Reset modal state
+      setUnivOtp('')
+      setUnivOtpSent(false)
+      setUnivEmail('')
     } catch (err) {
-      setUnivError(err.message)
+      if (err.name === 'AbortError') {
+        setUnivError('Request timed out. Please check your connection and try again.')
+      } else {
+        setUnivError(err.message || 'Verification failed. Please try again.')
+      }
     } finally {
+      clearTimeout(timeoutId)
       setUnivLoading(false)
     }
   }
@@ -371,43 +416,65 @@ export default function ProfilePage() {
             ) : (
               <form onSubmit={handleConfirmUnivOtp} className="space-y-4">
                 {univSending && (
-                  <p className="text-gray-500 text-xs text-center animate-pulse">Sending code to your university email...</p>
+                  <div className="text-center py-4">
+                    <div className="inline-block w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+                    <p className="text-gray-500 text-xs animate-pulse">Sending code to your university email...</p>
+                    <button
+                      type="button"
+                      onClick={() => { setUnivSending(false); setUnivOtpSent(false); setUnivLoading(false) }}
+                      className="mt-3 text-xs text-gray-600 hover:text-gray-400 underline"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 )}
-                {univSuccess && <p className="text-emerald-400 text-sm">{univSuccess}</p>}
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">8-Digit Code</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={8}
-                    value={univOtp}
-                    onChange={(e) => setUnivOtp(e.target.value.replace(/\D/g, ''))}
-                    placeholder="12345678"
-                    required
-                    disabled={univLoading}
-                    className="w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none placeholder-gray-600 tracking-widest font-mono text-center disabled:opacity-40"
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-                  />
-                  <p className="text-gray-600 text-xs mt-1.5">Check your university inbox for the code</p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    disabled={univLoading || univOtp.length !== 8}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer disabled:opacity-50"
-                    style={{ background: 'rgba(45,212,191,0.12)', border: '1px solid rgba(45,212,191,0.25)', color: '#2dd4bf' }}
-                  >
-                    {univLoading ? 'Verifying...' : 'Confirm'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setUnivOtpSent(false); setUnivOtp(''); setUnivError(null); setUnivSuccess(null) }}
-                    className="px-3 py-2.5 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-300 transition-colors cursor-pointer"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-                  >
-                    Change email
-                  </button>
-                </div>
+                {univSuccess && <p className="text-emerald-400 text-sm text-center">{univSuccess}</p>}
+                {!univSending && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">8-Digit Code</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={8}
+                        value={univOtp}
+                        onChange={(e) => setUnivOtp(e.target.value.replace(/\D/g, ''))}
+                        placeholder="12345678"
+                        required
+                        disabled={univLoading}
+                        autoComplete="one-time-code"
+                        className="w-full px-4 py-3.5 rounded-xl text-white text-lg outline-none placeholder-gray-600 tracking-[0.3em] font-mono text-center disabled:opacity-40"
+                        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                      />
+                      <p className="text-gray-600 text-xs mt-1.5 text-center">Check your university inbox for the code</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        disabled={univLoading || univOtp.length !== 8}
+                        className="flex-1 py-3 rounded-xl text-sm font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                        style={{ background: 'rgba(45,212,191,0.12)', border: '1px solid rgba(45,212,191,0.25)', color: '#2dd4bf' }}
+                      >
+                        {univLoading ? (
+                          <>
+                            <span className="inline-block w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></span>
+                            <span>Verifying...</span>
+                          </>
+                        ) : 'Confirm'}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={univLoading}
+                        onClick={() => { setUnivOtpSent(false); setUnivOtp(''); setUnivError(null); setUnivSuccess(null) }}
+                        className="px-4 py-3 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-300 transition-colors cursor-pointer disabled:opacity-50"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+                      >
+                        Back
+                      </button>
+                    </div>
+                  </>
+                )}
               </form>
             )}
           </div>
