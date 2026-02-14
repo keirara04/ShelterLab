@@ -140,6 +140,12 @@ export default function SellerProfilePage() {
     }
   }
 
+  // Generate profile schema before any conditional returns (Rules of Hooks)
+  const profileSchema = useMemo(
+    () => generateProfileSchema(seller, averageRating, reviews.length),
+    [seller, averageRating, reviews.length]
+  )
+
   if (loading) {
     return (
       <div
@@ -177,11 +183,6 @@ export default function SellerProfilePage() {
       </div>
     )
   }
-
-  const profileSchema = useMemo(
-    () => generateProfileSchema(seller, averageRating, reviews.length),
-    [seller, averageRating, reviews.length]
-  )
 
   return (
     <div
