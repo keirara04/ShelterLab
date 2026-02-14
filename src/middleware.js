@@ -54,35 +54,31 @@ export async function middleware(req) {
     }
   )
 
-  // Skip middleware for auth routes (login, signup, api/auth)
-  const authPaths = ['/login', '/signup', '/api/auth']
+  // Skip middleware for auth routes (login, signup, api/auth, oauth callback)
+  const authPaths = ['/login', '/signup', '/api/auth', '/auth/callback']
   const isAuthPath = authPaths.some((path) => req.nextUrl.pathname.startsWith(path))
 
   if (isAuthPath) {
     return res
   }
 
-  // Refresh session if expired - required for Server Components
-  // Use getUser() instead of getSession() for proper JWT validation
+  // Publicly accessible paths — everything else requires authentication
+  const publicPaths = ['/']
+  const publicApiPrefixes = ['/api/listings', '/api/notifications']
+  const isPublicPath =
+    publicPaths.some((path) => req.nextUrl.pathname === path) ||
+    publicApiPrefixes.some((prefix) => req.nextUrl.pathname.startsWith(prefix))
+
+  if (isPublicPath) {
+    return res
+  }
+
+  // All other routes require a valid session
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protected routes that require authentication
-  const protectedPaths = [
-    // Note: /sell, /my-listings and /listing/.*/edit are NOT protected here because
-    // these pages handle their own auth checks. This prevents middleware
-    // cookie timing issues where authenticated users get redirected to login.
-  ]
-
-  // Check if current path is protected
-  const isProtectedPath = protectedPaths.some((path) => {
-    const regex = new RegExp(`^${path}$`)
-    return regex.test(req.nextUrl.pathname)
-  })
-
-  // Redirect to login if accessing protected route without user
-  if (isProtectedPath && !user) {
+  if (!user) {
     const redirectUrl = req.nextUrl.clone()
     redirectUrl.pathname = '/login'
     redirectUrl.searchParams.set('redirect', req.nextUrl.pathname)

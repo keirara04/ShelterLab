@@ -1,6 +1,7 @@
 import { AuthProvider } from '@/shared/context/AuthContext'
 import LayoutWrapper from '@/shared/components/LayoutWrapper'
 import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 
 export const metadata = {
@@ -18,6 +19,7 @@ export default function RootLayout({ children }) {
           </LayoutWrapper>
         </AuthProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
