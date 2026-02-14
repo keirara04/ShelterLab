@@ -628,6 +628,9 @@ export default function ProfilePage() {
           <div>
             <h2 className="text-lg font-black text-white mb-4">🔐 Admin Controls</h2>
             
+            {/* Manage Approved Users Card */}
+            <AdminApprovedUsers />
+
             {/* Push Notifications Card */}
             <div className="glass rounded-2xl p-6 mb-6">
               <div className="flex items-start justify-between mb-4">
@@ -699,6 +702,238 @@ export default function ProfilePage() {
             {'\u2190'} Back to Marketplace
           </Link>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function AdminApprovedUsers() {
+  const [allUsers, setAllUsers] = useState([])
+  const [newSignups, setNewSignups] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(null)
+  const [email, setEmail] = useState('')
+  const [notes, setNotes] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const fetchAllUsers = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/approved-users?includeAll=true')
+      const result = await response.json()
+      if (response.ok && result.success) {
+        setAllUsers(result.data || [])
+      } else {
+        setError(result.error || 'Failed to fetch users')
+      }
+    } catch (err) {
+      setError('Error fetching users')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchNewSignups = async () => {
+    try {
+      const response = await fetch('/api/new-signups')
+      const result = await response.json()
+      if (response.ok && result.success) {
+        setNewSignups(result.data || [])
+      }
+    } catch (err) {
+      console.warn('Error fetching new signups')
+    }
+  }
+
+  const handleAddApprovedUser = async (e) => {
+    e.preventDefault()
+    if (!email.trim()) return
+
+    try {
+      setSubmitting(true)
+      setError(null)
+      setSuccess(null)
+
+      const response = await fetch('/api/approved-users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.toLowerCase(),
+          notes: notes.trim() || null,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setSuccess(`✓ ${email} approved successfully`)
+        setEmail('')
+        setNotes('')
+        await fetchAllUsers()
+      } else {
+        setError(data.error || 'Failed to add approved user')
+      }
+    } catch (err) {
+      setError('Error adding approved user')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleRemoveApprovedUser = async (email) => {
+    try {
+      const response = await fetch('/api/approved-users', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.toLowerCase() }),
+      })
+
+      if (response.ok && (await response.json()).success) {
+        setSuccess('✓ User removed from approved list')
+        await fetchAllUsers()
+      } else {
+        const data = await response.json()
+        setError(data.error || 'Failed to remove user')
+      }
+    } catch (err) {
+      setError('Error removing user')
+    }
+  }
+
+  const handleApproveUser = async (userEmail) => {
+    try {
+      setError(null)
+      setSuccess(null)
+
+      const response = await fetch('/api/approved-users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: userEmail.toLowerCase(),
+          notes: null,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setSuccess(`✓ ${userEmail} approved successfully`)
+        await fetchAllUsers()
+      } else {
+        setError(data.error || 'Failed to approve user')
+      }
+    } catch (err) {
+      setError('Error approving user')
+    }
+  }
+
+  useEffect(() => {
+    fetchAllUsers()
+    fetchNewSignups()
+  }, [])
+
+  return (
+    <div className="space-y-6">
+      {/* New Signups Notification */}
+      {newSignups.length > 0 && (
+        <div className="glass rounded-2xl p-6 border-l-4 border-orange-500">
+          <h3 className="text-xl font-black text-white mb-4">🔔 New Signups ({newSignups.length})</h3>
+          <p className="text-gray-400 text-sm mb-4">Users who clicked their confirmation email</p>
+          <div className="space-y-2 max-h-40 overflow-y-auto">
+            {newSignups.map((user) => (
+              <div
+                key={user.id}
+                className="flex items-center justify-between p-3 bg-orange-500/10 rounded-lg border border-orange-500/30"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-medium text-sm truncate">{user.email}</p>
+                  {user.full_name && (
+                    <p className="text-gray-400 text-xs mt-1">{user.full_name}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleApproveUser(user.email)}
+                  className="ml-2 px-3 py-2 rounded-lg bg-green-600/20 hover:bg-green-600/40 text-green-400 hover:text-green-300 font-bold transition-all duration-200 text-xs whitespace-nowrap"
+                >
+                  Approve
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* All Users Management */}
+      <div className="glass rounded-2xl p-6 mb-6">
+      <h3 className="text-xl font-black text-white mb-4">👥 Manage User Access</h3>
+      <p className="text-sm text-gray-400 mb-6">Approve or reject new signups</p>
+
+      {error && (
+        <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm mb-4">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 text-green-400 text-sm mb-4">
+          {success}
+        </div>
+      )}
+
+      {/* All Users List */}
+      {loading ? (
+        <div className="text-gray-400 text-sm">Loading...</div>
+      ) : allUsers.length === 0 ? (
+        <div className="text-gray-400 text-sm">No users yet</div>
+      ) : (
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {allUsers.map((user) => (
+            <div
+              key={user.id}
+              className={`flex flex-col md:flex-row md:items-center md:justify-between gap-2 p-3 rounded-lg border ${
+                user.status === 'approved'
+                  ? 'bg-green-500/10 border-green-500/30'
+                  : 'bg-yellow-500/10 border-yellow-500/30'
+              }`}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2 gap-1">
+                  <p className="text-white font-medium text-sm truncate">{user.email}</p>
+                  <span className={`text-xs px-2 py-1 rounded w-fit ${
+                    user.status === 'approved'
+                      ? 'bg-green-500/30 text-green-400'
+                      : 'bg-yellow-500/30 text-yellow-400'
+                  }`}>
+                    {user.status === 'approved' ? '✓ Approved' : '⏳ Pending'}
+                  </span>
+                </div>
+                {user.full_name && (
+                  <p className="text-gray-400 text-xs mt-1">{user.full_name}</p>
+                )}
+              </div>
+              <div className="flex gap-2">
+                {user.status === 'pending' && (
+                  <button
+                    onClick={() => handleApproveUser(user.email)}
+                    className="flex-1 md:flex-none px-3 py-2 rounded-lg bg-green-600/20 hover:bg-green-600/40 text-green-400 hover:text-green-300 font-bold transition-all duration-200 text-xs whitespace-nowrap"
+                  >
+                    Approve
+                  </button>
+                )}
+                {user.status === 'approved' && (
+                  <button
+                    onClick={() => handleRemoveApprovedUser(user.email)}
+                    className="flex-1 md:flex-none px-3 py-2 rounded-lg bg-red-600/20 hover:bg-red-600/40 text-red-400 hover:text-red-300 font-bold transition-all duration-200 text-xs whitespace-nowrap"
+                  >
+                    Revoke
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       </div>
     </div>
   )

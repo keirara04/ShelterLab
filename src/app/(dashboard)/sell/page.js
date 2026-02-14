@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/shared/context/AuthContext'
 import { CATEGORIES, CONDITIONS } from '@/services/utils/constants'
-import { validateImageFile } from '@/lib/helpers'
+import { validateImageFile } from '@/services/utils/helpers'
 import Link from 'next/link'
 
 // Image compression function

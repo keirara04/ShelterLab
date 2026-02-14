@@ -136,17 +136,17 @@ export default function AuthModal({ isOpen, onClose, redirectPath = null }) {
         </button>
 
         <div className="p-6 sm:p-8">
-          {/* Email Confirmation Success */}
+          {/* Pending Approval */}
           {showConfirmEmail ? (
             <div className="text-center py-4">
-              <div className="text-5xl mb-4">📧</div>
-              <h2 className="text-2xl font-black text-white mb-3">Check Your Email!</h2>
+              <div className="text-5xl mb-4 animate-pulse">⏳</div>
+              <h2 className="text-2xl font-black text-white mb-3">Account Pending Review</h2>
               <p className="text-gray-300 mb-2">
-                We sent a confirmation link to:
+                We've received your signup request:
               </p>
-              <p className="text-blue-400 font-bold mb-6">{formData.email}</p>
+              <p className="text-blue-400 font-bold mb-6 break-all">{formData.email}</p>
               <p className="text-gray-400 text-sm mb-6">
-                Click the link in your email to verify your account. Once confirmed, you can sign in.
+                Your account is pending approval from our administrators. We'll review your application and you'll be able to access ShelterLab shortly. Thank you for your patience!
               </p>
               <div className="space-y-3">
                 <button
@@ -157,7 +157,7 @@ export default function AuthModal({ isOpen, onClose, redirectPath = null }) {
                   }}
                   className="w-full py-3 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 transition"
                 >
-                  Go to Sign In
+                  Try Signing In
                 </button>
                 <button
                   onClick={onClose}

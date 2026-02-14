@@ -54,7 +54,7 @@ export default function AuthCallbackPage() {
           <>
             <div className="text-5xl mb-4">⏳</div>
             <h1 className="text-2xl font-black text-white mb-2">Confirming your email...</h1>
-            <p className="text-gray-400">Please wait while we verify your account.</p>
+            <p className="text-gray-400">Please wait while ShelterLab does its magic.</p>
           </>
         )}
 
@@ -62,7 +62,7 @@ export default function AuthCallbackPage() {
           <>
             <div className="text-5xl mb-4">✅</div>
             <h1 className="text-2xl font-black text-white mb-2">Email Confirmed!</h1>
-            <p className="text-gray-400 mb-4">Your account is verified. Redirecting you now...</p>
+            <p className="text-gray-400 mb-4">Your account is verified. Welcome to ShelterLab! Redirecting you now...</p>
             <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           </>
         )}

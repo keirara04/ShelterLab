@@ -46,6 +46,22 @@ export function AuthProvider({ children }) {
           setUser(session?.user || null)
 
           if (session?.user) {
+            // Check if user is still approved
+            const { data: approvedUser } = await supabase
+              .from('approved_users')
+              .select('*')
+              .eq('email', session.user.email.toLowerCase())
+              .eq('status', 'approved')
+              .single()
+
+            if (!approvedUser) {
+              // User is no longer approved - sign them out
+              await supabase.auth.signOut()
+              setUser(null)
+              setProfile(null)
+              return
+            }
+
             const { data, error: profileError } = await supabase
               .from('profiles')
               .select('*')
@@ -77,12 +93,16 @@ export function AuthProvider({ children }) {
     try {
       setError(null)
 
-      // Sign up via Supabase client (sends confirmation email automatically)
+      // Sign up via Supabase client
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/email-confirmation`,
+          data: {
+            full_name: fullName,
+            university: university,
+          }
         },
       })
 
@@ -117,8 +137,8 @@ export function AuthProvider({ children }) {
         throw new Error(profileData.error || 'Failed to create profile')
       }
 
-      // Don't sign in - user needs to confirm email first
-      return { success: true, confirmEmail: true }
+      // Pending admin approval
+      return { success: true, pending: true }
     } catch (err) {
       setError(err.message)
       return { success: false, error: err.message }
@@ -135,6 +155,20 @@ export function AuthProvider({ children }) {
       })
 
       if (error) throw error
+
+      // Check if email is approved
+      const { data: approvedUser, error: approvalError } = await supabase
+        .from('approved_users')
+        .select('*')
+        .eq('email', email.toLowerCase())
+        .eq('status', 'approved')
+        .single()
+
+      if (!approvedUser || approvalError?.code === 'PGRST116') {
+        // Email not approved - sign them out
+        await supabase.auth.signOut()
+        throw new Error('Your account has been revoked. Please contact the administrator.')
+      }
 
       // Set user first
       if (data.user) {
