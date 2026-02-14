@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/shared/context/AuthContext'
 import { supabase } from '@/services/supabase'
 import { createClient } from '@supabase/supabase-js'
-import { UNIVERSITIES } from '@/services/utils/constants'
+import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
 import Link from 'next/link'
 
 export default function ProfilePage() {
@@ -19,6 +19,7 @@ export default function ProfilePage() {
   const [myListings, setMyListings] = useState([])
   const [reviews, setReviews] = useState([])
   const [activeTab, setActiveTab] = useState('listings')
+  const [showBadgeTooltip, setShowBadgeTooltip] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [avatarFile, setAvatarFile] = useState(null)
   const fileInputRef = useRef(null)
@@ -247,6 +248,40 @@ export default function ProfilePage() {
         backgroundColor: '#000000',
       }}
     >
+      {/* Badge Modal — hoisted outside all overflow/filter containers */}
+      {showBadgeTooltip && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center"
+          style={{ backdropFilter: 'blur(12px)', background: 'rgba(0,0,0,0.45)' }}
+          onClick={() => setShowBadgeTooltip(false)}
+        >
+          <div
+            className="rounded-2xl p-6 w-72 max-w-[88vw]"
+            style={{
+              background: '#000000',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08)',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <img src="/BadgeIcon.svg" alt="" width={28} height={28} className="w-7 h-7 object-contain" />
+              <p className="text-white font-bold text-base">Verified Student</p>
+            </div>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              This user is a verified student at their registered university.
+            </p>
+            <button
+              onClick={() => setShowBadgeTooltip(false)}
+              className="mt-5 w-full py-2 rounded-xl text-sm font-semibold text-gray-300 hover:text-white transition-colors cursor-pointer"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto px-4 relative z-10">
 
         {/* Success toast */}
@@ -260,6 +295,43 @@ export default function ProfilePage() {
         <div className="glass-strong rounded-3xl p-8 mb-6 relative overflow-hidden">
           {/* Inner gradient shimmer */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-teal-500/5 rounded-3xl pointer-events-none" />
+
+          {/* Card action buttons */}
+          <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+            <button
+              onClick={() => setIsEditing(!isEditing)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200"
+              style={{
+                background: isEditing ? 'rgba(45, 212, 191, 0.15)' : 'rgba(255,255,255,0.06)',
+                border: isEditing ? '1px solid rgba(45, 212, 191, 0.3)' : '1px solid rgba(255,255,255,0.1)',
+                color: isEditing ? '#2dd4bf' : '#9ca3af',
+              }}
+              title={isEditing ? 'Cancel' : 'Edit Profile'}
+            >
+              {isEditing ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              )}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-500 hover:text-red-400"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)',
+              }}
+              title="Log Out"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </button>
+          </div>
 
           <div className="relative flex flex-col md:flex-row items-center gap-6">
             {/* Avatar */}
@@ -283,43 +355,23 @@ export default function ProfilePage() {
 
             {/* Name + Email + Buttons */}
             <div className="flex-1 text-center md:text-left">
-              <h1 className="text-3xl font-black text-white mb-1">
-                {profile?.full_name || user?.email || 'User'}
-              </h1>
-              {profile?.university && (
-                <p className="text-teal-400 text-sm font-bold mt-1 mb-1">
-                  🎓 {UNIVERSITIES.find(u => u.id === profile.university)?.name || profile.university}
-                </p>
-              )}
-              <p className="text-gray-500 text-xs mb-4">
-                Wrong university?{' '}
-                <a href="mailto:admin@shelterlab.shop" className="text-blue-400 hover:text-blue-300 transition">
-                  Contact admin@shelterlab.shop
-                </a>
-              </p>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap justify-center md:justify-start gap-3">
+              <div className="flex items-center gap-2 justify-center md:justify-start mb-1">
+                <h1 className="text-3xl font-black text-white">
+                  {profile?.full_name || user?.email || 'User'}
+                </h1>
                 <button
-                  onClick={() => setIsEditing(!isEditing)}
-                  className="px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer"
-                  style={{
-                    background: isEditing
-                      ? 'rgba(45, 212, 191, 0.1)'
-                      : 'linear-gradient(135deg, #14b8a6, #06b6d4)',
-                    color: isEditing ? '#2dd4bf' : '#fff',
-                    border: isEditing ? '1px solid rgba(45, 212, 191, 0.3)' : 'none',
-                  }}
+                  onClick={(e) => { e.stopPropagation(); setShowBadgeTooltip(true) }}
+                  className="cursor-pointer flex items-center"
                 >
-                  {isEditing ? 'Cancel' : 'Edit Profile'}
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="px-5 py-2.5 glass rounded-xl font-bold text-sm text-gray-400 hover:text-red-400 transition-all duration-200 cursor-pointer"
-                >
-                  Log Out
+                  <img src="/BadgeIcon.svg" alt="Verified Student" width={24} height={24} className="w-6 h-6 object-contain" />
                 </button>
               </div>
+              {profile?.university && (
+                <p className="text-teal-400 text-sm font-bold mt-1 mb-1 flex items-center gap-1.5 justify-center md:justify-start">
+                  <img src={UNIVERSITY_LOGOS[profile.university]} alt="" width={18} height={18} className="w-4.5 h-4.5 object-contain rounded-full" />
+                  {UNIVERSITIES.find(u => u.id === profile.university)?.name || profile.university}
+                </p>
+              )}
             </div>
           </div>
 
@@ -701,6 +753,12 @@ export default function ProfilePage() {
           >
             {'\u2190'} Back to Marketplace
           </Link>
+          <p className="text-gray-600 text-xs mt-3">
+            Wrong university?{' '}
+            <a href="mailto:admin@shelterlab.shop" className="text-gray-500 hover:text-gray-400 transition">
+              Contact admin@shelterlab.shop
+            </a>
+          </p>
         </div>
       </div>
     </div>

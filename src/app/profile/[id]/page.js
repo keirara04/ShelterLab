@@ -27,6 +27,7 @@ export default function SellerProfilePage() {
   const [reviewError, setReviewError] = useState(null)
   const [showAllListings, setShowAllListings] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
+  const [showBadgeTooltip, setShowBadgeTooltip] = useState(false)
 
   useEffect(() => {
     if (sellerId) {
@@ -218,6 +219,46 @@ export default function SellerProfilePage() {
             <div className="flex-1 text-center sm:text-left w-full">
               <div className="flex items-center justify-center sm:justify-start gap-2">
                 <h1 className="text-2xl sm:text-4xl font-black text-white">{seller.full_name}</h1>
+                <div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowBadgeTooltip(true) }}
+                    className="cursor-pointer flex items-center"
+                  >
+                    <img src="/BadgeIcon.svg" alt="Verified Student" width={24} height={24} className="w-6 h-6 object-contain" />
+                  </button>
+                  {showBadgeTooltip && (
+                    <div
+                      className="fixed inset-0 z-[9999] flex items-center justify-center"
+                      style={{ backdropFilter: 'blur(12px)', background: 'rgba(0,0,0,0.45)' }}
+                      onClick={() => setShowBadgeTooltip(false)}
+                    >
+                      <div
+                        className="rounded-2xl p-6 w-72 max-w-[88vw]"
+                        style={{
+                          background: '#000000',
+                          border: '1px solid rgba(255, 255, 255, 0.12)',
+                          boxShadow: '0 24px 64px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08)',
+                        }}
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <div className="flex items-center gap-3 mb-3">
+                          <img src="/BadgeIcon.svg" alt="" width={28} height={28} className="w-7 h-7 object-contain" />
+                          <p className="text-white font-bold text-base">Verified Student</p>
+                        </div>
+                        <p className="text-gray-400 text-sm leading-relaxed">
+                          This user is a verified student at their registered university.
+                        </p>
+                        <button
+                          onClick={() => setShowBadgeTooltip(false)}
+                          className="mt-5 w-full py-2 rounded-xl text-sm font-semibold text-gray-300 hover:text-white transition-colors cursor-pointer"
+                          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                        >
+                          Got it
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 {isAuthenticated && user?.id !== sellerId && (
                   <button
                     onClick={() => setShowReportModal(true)}
