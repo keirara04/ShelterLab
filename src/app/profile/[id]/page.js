@@ -219,6 +219,7 @@ export default function SellerProfilePage() {
             <div className="flex-1 text-center sm:text-left w-full">
               <div className="flex items-center justify-center sm:justify-start gap-2">
                 <h1 className="text-2xl sm:text-4xl font-black text-white">{seller.full_name}</h1>
+                {seller?.university_email_verified && (
                 <div>
                   <button
                     onClick={(e) => { e.stopPropagation(); setShowBadgeTooltip(true) }}
@@ -259,6 +260,7 @@ export default function SellerProfilePage() {
                     </div>
                   )}
                 </div>
+                )}
                 {isAuthenticated && user?.id !== sellerId && (
                   <button
                     onClick={() => setShowReportModal(true)}

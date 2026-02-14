@@ -254,9 +254,7 @@ export default function HomePage() {
                     boxShadow: showNotificationPanel ? '0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)' : 'none',
                   }}
                 >
-                  <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
+                  <img src="/bell.svg" alt="Notifications" className="w-4 h-4" />
                   {hasUnreadNotification && (
                     <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
                   )}
@@ -277,9 +275,7 @@ export default function HomePage() {
                     >
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
-                          <svg className="w-6 h-6 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V2c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 3.36 6 5.92 6 9v5l-2 2v1h16v-1l-2-2z" />
-                          </svg>
+                          <img src="/bell.svg" alt="" className="w-6 h-6 flex-shrink-0" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="text-sm font-bold text-white mb-1 truncate">
@@ -384,9 +380,7 @@ export default function HomePage() {
                     boxShadow: showNotificationPanel ? '0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)' : 'none',
                   }}
                 >
-                  <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
+                  <img src="/bell.svg" alt="Notifications" className="w-5 h-5" />
                   {hasUnreadNotification && (
                     <div className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
                   )}
@@ -407,9 +401,7 @@ export default function HomePage() {
                     >
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
-                          <svg className="w-6 h-6 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V2c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 3.36 6 5.92 6 9v5l-2 2v1h16v-1l-2-2z" />
-                          </svg>
+                          <img src="/bell.svg" alt="" className="w-6 h-6 flex-shrink-0" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="text-sm font-bold text-white mb-1 truncate">

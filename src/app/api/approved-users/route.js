@@ -9,7 +9,7 @@ export async function GET(req) {
       // Get all auth users with their approval status
       const { data: authUsers, error: authError } = await supabaseServer
         .from('profiles')
-        .select('id, email, full_name, created_at')
+        .select('id, email, full_name, created_at, university_email_verified')
         .order('created_at', { ascending: false })
 
       if (authError) throw authError

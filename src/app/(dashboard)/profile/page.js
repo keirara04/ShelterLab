@@ -20,6 +20,7 @@ export default function ProfilePage() {
   const [reviews, setReviews] = useState([])
   const [activeTab, setActiveTab] = useState('listings')
   const [showBadgeTooltip, setShowBadgeTooltip] = useState(false)
+  const [showVerifyModal, setShowVerifyModal] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [avatarFile, setAvatarFile] = useState(null)
   const fileInputRef = useRef(null)
@@ -28,6 +29,12 @@ export default function ProfilePage() {
   const [notificationLoading, setNotificationLoading] = useState(false)
   const [notificationError, setNotificationError] = useState(null)
   const [notificationSuccess, setNotificationSuccess] = useState(null)
+  const [univEmail, setUnivEmail] = useState('')
+  const [univOtpSent, setUnivOtpSent] = useState(false)
+  const [univOtp, setUnivOtp] = useState('')
+  const [univLoading, setUnivLoading] = useState(false)
+  const [univError, setUnivError] = useState(null)
+  const [univSuccess, setUnivSuccess] = useState(null)
   const [formData, setFormData] = useState({
     full_name: '',
     avatar_url: '',
@@ -223,6 +230,57 @@ export default function ProfilePage() {
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : null
 
+  const handleSendUnivOtp = async (e) => {
+    e.preventDefault()
+    setUnivError(null)
+    setUnivSuccess(null)
+    setUnivLoading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/verify-university-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ university_email: univEmail }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setUnivOtpSent(true)
+      setUnivSuccess('Verification code sent! Check your university email.')
+    } catch (err) {
+      setUnivError(err.message)
+    } finally {
+      setUnivLoading(false)
+    }
+  }
+
+  const handleConfirmUnivOtp = async (e) => {
+    e.preventDefault()
+    setUnivError(null)
+    setUnivLoading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/verify-university-email/confirm', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ otp: univOtp }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setUnivSuccess('University email verified! Refreshing...')
+      setTimeout(() => window.location.reload(), 1200)
+    } catch (err) {
+      setUnivError(err.message)
+    } finally {
+      setUnivLoading(false)
+    }
+  }
+
   if (!user) {
     return (
       <div
@@ -248,6 +306,106 @@ export default function ProfilePage() {
         backgroundColor: '#000000',
       }}
     >
+      {/* Verify University Email Modal */}
+      {showVerifyModal && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center"
+          style={{ backdropFilter: 'blur(12px)', background: 'rgba(0,0,0,0.5)' }}
+          onClick={() => setShowVerifyModal(false)}
+        >
+          <div
+            className="rounded-2xl p-6 w-80 max-w-[92vw]"
+            style={{
+              background: '#0a0a0a',
+              border: '1px solid rgba(255,255,255,0.1)',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.9)',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <img src="/BadgeIcon.svg" alt="" width={20} height={20} className="w-5 h-5 object-contain" />
+                <h2 className="text-white font-bold text-base">Verify Student Email</h2>
+              </div>
+              <button
+                onClick={() => setShowVerifyModal(false)}
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-white transition-colors cursor-pointer"
+                style={{ background: 'rgba(255,255,255,0.06)' }}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {univError && <p className="text-red-400 text-sm mb-3">{univError}</p>}
+
+            {!univOtpSent ? (
+              <form onSubmit={handleSendUnivOtp} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">University Email</label>
+                  <input
+                    type="email"
+                    value={univEmail}
+                    onChange={(e) => setUnivEmail(e.target.value)}
+                    placeholder="yourname@university.ac.kr"
+                    required
+                    className="w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none placeholder-gray-600"
+                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  />
+                  <p className="text-gray-600 text-xs mt-1.5">Must follow @university.ac.kr or another approved domain by University</p>
+                </div>
+                <button
+                  type="submit"
+                  disabled={univLoading}
+                  className="w-full py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer disabled:opacity-50"
+                  style={{ background: 'rgba(45,212,191,0.12)', border: '1px solid rgba(45,212,191,0.25)', color: '#2dd4bf' }}
+                >
+                  {univLoading ? 'Sending...' : 'Send Verification Code'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleConfirmUnivOtp} className="space-y-4">
+                {univSuccess && <p className="text-emerald-400 text-sm">{univSuccess}</p>}
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">6-Digit Code</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={univOtp}
+                    onChange={(e) => setUnivOtp(e.target.value.replace(/\D/g, ''))}
+                    placeholder="123456"
+                    required
+                    className="w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none placeholder-gray-600 tracking-widest font-mono text-center"
+                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  />
+                  <p className="text-gray-600 text-xs mt-1.5">Check your university inbox for the code</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={univLoading || univOtp.length !== 6}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer disabled:opacity-50"
+                    style={{ background: 'rgba(45,212,191,0.12)', border: '1px solid rgba(45,212,191,0.25)', color: '#2dd4bf' }}
+                  >
+                    {univLoading ? 'Verifying...' : 'Confirm'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setUnivOtpSent(false); setUnivOtp(''); setUnivError(null); setUnivSuccess(null) }}
+                    className="px-3 py-2.5 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-300 transition-colors cursor-pointer"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+                  >
+                    Change email
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Badge Modal — hoisted outside all overflow/filter containers */}
       {showBadgeTooltip && (
         <div
@@ -359,18 +517,32 @@ export default function ProfilePage() {
                 <h1 className="text-3xl font-black text-white">
                   {profile?.full_name || user?.email || 'User'}
                 </h1>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setShowBadgeTooltip(true) }}
-                  className="cursor-pointer flex items-center"
-                >
-                  <img src="/BadgeIcon.svg" alt="Verified Student" width={24} height={24} className="w-6 h-6 object-contain" />
-                </button>
+                {profile?.university_email_verified && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowBadgeTooltip(true) }}
+                    className="cursor-pointer flex items-center"
+                  >
+                    <img src="/BadgeIcon.svg" alt="Verified Student" width={24} height={24} className="w-6 h-6 object-contain" />
+                  </button>
+                )}
               </div>
               {profile?.university && (
                 <p className="text-teal-400 text-sm font-bold mt-1 mb-1 flex items-center gap-1.5 justify-center md:justify-start">
                   <img src={UNIVERSITY_LOGOS[profile.university]} alt="" width={18} height={18} className="w-4.5 h-4.5 object-contain rounded-full" />
                   {UNIVERSITIES.find(u => u.id === profile.university)?.name || profile.university}
                 </p>
+              )}
+              {!profile?.university_email_verified && (
+                <button
+                  onClick={() => { setUnivError(null); setUnivSuccess(null); setShowVerifyModal(true) }}
+                  className="inline-flex items-center gap-1.5 mt-1 px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer"
+                  style={{ background: 'rgba(45,212,191,0.08)', border: '1px solid rgba(45,212,191,0.2)', color: '#5eead4' }}
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Get Verified
+                </button>
               )}
             </div>
           </div>
@@ -886,6 +1058,30 @@ function AdminApprovedUsers() {
     }
   }
 
+  const handleGrantBadge = async (userId, grant) => {
+    try {
+      setError(null)
+      setSuccess(null)
+
+      const response = await fetch('/api/admin/grant-badge', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, grant }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setSuccess(`✓ Badge ${grant ? 'granted' : 'revoked'} successfully`)
+        await fetchAllUsers()
+      } else {
+        setError(data.error || 'Failed to update badge')
+      }
+    } catch (err) {
+      setError('Error updating badge')
+    }
+  }
+
   useEffect(() => {
     fetchAllUsers()
     fetchNewSignups()
@@ -979,6 +1175,18 @@ function AdminApprovedUsers() {
                     Approve
                   </button>
                 )}
+                <button
+                  onClick={() => handleGrantBadge(user.id, !user.university_email_verified)}
+                  className={`flex-1 md:flex-none px-3 py-2 rounded-lg font-bold transition-all duration-200 text-xs whitespace-nowrap flex items-center gap-1 ${
+                    user.university_email_verified
+                      ? 'bg-teal-600/20 hover:bg-red-600/20 text-teal-400 hover:text-red-400'
+                      : 'bg-white/5 hover:bg-teal-600/20 text-gray-500 hover:text-teal-400'
+                  }`}
+                  title={user.university_email_verified ? 'Revoke badge' : 'Grant badge'}
+                >
+                  <img src="/BadgeIcon.svg" alt="" className="w-3 h-3" />
+                  {user.university_email_verified ? 'Revoke' : 'Badge'}
+                </button>
                 {user.status === 'approved' && (
                   <button
                     onClick={() => handleRemoveApprovedUser(user.email)}

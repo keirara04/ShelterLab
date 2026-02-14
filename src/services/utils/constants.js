@@ -66,6 +66,14 @@ export const RATING_COLORS = {
 
 export const DEFAULT_LISTING_ID = 'test-user-id' // For development/testing
 
+// Allowed university email domains for the Verified Student badge.
+// Add new domains here to extend verification eligibility.
+export const ALLOWED_UNIVERSITY_EMAIL_DOMAINS = [
+  '.ac.kr', // Standard Korean university domain
+  // '.edu',    // Uncomment to allow US university emails
+  // '.edu.sg', // Uncomment to allow Singapore university emails
+]
+
 // API Response Status
 export const API_STATUS = {
   SUCCESS: 'success',
