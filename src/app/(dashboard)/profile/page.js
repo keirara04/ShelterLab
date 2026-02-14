@@ -402,7 +402,7 @@ export default function ProfilePage() {
                     className="w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none placeholder-gray-600"
                     style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                   />
-                  <p className="text-gray-600 text-xs mt-1.5">Must follow @university.ac.kr or another approved domain by University</p>
+                  <p className="text-gray-600 text-xs mt-1.5">Must use @university.ac.kr or another approved domain by University. Ensure you are using desktop version to verify your profile</p>
                 </div>
                 <button
                   type="submit"

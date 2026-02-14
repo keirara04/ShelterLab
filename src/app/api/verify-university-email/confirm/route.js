@@ -26,10 +26,10 @@ export async function POST(request) {
       return Response.json({ error: 'Please enter the 8-digit code' }, { status: 400 })
     }
 
-    // Get the pending university email from this user's profile
+    // Get the pending university email and verification data from this user's profile
     const { data: profileData, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('university_email, university_email_verified')
+      .select('university_email, university_email_verified, verification_code, verification_expires_at, verification_attempts')
       .eq('id', user.id)
       .single()
 
@@ -41,9 +41,59 @@ export async function POST(request) {
       return Response.json({ error: 'University email already verified' }, { status: 400 })
     }
 
+    // Check if we have verification data in profile (new approach)
+    if (profileData.verification_code) {
+      const currentTime = Math.floor(Date.now() / 1000)
+      
+      // Check expiry
+      if (profileData.verification_expires_at && currentTime > profileData.verification_expires_at) {
+        return Response.json({ error: 'Verification code has expired. Please request a new one.' }, { status: 400 })
+      }
+
+      // Check attempts
+      const attempts = profileData.verification_attempts || 0
+      if (attempts >= 5) {
+        return Response.json({ error: 'Too many failed attempts. Please request a new verification code.' }, { status: 429 })
+      }
+
+      // Verify code
+      if (profileData.verification_code !== otp) {
+        // Increment attempts
+        await supabaseAdmin
+          .from('profiles')
+          .update({ verification_attempts: attempts + 1 })
+          .eq('id', user.id)
+          .catch(() => {})
+
+        const remaining = 5 - (attempts + 1)
+        return Response.json({ error: `Invalid code. ${remaining} attempts remaining.` }, { status: 400 })
+      }
+
+      // Code matches! Mark as verified and clear verification data
+      const { error: updateError } = await supabaseAdmin
+        .from('profiles')
+        .update({ 
+          university_email_verified: true,
+          verification_code: null,
+          verification_expires_at: null,
+          verification_attempts: null
+        })
+        .eq('id', user.id)
+
+      if (updateError) {
+        // Try simpler update if columns don't exist
+        await supabaseAdmin
+          .from('profiles')
+          .update({ university_email_verified: true })
+          .eq('id', user.id)
+      }
+
+      return Response.json({ success: true })
+    }
+
+    // Fallback: Try verification_codes table (old approach)
     const emailLower = profileData.university_email.toLowerCase().trim()
 
-    // Retrieve the latest unused verification code for this user
     const { data: verificationData, error: verifyError } = await supabaseAdmin
       .from('verification_codes')
       .select('id, code, expires_at, attempts')
@@ -77,7 +127,7 @@ export async function POST(request) {
         .from('verification_codes')
         .update({ attempts: newAttempts })
         .eq('id', verificationData.id)
-        .catch(() => {}) // Silently fail attempt update
+        .catch(() => {})
 
       const remainingAttempts = 5 - newAttempts
       return Response.json(
@@ -87,15 +137,11 @@ export async function POST(request) {
     }
 
     // Mark verification code as used
-    const { error: markUsedError } = await supabaseAdmin
+    await supabaseAdmin
       .from('verification_codes')
       .update({ is_used: true })
       .eq('id', verificationData.id)
-
-    if (markUsedError) {
-      // Still proceed even if marking as used fails - the code validation passed
-      console.error('Failed to mark verification code as used:', markUsedError)
-    }
+      .catch(() => {})
 
     // Mark university email as verified on the user's profile
     const { error: updateError } = await supabaseAdmin
@@ -109,6 +155,7 @@ export async function POST(request) {
 
     return Response.json({ success: true })
   } catch (err) {
+    console.error('Verify confirm error:', err)
     return Response.json({ error: err.message || 'An error occurred' }, { status: 500 })
   }
 }

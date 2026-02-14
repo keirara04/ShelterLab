@@ -58,16 +58,6 @@ export async function POST(request) {
       )
     }
 
-    // Store the university email on the profile (unverified for now)
-    const { error: updateError } = await supabaseAdmin
-      .from('profiles')
-      .update({ university_email: emailLower, university_email_verified: false })
-      .eq('id', user.id)
-
-    if (updateError) {
-      return Response.json({ error: updateError.message }, { status: 400 })
-    }
-
     // Generate 8-digit OTP code
     const otp = String(Math.floor(10000000 + Math.random() * 90000000))
 
@@ -75,21 +65,47 @@ export async function POST(request) {
     const currentTime = Math.floor(Date.now() / 1000)
     const expiresAt = currentTime + (15 * 60)
 
-    // Store OTP in verification_codes table
-    const { error: codeError } = await supabaseAdmin
-      .from('verification_codes')
-      .insert({
-        user_id: user.id,
-        email: emailLower,
-        code: otp,
-        created_at: currentTime,
-        expires_at: expiresAt,
-        attempts: 0,
-        is_used: false
+    // Store the university email on the profile (unverified for now)
+    // Also store the OTP code and expiry directly in the profile for simpler verification
+    const { error: updateError } = await supabaseAdmin
+      .from('profiles')
+      .update({ 
+        university_email: emailLower, 
+        university_email_verified: false,
+        verification_code: otp,
+        verification_expires_at: expiresAt,
+        verification_attempts: 0
       })
+      .eq('id', user.id)
 
-    if (codeError) {
-      return Response.json({ error: 'Failed to generate verification code. Please try again.' }, { status: 500 })
+    if (updateError) {
+      // If columns don't exist, try without them
+      const { error: fallbackError } = await supabaseAdmin
+        .from('profiles')
+        .update({ university_email: emailLower, university_email_verified: false })
+        .eq('id', user.id)
+      
+      if (fallbackError) {
+        return Response.json({ error: fallbackError.message }, { status: 400 })
+      }
+    }
+
+    // Try to store OTP in verification_codes table (non-blocking if table doesn't exist)
+    try {
+      await supabaseAdmin
+        .from('verification_codes')
+        .insert({
+          user_id: user.id,
+          email: emailLower,
+          code: otp,
+          created_at: currentTime,
+          expires_at: expiresAt,
+          attempts: 0,
+          is_used: false
+        })
+    } catch (dbError) {
+      // Table might not exist yet - continue anyway
+      console.error('verification_codes insert error (table may not exist):', dbError?.message)
     }
 
     // Send OTP via Brevo email service
