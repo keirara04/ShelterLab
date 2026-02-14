@@ -41,21 +41,60 @@ export async function POST(request) {
       return Response.json({ error: 'University email already verified' }, { status: 400 })
     }
 
-    // Verify the OTP server-side using a temporary anon client.
-    // This does NOT affect the current user's browser session because it runs server-side.
-    const tempClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    )
+    const emailLower = profileData.university_email.toLowerCase().trim()
 
-    const { data: verifyData, error: verifyError } = await tempClient.auth.verifyOtp({
-      email: profileData.university_email,
-      token: otp,
-      type: 'email',
-    })
+    // Retrieve the latest unused verification code for this user
+    const { data: verificationData, error: verifyError } = await supabaseAdmin
+      .from('verification_codes')
+      .select('id, code, expires_at, attempts')
+      .eq('user_id', user.id)
+      .eq('email', emailLower)
+      .eq('is_used', false)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
 
-    if (verifyError || !verifyData?.user) {
-      return Response.json({ error: 'Invalid or expired code. Please request a new one.' }, { status: 400 })
+    if (verifyError || !verificationData) {
+      return Response.json({ error: 'No verification code found. Please request a new one.' }, { status: 400 })
+    }
+
+    // Check if code has expired
+    const currentTime = Math.floor(Date.now() / 1000)
+    if (currentTime > verificationData.expires_at) {
+      return Response.json({ error: 'Verification code has expired. Please request a new one.' }, { status: 400 })
+    }
+
+    // Check attempt limit (max 5 attempts)
+    if (verificationData.attempts >= 5) {
+      return Response.json({ error: 'Too many failed attempts. Please request a new verification code.' }, { status: 429 })
+    }
+
+    // Verify the code matches
+    if (verificationData.code !== otp) {
+      // Increment attempt counter
+      const newAttempts = verificationData.attempts + 1
+      await supabaseAdmin
+        .from('verification_codes')
+        .update({ attempts: newAttempts })
+        .eq('id', verificationData.id)
+        .catch(() => {}) // Silently fail attempt update
+
+      const remainingAttempts = 5 - newAttempts
+      return Response.json(
+        { error: `Invalid code. ${remainingAttempts} attempts remaining.` },
+        { status: 400 }
+      )
+    }
+
+    // Mark verification code as used
+    const { error: markUsedError } = await supabaseAdmin
+      .from('verification_codes')
+      .update({ is_used: true })
+      .eq('id', verificationData.id)
+
+    if (markUsedError) {
+      // Still proceed even if marking as used fails - the code validation passed
+      console.error('Failed to mark verification code as used:', markUsedError)
     }
 
     // Mark university email as verified on the user's profile
@@ -66,11 +105,6 @@ export async function POST(request) {
 
     if (updateError) {
       return Response.json({ error: updateError.message }, { status: 400 })
-    }
-
-    // Clean up the temporary Supabase auth user created by the OTP flow
-    if (verifyData.user?.id) {
-      await supabaseAdmin.auth.admin.deleteUser(verifyData.user.id).catch(() => {})
     }
 
     return Response.json({ success: true })

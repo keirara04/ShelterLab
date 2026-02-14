@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { sendOtpEmail } from '@/services/brevoEmail'
 import { ALLOWED_UNIVERSITY_EMAIL_DOMAINS } from '@/services/utils/constants'
 
 const supabaseAdmin = createClient(
@@ -67,13 +68,38 @@ export async function POST(request) {
       return Response.json({ error: updateError.message }, { status: 400 })
     }
 
-    // Send OTP via Supabase's built-in email delivery
-    const { error: otpError } = await supabaseAdmin.auth.signInWithOtp({
-      email: emailLower,
-      options: { shouldCreateUser: true },
-    })
+    // Generate 8-digit OTP code
+    const otp = String(Math.floor(10000000 + Math.random() * 90000000))
 
-    if (otpError) {
+    // Calculate expiry time (15 minutes from now) using Unix timestamp in seconds
+    const currentTime = Math.floor(Date.now() / 1000)
+    const expiresAt = currentTime + (15 * 60)
+
+    // Store OTP in verification_codes table
+    const { error: codeError } = await supabaseAdmin
+      .from('verification_codes')
+      .insert({
+        user_id: user.id,
+        email: emailLower,
+        code: otp,
+        created_at: currentTime,
+        expires_at: expiresAt,
+        attempts: 0,
+        is_used: false
+      })
+
+    if (codeError) {
+      return Response.json({ error: 'Failed to generate verification code. Please try again.' }, { status: 500 })
+    }
+
+    // Send OTP via Brevo email service
+    const emailResult = await sendOtpEmail(emailLower, otp)
+
+    if (!emailResult.success) {
+      // Log the error but don't expose details to client
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Brevo email send error:', emailResult.error)
+      }
       return Response.json({ error: 'Failed to send verification email. Please try again.' }, { status: 500 })
     }
 
