@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import { UNIVERSITIES } from '@/lib/constants'
 import Link from 'next/link'
 
@@ -21,6 +22,11 @@ export default function ProfilePage() {
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [avatarFile, setAvatarFile] = useState(null)
   const fileInputRef = useRef(null)
+  const [notificationTitle, setNotificationTitle] = useState('')
+  const [notificationMessage, setNotificationMessage] = useState('')
+  const [notificationLoading, setNotificationLoading] = useState(false)
+  const [notificationError, setNotificationError] = useState(null)
+  const [notificationSuccess, setNotificationSuccess] = useState(null)
   const [formData, setFormData] = useState({
     full_name: '',
     avatar_url: '',
@@ -60,6 +66,70 @@ export default function ProfilePage() {
       .eq('reviewee_id', user.id)
       .order('created_at', { ascending: false })
     setReviews(data || [])
+  }
+
+  const handlePushNotification = async (e) => {
+    e.preventDefault()
+
+    if (!notificationTitle.trim() || !notificationMessage.trim()) {
+      setNotificationError('Title and message are required')
+      return
+    }
+
+    setNotificationLoading(true)
+    setNotificationError(null)
+    setNotificationSuccess(null)
+
+    try {
+      // Create Supabase client to get session
+      const supabaseClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      )
+
+      // Get current session
+      let { data: { session }, error: sessionError } = await supabaseClient.auth.getSession()
+
+      if (!session) {
+        try {
+          const storedSession = localStorage.getItem('sb-xehylbvuqnwrgocgqelm-auth-token')
+          if (storedSession) {
+            const parsed = JSON.parse(storedSession)
+            session = parsed.session || parsed
+          }
+        } catch (e) {
+          console.error('Error parsing stored session:', e)
+        }
+      }
+
+      if (!session || !session.access_token) {
+        throw new Error('Session not found. Please log out and log back in.')
+      }
+
+      const response = await fetch('/api/notifications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ title: notificationTitle, message: notificationMessage }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to push notification')
+      }
+
+      setNotificationSuccess('Notification pushed to all users!')
+      setNotificationTitle('')
+      setNotificationMessage('')
+    } catch (err) {
+      console.error('Error:', err)
+      setNotificationError(err.message || 'Failed to push notification')
+    } finally {
+      setNotificationLoading(false)
+    }
   }
 
   const handleAvatarSelect = (e) => {
@@ -410,6 +480,19 @@ export default function ProfilePage() {
           >
             Reviews ({reviews.length})
           </button>
+          {user?.email === 'keiratestaccount@yahoo.com' && (
+            <button
+              onClick={() => setActiveTab('admin')}
+              className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
+                activeTab === 'admin'
+                  ? 'text-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+              style={activeTab === 'admin' ? { background: 'rgba(59, 130, 246, 0.3)' } : {}}
+            >
+              🔐 Admin
+            </button>
+          )}
         </div>
 
         {/* Listings Tab */}
@@ -537,6 +620,73 @@ export default function ProfilePage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Admin Tab */}
+        {activeTab === 'admin' && user?.email === 'keiratestaccount@yahoo.com' && (
+          <div>
+            <h2 className="text-lg font-black text-white mb-4">🔐 Admin Controls</h2>
+            
+            {/* Push Notifications Card */}
+            <div className="glass rounded-2xl p-6 mb-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-xl font-black text-white mb-1">🔔 Push Notifications</h3>
+                  <p className="text-sm text-gray-400">Send notifications to all users</p>
+                </div>
+              </div>
+
+              {notificationError && (
+                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 text-red-400 text-sm mb-4">
+                  {notificationError}
+                </div>
+              )}
+
+              {notificationSuccess && (
+                <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 text-green-400 text-sm mb-4">
+                  ✓ {notificationSuccess}
+                </div>
+              )}
+
+              <form onSubmit={handlePushNotification} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-300 mb-2">Title</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., New Features Available"
+                    value={notificationTitle}
+                    onChange={(e) => setNotificationTitle(e.target.value)}
+                    disabled={notificationLoading}
+                    className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-500 outline-none focus:border-blue-500 focus:bg-white/15 transition disabled:opacity-50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-300 mb-2">Message</label>
+                  <textarea
+                    placeholder="e.g., Check out our latest features and bug fixes..."
+                    rows={4}
+                    value={notificationMessage}
+                    onChange={(e) => setNotificationMessage(e.target.value)}
+                    disabled={notificationLoading}
+                    className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-500 outline-none focus:border-blue-500 focus:bg-white/15 transition resize-none disabled:opacity-50"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={notificationLoading}
+                  className="w-full px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold transition-all duration-200"
+                >
+                  {notificationLoading ? 'Pushing...' : 'Push Notification to All Users'}
+                </button>
+              </form>
+
+              <p className="text-xs text-gray-500 mt-4 pt-4 border-t border-white/10">
+                💡 Only one notification can be active at a time. Pushing a new notification will replace the previous one.
+              </p>
+            </div>
           </div>
         )}
 

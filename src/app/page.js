@@ -22,6 +22,9 @@ export default function HomePage() {
   const categoryDropdownRef = useRef(null)
   const [showHeader, setShowHeader] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
+  const [notification, setNotification] = useState(null)
+  const [showNotificationPanel, setShowNotificationPanel] = useState(false)
+  const [hasUnreadNotification, setHasUnreadNotification] = useState(false)
 
   // Hide/show header on scroll
   useEffect(() => {
@@ -52,6 +55,42 @@ export default function HomePage() {
       setSelectedUniversity(profile.university)
     }
   }, [profile?.university])
+
+  // Close notification panel on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      const notificationButton = document.querySelector('[data-notification-bell]')
+      const notificationPanel = document.querySelector('[data-notification-panel]')
+      if (
+        showNotificationPanel &&
+        !notificationButton?.contains(e.target) &&
+        !notificationPanel?.contains(e.target)
+      ) {
+        setShowNotificationPanel(false)
+      }
+    }
+    if (showNotificationPanel) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showNotificationPanel])
+
+  // Fetch notification on mount
+  useEffect(() => {
+    const fetchNotification = async () => {
+      try {
+        const response = await fetch('/api/notifications')
+        const data = await response.json()
+        if (data.success && data.data) {
+          setNotification(data.data)
+          setHasUnreadNotification(true)
+        }
+      } catch (err) {
+        console.error('Error fetching notification:', err)
+      }
+    }
+    fetchNotification()
+  }, [])
 
   // Scroll to top when page changes
   useEffect(() => {
@@ -96,12 +135,12 @@ export default function HomePage() {
   // Filter listings on frontend for search (category, seller, title)
   const filteredListings = listings.filter((listing) => {
     if (!searchQuery.trim()) return true
-    
+
     const query = searchQuery.toLowerCase()
     const title = listing.title?.toLowerCase() || ''
     const seller = listing.profiles?.full_name?.toLowerCase() || ''
     const category = listing.categories?.[0]?.toLowerCase() || ''
-    
+
     return title.includes(query) || seller.includes(query) || category.includes(query)
   })
 
@@ -118,7 +157,7 @@ export default function HomePage() {
   }
 
   return (
-    <div 
+    <div
       className="min-h-screen"
       style={{
         backgroundColor: '#000000',
@@ -197,6 +236,64 @@ export default function HomePage() {
                   )
                 })()}
               </button>
+
+              {/* Notification Bell - Mobile only */}
+              <div className="lg:hidden relative">
+                <button
+                  data-notification-bell
+                  onClick={() => {
+                    setShowNotificationPanel(!showNotificationPanel)
+                    if (!showNotificationPanel) {
+                      setHasUnreadNotification(false)
+                    }
+                  }}
+                  className="relative flex items-center justify-center w-9 h-9 rounded-full transition-all duration-200"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255,255,255,0.18)',
+                    boxShadow: showNotificationPanel ? '0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)' : 'none',
+                  }}
+                >
+                  <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  {hasUnreadNotification && (
+                    <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+                  )}
+                </button>
+
+                {/* Notification Panel - Mobile */}
+                <div className="absolute top-full right-0 mt-2 w-72 z-50" style={{ contain: 'layout style paint' }}>
+                  {showNotificationPanel && notification && (
+                    <div
+                      data-notification-panel
+                      className="rounded-2xl overflow-hidden p-4 opacity-100 pointer-events-auto"
+                      style={{
+                        background: 'rgba(0, 0, 0, 0.95)',
+                        border: '1px solid rgba(255,255,255,0.15)',
+                        boxShadow: '0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)',
+                      }}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V2c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 3.36 6 5.92 6 9v5l-2 2v1h16v-1l-2-2z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-bold text-white mb-1 truncate">
+                            {notification.title || 'Updates Available'}
+                          </h3>
+                          <p className="text-xs text-gray-300 leading-relaxed break-words">
+                            {notification.message}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Right side actions - Desktop only */}
@@ -269,6 +366,64 @@ export default function HomePage() {
               </div>
 
               <div className="w-px h-6 bg-white/15" />
+
+              {/* Notification Bell - Desktop only */}
+              <div className="relative">
+              <button
+                data-notification-bell
+                onClick={() => {
+                  setShowNotificationPanel(!showNotificationPanel)
+                  if (!showNotificationPanel) {
+                    setHasUnreadNotification(false)
+                  }
+                }}
+                className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  boxShadow: showNotificationPanel ? '0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)' : 'none',
+                }}
+              >
+                <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                {hasUnreadNotification && (
+                  <div className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                )}
+              </button>
+
+              {/* Notification Panel */}
+              <div className="absolute top-full right-0 mt-2 w-72 sm:w-80 z-50" style={{ contain: 'layout style paint' }}>
+                {showNotificationPanel && notification && (
+                  <div
+                    data-notification-panel
+                    className="rounded-2xl overflow-hidden p-4 opacity-100 pointer-events-auto"
+                    style={{
+                      background: 'rgba(0, 0, 0, 0.95)',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      boxShadow: '0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)',
+                    }}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+                        <svg className="w-6 h-6 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V2c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 3.36 6 5.92 6 9v5l-2 2v1h16v-1l-2-2z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-bold text-white mb-1 truncate">
+                          {notification.title || 'Updates Available'}
+                        </h3>
+                        <p className="text-xs text-gray-300 leading-relaxed break-words">
+                          {notification.message}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              </div>
 
               {isAuthenticated ? (
                 <Link
@@ -343,11 +498,10 @@ export default function HomePage() {
           <div className="flex gap-2 justify-center flex-wrap mb-6 sm:mb-8 px-4">
             <button
               onClick={() => setSelectedUniversity('all')}
-              className={`px-4 py-2 rounded-full font-bold text-sm transition ${
-                selectedUniversity === 'all'
+              className={`px-4 py-2 rounded-full font-bold text-sm transition ${selectedUniversity === 'all'
                   ? 'bg-blue-600 text-white'
                   : 'bg-white/5 hover:bg-white/10 text-gray-300'
-              }`}
+                }`}
             >
               All Universities
             </button>
@@ -355,11 +509,10 @@ export default function HomePage() {
               <button
                 key={u.id}
                 onClick={() => setSelectedUniversity(u.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition ${
-                  selectedUniversity === u.id
+                className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition ${selectedUniversity === u.id
                     ? 'bg-teal-600 text-white'
                     : 'bg-white/5 hover:bg-white/10 text-gray-300'
-                }`}
+                  }`}
               >
                 <img src={UNIVERSITY_LOGOS[u.id]} alt="" width={20} height={20} className="w-5 h-5 object-contain rounded-full" />
                 {u.name}
@@ -502,7 +655,7 @@ export default function HomePage() {
 
             {/* Pagination Controls - iPhone Sheet Style */}
             {totalPages > 1 && (
-              <div 
+              <div
                 className="flex items-center justify-center gap-2 p-3 rounded-full backdrop-blur-xl"
                 style={{
                   background: 'rgba(255, 255, 255, 0.08)',
@@ -519,23 +672,22 @@ export default function HomePage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
-                
+
                 <div className="flex items-center gap-0.5 px-2">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`w-6 h-6 rounded-full text-xs font-semibold transition duration-200 ${
-                        currentPage === page
+                      className={`w-6 h-6 rounded-full text-xs font-semibold transition duration-200 ${currentPage === page
                           ? 'bg-blue-500 text-white'
                           : 'text-gray-300 hover:text-white hover:bg-white/10'
-                      }`}
+                        }`}
                     >
                       {page}
                     </button>
                   ))}
                 </div>
-                
+
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages}
@@ -648,16 +800,16 @@ export default function HomePage() {
                       style={
                         selectedCategory === cat.id
                           ? {
-                              background: 'rgba(59, 130, 246, 0.65)',
-                              border: '1px solid rgba(59,130,246,0.5)',
-                              color: 'white',
-                              boxShadow: '0 2px 12px rgba(59,130,246,0.3)',
-                            }
+                            background: 'rgba(59, 130, 246, 0.65)',
+                            border: '1px solid rgba(59,130,246,0.5)',
+                            color: 'white',
+                            boxShadow: '0 2px 12px rgba(59,130,246,0.3)',
+                          }
                           : {
-                              background: 'rgba(255,255,255,0.06)',
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              color: 'rgba(255,255,255,0.75)',
-                            }
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            color: 'rgba(255,255,255,0.75)',
+                          }
                       }
                     >
                       {cat.icon && <span className="text-base">{cat.icon}</span>}

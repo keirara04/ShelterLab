@@ -13,6 +13,7 @@ function LoginContent() {
   const { login, isAuthenticated, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [isAdminMode, setIsAdminMode] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -42,6 +43,16 @@ function LoginContent() {
         return
       }
 
+      // If admin mode, verify it's the admin email
+      if (isAdminMode) {
+        const ADMIN_EMAIL = 'keiratestaccount@yahoo.com'
+        if (formData.email !== ADMIN_EMAIL) {
+          setError('Invalid admin credentials. Admin email is required.')
+          setLoading(false)
+          return
+        }
+      }
+
       const result = await login(formData.email, formData.password)
 
       if (result.success) {
@@ -54,6 +65,12 @@ function LoginContent() {
       setError(err.message || 'An error occurred during login')
       setLoading(false)
     }
+  }
+
+  const handleAdminModeToggle = () => {
+    setIsAdminMode(!isAdminMode)
+    setFormData({ email: '', password: '' })
+    setError(null)
   }
 
   if (authLoading) {
@@ -114,8 +131,12 @@ function LoginContent() {
 
           {/* Form Container */}
           <div className="bg-white/10 border border-white/20 rounded-3xl p-8 backdrop-blur-xl">
-            <h2 className="text-3xl font-black mb-2 text-white text-center">Welcome Back</h2>
-            <p className="text-gray-400 text-center mb-8">Sign in to your Shelter account</p>
+            <h2 className="text-3xl font-black mb-2 text-white text-center">
+              {isAdminMode ? '🔐 Admin Login' : 'Welcome Back'}
+            </h2>
+            <p className="text-gray-400 text-center mb-8">
+              {isAdminMode ? 'Sign in to admin panel' : 'Sign in to your Shelter account'}
+            </p>
 
             {error && (
               <div className="bg-red-500/20 border border-red-500 text-red-400 p-4 rounded-xl mb-6 text-sm">
@@ -128,7 +149,7 @@ function LoginContent() {
                 <label className="block text-sm font-bold text-gray-300 mb-2">Email Address</label>
                 <input
                   type="email"
-                  placeholder="your@email.com"
+                  placeholder={isAdminMode ? "keiratestaccount@yahoo.com" : "your@email.com"}
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   disabled={loading}
@@ -153,9 +174,13 @@ function LoginContent() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed py-3 rounded-xl font-black text-white transition mt-6"
+                className={`w-full py-3 rounded-xl font-black text-white transition mt-6 ${
+                  isAdminMode
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-600'
+                    : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-600'
+                } disabled:cursor-not-allowed`}
               >
-                {loading ? 'Signing in...' : 'Sign In'}
+                {loading ? 'Signing in...' : isAdminMode ? '🔐 Admin Login' : 'Sign In'}
               </button>
             </form>
 
@@ -165,12 +190,22 @@ function LoginContent() {
               <div className="h-px bg-white/10 flex-1"></div>
             </div>
 
-            <p className="text-center text-gray-400">
-              Don't have an account?{' '}
-              <Link href="/signup" className="text-blue-400 hover:text-blue-300 font-bold transition">
-                Sign up
-              </Link>
-            </p>
+            <button
+              type="button"
+              onClick={handleAdminModeToggle}
+              className="w-full py-2.5 rounded-xl font-bold text-sm text-gray-300 hover:text-white border border-white/20 hover:border-white/40 transition"
+            >
+              {isAdminMode ? '← Back to User Login' : '🔐 Login as Admin'}
+            </button>
+
+            {!isAdminMode && (
+              <p className="text-center text-gray-400 mt-6">
+                Don't have an account?{' '}
+                <Link href="/signup" className="text-blue-400 hover:text-blue-300 font-bold transition">
+                  Sign up
+                </Link>
+              </p>
+            )}
           </div>
 
           <p className="text-center text-gray-500 text-xs mt-8">
