@@ -17,9 +17,17 @@ export default function BottomNav() {
       name: 'Home',
       href: '/',
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g clipPath="url(#clip0_4039_12377)">
+            <path d="M18.8751 11.9916L10.0001 18.4416L1.12512 11.9916C1.00614 11.9041 0.917886 11.7812 0.872982 11.6405C0.828079 11.4998 0.828827 11.3485 0.87512 11.2083L1.89179 8.0583L3.92512 1.79997C3.94484 1.74897 3.97624 1.70331 4.01679 1.66663C4.08282 1.60632 4.16902 1.57288 4.25845 1.57288C4.34789 1.57288 4.43409 1.60632 4.50012 1.66663C4.54294 1.70802 4.57449 1.75965 4.59179 1.81663L6.62512 8.0583H13.3751L15.4085 1.79997C15.4282 1.74897 15.4596 1.70331 15.5001 1.66663C15.5662 1.60632 15.6524 1.57288 15.7418 1.57288C15.8312 1.57288 15.9174 1.60632 15.9835 1.66663C16.0263 1.70802 16.0578 1.75965 16.0751 1.81663L18.1085 8.07497L19.1668 11.2083C19.2089 11.3529 19.2032 11.5072 19.1507 11.6483C19.0982 11.7894 19.0015 11.9098 18.8751 11.9916Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </g>
+          <defs>
+            <clipPath id="clip0_4039_12377">
+              <rect width="20" height="20" fill="white" />
+            </clipPath>
+          </defs>
         </svg>
+
       ),
       requiresAuth: false,
     },
@@ -27,8 +35,8 @@ export default function BottomNav() {
       name: 'Sell',
       href: '/sell',
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        <svg width="24" height="24" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M704 288h131.072a32 32 0 0 1 31.808 28.8L886.4 512h-64.384l-16-160H704v96a32 32 0 1 1-64 0v-96H384v96a32 32 0 0 1-64 0v-96H217.92l-51.2 512H512v64H131.328a32 32 0 0 1-31.808-35.2l57.6-576a32 32 0 0 1 31.808-28.8H320v-22.336C320 154.688 405.504 64 512 64s192 90.688 192 201.664v22.4zm-64 0v-22.336C640 189.248 582.272 128 512 128c-70.272 0-128 61.248-128 137.664v22.4h256zm201.408 483.84L768 698.496V928a32 32 0 1 1-64 0V698.496l-73.344 73.344a32 32 0 1 1-45.248-45.248l128-128a32 32 0 0 1 45.248 0l128 128a32 32 0 1 1-45.248 45.248z" />
         </svg>
       ),
       requiresAuth: true,
@@ -37,9 +45,14 @@ export default function BottomNav() {
       name: 'My Items',
       href: '/my-listings',
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 3H3V10H10V3Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M21 3H14V10H21V3Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M21 14H14V21H21V14Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M10 14H3V21H10V14Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
+
+
       ),
       requiresAuth: true,
     },
@@ -65,7 +78,7 @@ export default function BottomNav() {
       <nav
         className="fixed bottom-0 left-0 right-0 z-50 lg:hidden border-t backdrop-blur-2xl"
         style={{
-          background: 'rgba(17, 24, 39, 0.95)',
+          background: 'rgba(18, 24, 39, 0.95)',
           borderColor: 'rgba(255, 255, 255, 0.1)',
         }}
       >
@@ -98,11 +111,10 @@ export default function BottomNav() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 touch-manipulation min-h-[60px] min-w-[64px] ${
-                  isActive
-                    ? 'text-blue-400'
-                    : 'text-gray-400 hover:text-white active:text-blue-300'
-                }`}
+                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 touch-manipulation min-h-[60px] min-w-[64px] ${isActive
+                  ? 'text-blue-400'
+                  : 'text-gray-400 hover:text-white active:text-blue-300'
+                  }`}
                 style={{
                   background: isActive ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
                 }}

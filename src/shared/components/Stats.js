@@ -1,3 +1,5 @@
+//Stats component to display user stats like listings count, trust score, reviews count, and rating
+
 export function Stats({ listingsCount = 0, trustScore = 0, reviewsCount = 0, rating = null }) {
   const stats = [
     {
