@@ -170,7 +170,7 @@ export default function HomePage() {
           <div className="flex sm:hidden gap-2 mb-2 pb-2 border-b border-white/10">
             <span className="text-sm flex-shrink-0 mt-0.5">⚠️</span>
             <div className="flex-1 min-w-0 flex flex-col gap-1">
-              <p className="text-xs font-bold text-yellow-200">Testing Phase</p>
+              <p className="text-xs font-bold text-yellow-200">Testing Phase (Beta on 17th)</p>
               <p className="text-xs text-yellow-200/70">Lag & bugs possible. <a href="mailto:admin@shelterlab.shop?subject=ShelterLab%20Bug%20Report" className="underline hover:text-yellow-100">Report</a></p>
               <p className="text-xs text-gray-400">Best experience on desktop</p>
             </div>
@@ -200,7 +200,7 @@ export default function HomePage() {
                   <div className="flex items-center gap-3 text-xs">
                     <span>⚠️</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-yellow-200 font-semibold">Testing Phase:</span>
+                      <span className="text-yellow-200 font-semibold">Beta Phase:</span>
                       <span className="text-yellow-200/80">Site in development. May experience lag, bugs, or data loss.</span>
                       <a
                         href="mailto:admin@shelterlab.shop?subject=ShelterLab%20Bug%20Report"
@@ -369,8 +369,13 @@ export default function HomePage() {
                   color: '#fbbf24',
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 2h6" /><path d="M12 2v3" /><path d="M6 7a6 6 0 0 0 6 10 6 6 0 0 0 6-10H6z" /><path d="M9 17v2a3 3 0 0 0 6 0v-2" />
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 7 Q7 5.5 8 4" />
+                  <path d="M12 7 Q11 5.5 12 4" />
+                  <path d="M2 7 L22 7 L22 11 Q19.5 13 17 11 Q14.5 13 12 11 Q9.5 13 7 11 Q4.5 13 2 11 Z" />
+                  <rect x="3" y="11" width="18" height="8" rx="1" />
+                  <circle cx="17" cy="21" r="1.5" />
+                  <path d="M4 14 L1 9" />
                 </svg>
                 Pasar Malam
               </Link>

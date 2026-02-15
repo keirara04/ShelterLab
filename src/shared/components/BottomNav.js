@@ -57,8 +57,18 @@ export default function BottomNav() {
       name: 'PasarMalam',
       href: '/pasarmalam',
       icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 11l19-9-9 19-2-8-8-2z" />
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+          {/* Steam */}
+          <path d="M8 7 Q7 5.5 8 4" />
+          <path d="M12 7 Q11 5.5 12 4" />
+          {/* Awning with scalloped bottom */}
+          <path d="M2 7 L22 7 L22 11 Q19.5 13 17 11 Q14.5 13 12 11 Q9.5 13 7 11 Q4.5 13 2 11 Z" />
+          {/* Cart body */}
+          <rect x="3" y="11" width="18" height="8" rx="1" />
+          {/* Wheel */}
+          <circle cx="17" cy="21" r="1.5" />
+          {/* Handle */}
+          <path d="M4 14 L1 9" />
         </svg>
       ),
       requiresAuth: false,
