@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/shared/context/AuthContext'
 import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
+import { compressImage } from '@/services/utils/helpers'
 import { SchemaScript } from '@/shared/components/SchemaScript'
 import { generateProfileSchema } from '@/schema'
 
@@ -65,7 +66,7 @@ export default function BuyerProfilePage() {
     }
   }
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -75,10 +76,11 @@ export default function BuyerProfilePage() {
     }
 
     setReviewError(null)
-    setProofImage(file)
+    const compressed = await compressImage(file)
+    setProofImage(compressed)
     const reader = new FileReader()
     reader.onloadend = () => setProofImagePreview(reader.result)
-    reader.readAsDataURL(file)
+    reader.readAsDataURL(compressed)
   }
 
   const handleSubmitReview = async (e) => {

@@ -155,6 +155,50 @@ export const generateId = () => {
   return Math.random().toString(36).substring(2, 11)
 }
 
+/**
+ * Compress an image file for web upload
+ * Resizes to maxWidth and converts to JPEG at given quality
+ */
+export const compressImage = (file, maxWidth = 1920, quality = 0.8) => {
+  return new Promise((resolve) => {
+    const img = new Image()
+    const objectUrl = URL.createObjectURL(file)
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl)
+
+      const canvas = document.createElement('canvas')
+      let { width, height } = img
+
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width)
+        width = maxWidth
+      }
+
+      canvas.width = width
+      canvas.height = height
+
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, width, height)
+
+      canvas.toBlob(
+        (blob) => {
+          const compressedFile = new File(
+            [blob],
+            file.name.replace(/\.[^/.]+$/, '.jpg'),
+            { type: 'image/jpeg', lastModified: Date.now() }
+          )
+          resolve(compressedFile)
+        },
+        'image/jpeg',
+        quality
+      )
+    }
+
+    img.src = objectUrl
+  })
+}
+
 export default {
   calculateExpiryDate,
   isListingExpired,
@@ -172,4 +216,5 @@ export default {
   buildContactUrl,
   isAdmin,
   generateId,
+  compressImage,
 }
