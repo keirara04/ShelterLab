@@ -575,23 +575,33 @@ export default function SellPage() {
                                     <summary className="text-xs text-teal-400 hover:text-teal-300">
                                         How to get your Kakao Open Chat link?
                                     </summary>
-                                    <div className="mt-3 glass rounded-xl p-4 text-xs text-gray-300 space-y-3">
+                                    <div className="mt-3 glass rounded-xl p-4 text-xs text-gray-300 space-y-4">
+                                        <p className="text-gray-400 leading-relaxed">
+                                            An <span className="text-white font-bold">Open Chat</span> lets buyers message you anonymously — no need to share your personal Kakao ID. Create one just for this listing.
+                                        </p>
                                         <div>
-                                            <p className="font-bold text-teal-400 mb-1">Step 1: Open Kakao Talk</p>
-                                            <p className="text-gray-400">Open the Kakao Talk app (or web at kakao.com)</p>
+                                            <p className="font-bold text-teal-400 mb-1">Step 1 — Open Kakao Talk</p>
+                                            <p className="text-gray-400 leading-relaxed">Open the <span className="text-white">Kakao Talk app</span> on your phone. Make sure you&apos;re logged in.</p>
                                         </div>
                                         <div>
-                                            <p className="font-bold text-teal-400 mb-1">Step 2: Create Open Chat</p>
-                                            <p className="text-gray-400">Click the <span className="bg-white/10 px-1 rounded">+</span> button {'\u2192'} <span className="bg-white/10 px-1 rounded">Create Open Chat</span></p>
+                                            <p className="font-bold text-teal-400 mb-1">Step 2 — Go to Chats tab</p>
+                                            <p className="text-gray-400 leading-relaxed">Tap the <span className="bg-white/10 px-1 rounded text-white">Chats</span> tab at the bottom, then tap the <span className="bg-white/10 px-1 rounded text-white">✏️ compose</span> icon (top right).</p>
                                         </div>
                                         <div>
-                                            <p className="font-bold text-teal-400 mb-1">Step 3: Get the Link</p>
-                                            <p className="text-gray-400">In the chat, click <span className="bg-white/10 px-1 rounded">{'\u22EF'} Menu</span> {'\u2192'} <span className="bg-white/10 px-1 rounded">Invite</span></p>
-                                            <p className="text-gray-400 mt-1">Copy the link starting with <span className="bg-amber-500/20 text-amber-300 px-1 rounded">https://open.kakao.com/o/</span></p>
+                                            <p className="font-bold text-teal-400 mb-1">Step 3 — Create an Open Chat</p>
+                                            <p className="text-gray-400 leading-relaxed">Select <span className="bg-white/10 px-1 rounded text-white">Open Chat</span> {'\u2192'} <span className="bg-white/10 px-1 rounded text-white">1:1 Open Chat</span>. Give it any name (e.g. <span className="text-gray-300 italic">&quot;Contact for sale&quot;</span>). Tap <span className="bg-white/10 px-1 rounded text-white">Create</span>.</p>
                                         </div>
                                         <div>
-                                            <p className="font-bold text-teal-400 mb-1">Step 4: Paste Here</p>
-                                            <p className="text-gray-400">Paste the full link in the field above</p>
+                                            <p className="font-bold text-teal-400 mb-1">Step 4 — Copy the link</p>
+                                            <p className="text-gray-400 leading-relaxed">Inside the chat, tap the <span className="bg-white/10 px-1 rounded text-white">≡ hamburger menu</span> (top right) {'\u2192'} <span className="bg-white/10 px-1 rounded text-white">Share</span> {'\u2192'} <span className="bg-white/10 px-1 rounded text-white">Copy Link</span>.</p>
+                                            <p className="text-gray-400 mt-1.5 leading-relaxed">The link should look like: <span className="bg-amber-500/20 text-amber-300 px-1 rounded break-all">https://open.kakao.com/o/xxxxxxx</span></p>
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-teal-400 mb-1">Step 5 — Paste it above</p>
+                                            <p className="text-gray-400 leading-relaxed">Paste the full link into the field above. Buyers will tap it to reach you directly — no number sharing needed.</p>
+                                        </div>
+                                        <div className="rounded-lg p-3" style={{ background: 'rgba(251,191,36,0.07)', border: '1px solid rgba(251,191,36,0.15)' }}>
+                                            <p className="text-amber-400/80 leading-relaxed"><span className="font-bold text-amber-400">Tip:</span> You can reuse the same Open Chat link across multiple listings. Buyers won&apos;t see your real profile unless you accept them.</p>
                                         </div>
                                     </div>
                                 </details>
