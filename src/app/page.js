@@ -196,7 +196,7 @@ export default function HomePage() {
                 </button>
 
                 {/* Warning Text - Desktop only */}
-                <div className="hidden sm:flex flex-col gap-1">
+                <div className="hidden sm:flex flex-col gap-2">
                   <div className="flex items-center gap-3 text-xs">
                     <span>⚠️</span>
                     <div className="flex items-center gap-2">
@@ -210,7 +210,6 @@ export default function HomePage() {
                       </a>
                     </div>
                   </div>
-
                 </div>
               </div>
 
@@ -385,7 +384,7 @@ export default function HomePage() {
                     <div className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
                   )}
                 </button>
-
+                  
                 {/* Notification Panel */}
                 <div className="absolute top-full right-0 mt-2 w-72 sm:w-80 z-50" style={{ contain: 'layout style paint' }}>
                   {showNotificationPanel && notification && (
@@ -814,6 +813,7 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
     </div>
   )
 }
