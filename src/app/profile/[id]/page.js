@@ -36,12 +36,38 @@ export default function SellerProfilePage() {
   const [showReportModal, setShowReportModal] = useState(false)
   const [showBadgeTooltip, setShowBadgeTooltip] = useState(false)
   const fileInputRef = useRef(null)
+  const submittingRef = useRef(false)
+  const abortControllerRef = useRef(null)
+  const submittingTimeoutRef = useRef(null)
 
   useEffect(() => {
     if (sellerId) {
       fetchSellerData()
     }
   }, [sellerId])
+
+  useEffect(() => {
+    const handleInterruption = () => {
+      if (submittingRef.current) {
+        clearTimeout(submittingTimeoutRef.current)
+        abortControllerRef.current?.abort()
+        submittingRef.current = false
+        setSubmitting(false)
+        setReviewError('Submission was interrupted. Please try again.')
+      }
+    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') handleInterruption()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleInterruption)
+    window.addEventListener('pageshow', handleInterruption)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleInterruption)
+      window.removeEventListener('pageshow', handleInterruption)
+    }
+  }, [])
 
   const fetchSellerData = async () => {
     try {
@@ -106,9 +132,22 @@ export default function SellerProfilePage() {
       return
     }
 
+    abortControllerRef.current = new AbortController()
+    const { signal } = abortControllerRef.current
+
     try {
       setSubmitting(true)
+      submittingRef.current = true
       setReviewError(null)
+
+      submittingTimeoutRef.current = setTimeout(() => {
+        if (submittingRef.current) {
+          abortControllerRef.current?.abort()
+          submittingRef.current = false
+          setSubmitting(false)
+          setReviewError('Request timed out. Please try again.')
+        }
+      }, 30000)
 
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Not authenticated')
@@ -121,6 +160,7 @@ export default function SellerProfilePage() {
       const uploadRes = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
+        signal,
       })
 
       const uploadData = await uploadRes.json()
@@ -144,6 +184,7 @@ export default function SellerProfilePage() {
           is_seller_review: true,
           proof_image_url: uploadData.urls[0],
         }),
+        signal,
       })
 
       const data = await response.json()
@@ -161,9 +202,12 @@ export default function SellerProfilePage() {
       setShowReviewForm(false)
       await fetchSellerData()
     } catch (err) {
+      if (err.name === 'AbortError') return
       console.error('Error submitting review:', err)
       setReviewError(err.message)
     } finally {
+      clearTimeout(submittingTimeoutRef.current)
+      submittingRef.current = false
       setSubmitting(false)
     }
   }

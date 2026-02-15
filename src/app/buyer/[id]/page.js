@@ -32,12 +32,38 @@ export default function BuyerProfilePage() {
   const [submitting, setSubmitting] = useState(false)
   const [reviewError, setReviewError] = useState(null)
   const fileInputRef = useRef(null)
+  const submittingRef = useRef(false)
+  const abortControllerRef = useRef(null)
+  const submittingTimeoutRef = useRef(null)
 
   useEffect(() => {
     if (buyerId) {
       fetchBuyerData()
     }
   }, [buyerId])
+
+  useEffect(() => {
+    const handleInterruption = () => {
+      if (submittingRef.current) {
+        clearTimeout(submittingTimeoutRef.current)
+        abortControllerRef.current?.abort()
+        submittingRef.current = false
+        setSubmitting(false)
+        setReviewError('Submission was interrupted. Please try again.')
+      }
+    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') handleInterruption()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleInterruption)
+    window.addEventListener('pageshow', handleInterruption)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleInterruption)
+      window.removeEventListener('pageshow', handleInterruption)
+    }
+  }, [])
 
   const fetchBuyerData = async () => {
     try {
@@ -101,9 +127,22 @@ export default function BuyerProfilePage() {
       return
     }
 
+    abortControllerRef.current = new AbortController()
+    const { signal } = abortControllerRef.current
+
     try {
       setSubmitting(true)
+      submittingRef.current = true
       setReviewError(null)
+
+      submittingTimeoutRef.current = setTimeout(() => {
+        if (submittingRef.current) {
+          abortControllerRef.current?.abort()
+          submittingRef.current = false
+          setSubmitting(false)
+          setReviewError('Request timed out. Please try again.')
+        }
+      }, 30000)
 
       // Upload proof image first
       const formData = new FormData()
@@ -113,6 +152,7 @@ export default function BuyerProfilePage() {
       const uploadRes = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
+        signal,
       })
 
       const uploadData = await uploadRes.json()
@@ -133,6 +173,7 @@ export default function BuyerProfilePage() {
           is_seller_review: false,
           proof_image_url: uploadData.urls[0],
         }),
+        signal,
       })
 
       const data = await response.json()
@@ -150,9 +191,12 @@ export default function BuyerProfilePage() {
       setShowReviewForm(false)
       await fetchBuyerData()
     } catch (err) {
+      if (err.name === 'AbortError') return
       console.error('Error submitting review:', err)
       setReviewError(err.message)
     } finally {
+      clearTimeout(submittingTimeoutRef.current)
+      submittingRef.current = false
       setSubmitting(false)
     }
   }
