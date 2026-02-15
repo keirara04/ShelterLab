@@ -1,0 +1,103 @@
+import { supabaseServer } from '@/services/supabaseServer'
+import { createClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+
+function getRatingBonus(rating) {
+  if (rating === 5) return 5
+  if (rating === 4) return 3
+  if (rating === 3) return 1
+  if (rating <= 2) return -5
+  return 0
+}
+
+export async function POST(request, { params }) {
+  try {
+    const { id } = await params
+    const body = await request.json()
+    const { userId, rating, comment } = body
+
+    if (!id || !userId || !rating) {
+      return Response.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      )
+    }
+
+    if (rating < 1 || rating > 5) {
+      return Response.json({ error: 'Rating must be between 1 and 5' }, { status: 400 })
+    }
+
+    // Fetch the transaction
+    const { data: transaction, error: txFetchError } = await supabaseServer
+      .from('transactions')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (txFetchError || !transaction) {
+      return Response.json({ error: 'Transaction not found' }, { status: 404 })
+    }
+
+    if (transaction.buyer_id !== userId) {
+      return Response.json({ error: 'Only the buyer can confirm this transaction' }, { status: 403 })
+    }
+
+    if (transaction.status !== 'pending') {
+      return Response.json({ error: 'Transaction is no longer pending' }, { status: 400 })
+    }
+
+    // 1. Confirm transaction
+    const { error: txUpdateError } = await supabaseServer
+      .from('transactions')
+      .update({ status: 'confirmed' })
+      .eq('id', id)
+
+    if (txUpdateError) throw txUpdateError
+
+    // 2. Insert review
+    const { error: reviewError } = await supabaseServer
+      .from('reviews')
+      .insert({
+        reviewer_id: userId,
+        reviewee_id: transaction.seller_id,
+        rating,
+        comment: comment || '',
+        listing_id: transaction.listing_id,
+        is_seller_review: true,
+      })
+
+    if (reviewError) throw reviewError
+
+    // 3. Update seller trust score
+    const { data: seller } = await supabaseServer
+      .from('profiles')
+      .select('trust_score')
+      .eq('id', transaction.seller_id)
+      .single()
+
+    const sellerBonus = 10 + getRatingBonus(rating)
+    await supabaseServer
+      .from('profiles')
+      .update({ trust_score: (seller?.trust_score || 0) + sellerBonus })
+      .eq('id', transaction.seller_id)
+
+    // 4. Update buyer trust score
+    const { data: buyer } = await supabaseServer
+      .from('profiles')
+      .select('trust_score')
+      .eq('id', userId)
+      .single()
+
+    await supabaseServer
+      .from('profiles')
+      .update({ trust_score: (buyer?.trust_score || 0) + 5 })
+      .eq('id', userId)
+
+    return Response.json({ success: true, message: 'Transaction confirmed and review submitted' })
+  } catch (error) {
+    return Response.json(
+      { error: error.message || 'Failed to confirm transaction' },
+      { status: 500 }
+    )
+  }
+}

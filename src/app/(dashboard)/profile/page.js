@@ -41,6 +41,13 @@ export default function ProfilePage() {
     avatar_url: '',
   })
 
+  // Pending transaction confirmations
+  const [pendingTx, setPendingTx] = useState([])
+  const [confirmModal, setConfirmModal] = useState(null) // transaction object
+  const [confirmRating, setConfirmRating] = useState(5)
+  const [confirmComment, setConfirmComment] = useState('')
+  const [confirmLoading, setConfirmLoading] = useState(false)
+
   const handleLogout = async () => {
     await logout()
     router.push('/login')
@@ -54,6 +61,7 @@ export default function ProfilePage() {
       })
       fetchMyListings()
       fetchReviews()
+      fetchPendingTransactions()
     }
   }, [user, profile])
 
@@ -75,6 +83,52 @@ export default function ProfilePage() {
       .eq('reviewee_id', user.id)
       .order('created_at', { ascending: false })
     setReviews(data || [])
+  }
+
+  const fetchPendingTransactions = async () => {
+    if (!user) return
+    const res = await fetch(`/api/transactions/pending?userId=${user.id}`)
+    const json = await res.json()
+    setPendingTx(json.transactions || [])
+  }
+
+  const handleConfirmTransaction = async () => {
+    if (!confirmModal) return
+    setConfirmLoading(true)
+    try {
+      const res = await fetch(`/api/transactions/${confirmModal.id}/confirm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, rating: confirmRating, comment: confirmComment }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setPendingTx((prev) => prev.filter((t) => t.id !== confirmModal.id))
+      setConfirmModal(null)
+      setConfirmRating(5)
+      setConfirmComment('')
+      refreshProfile()
+    } catch (err) {
+      alert('Failed to confirm: ' + err.message)
+    } finally {
+      setConfirmLoading(false)
+    }
+  }
+
+  const handleRejectTransaction = async (txId) => {
+    if (!confirm('Reject this sale? The listing will be marked as available again.')) return
+    try {
+      const res = await fetch(`/api/transactions/${txId}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setPendingTx((prev) => prev.filter((t) => t.id !== txId))
+    } catch (err) {
+      alert('Failed to reject: ' + err.message)
+    }
   }
 
   const handlePushNotification = async (e) => {
@@ -739,6 +793,50 @@ export default function ProfilePage() {
           />
         </div>
 
+        {/* Pending Confirmations */}
+        {pendingTx.length > 0 && (
+          <div className="mb-6 rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(251,191,36,0.25)', background: 'rgba(251,191,36,0.05)' }}>
+            <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: 'rgba(251,191,36,0.15)' }}>
+              <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+              <p className="text-yellow-400 font-black text-sm">
+                {pendingTx.length} Pending Confirmation{pendingTx.length > 1 ? 's' : ''}
+              </p>
+              <p className="text-yellow-400/50 text-xs ml-auto">Did you buy these items?</p>
+            </div>
+            <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+              {pendingTx.map((tx) => (
+                <div key={tx.id} className="flex items-center gap-3 px-4 py-3">
+                  {tx.listing?.image_urls?.[0] && (
+                    <img src={tx.listing.image_urls[0]} alt={tx.listing.title} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-bold line-clamp-1">{tx.listing?.title}</p>
+                    <p className="text-gray-500 text-xs">
+                      from <span className="text-gray-400">{tx.seller?.full_name}</span> · ₩{tx.listing?.price?.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => { setConfirmModal(tx); setConfirmRating(5); setConfirmComment('') }}
+                      className="px-3 py-1.5 rounded-lg text-xs font-black text-white transition"
+                      style={{ background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.3)' }}
+                    >
+                      Yes, confirm
+                    </button>
+                    <button
+                      onClick={() => handleRejectTransaction(tx.id)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold text-red-400 transition hover:bg-red-500/10"
+                      style={{ border: '1px solid rgba(239,68,68,0.2)' }}
+                    >
+                      Not me
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Tab Switcher */}
         <div className="glass rounded-2xl p-1.5 flex gap-1 mb-6">
           <button
@@ -992,6 +1090,55 @@ export default function ProfilePage() {
           </p>
         </div>
       </div>
+
+      {/* Confirm Transaction Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
+          <div className="w-full max-w-md rounded-2xl p-6" style={{ background: 'rgba(18,24,39,0.98)', border: '1px solid rgba(255,255,255,0.12)' }}>
+            <h2 className="text-xl font-black text-white mb-1">Confirm Purchase</h2>
+            <p className="text-gray-400 text-sm mb-5">Leave a review for the seller to complete the sale and update trust scores.</p>
+            <div className="flex items-center gap-3 mb-5 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)' }}>
+              {confirmModal.listing?.image_urls?.[0] && (
+                <img src={confirmModal.listing.image_urls[0]} alt={confirmModal.listing.title} className="w-12 h-12 rounded-lg object-cover" />
+              )}
+              <div>
+                <p className="text-white font-bold text-sm line-clamp-1">{confirmModal.listing?.title}</p>
+                <p className="text-gray-400 text-xs">Sold by {confirmModal.seller?.full_name}</p>
+                <p className="text-green-400 font-black text-sm">₩{confirmModal.listing?.price?.toLocaleString()}</p>
+              </div>
+            </div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Your Rating</label>
+            <div className="flex gap-2 mb-4">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button key={star} onClick={() => setConfirmRating(star)} className="text-2xl transition-transform hover:scale-110">
+                  {star <= confirmRating ? '⭐' : '☆'}
+                </button>
+              ))}
+            </div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Review (optional)</label>
+            <textarea
+              value={confirmComment}
+              onChange={(e) => setConfirmComment(e.target.value)}
+              placeholder="How was the transaction? Was the item as described?"
+              rows={3}
+              className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500 resize-none mb-4"
+            />
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={handleConfirmTransaction}
+                disabled={confirmLoading}
+                className="w-full py-3 rounded-xl font-black text-sm text-white transition disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}
+              >
+                {confirmLoading ? 'Confirming...' : 'Confirm & Submit Review'}
+              </button>
+              <button onClick={() => setConfirmModal(null)} disabled={confirmLoading} className="w-full py-2 rounded-xl font-bold text-xs text-gray-600 hover:text-gray-400 transition">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

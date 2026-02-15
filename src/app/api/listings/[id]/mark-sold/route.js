@@ -1,11 +1,10 @@
-// src/app/api/listings/[id]/mark-sold/route.js
 import { supabaseServer } from '@/services/supabaseServer'
 
 export async function POST(request, { params }) {
   try {
     const { id } = await params
     const body = await request.json()
-    const { userId } = body
+    const { userId, buyerId } = body
 
     if (!id || !userId) {
       return Response.json(
@@ -14,19 +13,14 @@ export async function POST(request, { params }) {
       )
     }
 
-    console.log(`Marking listing ${id} as sold for user ${userId}`)
-
-    // First verify the listing belongs to this user
+    // Verify the listing belongs to this user
     const { data: listing, error: fetchError } = await supabaseServer
       .from('listings')
       .select('seller_id, is_sold')
       .eq('id', id)
       .single()
 
-    if (fetchError) {
-      console.error('Fetch error:', fetchError)
-      throw new Error('Listing not found')
-    }
+    if (fetchError) throw new Error('Listing not found')
 
     if (listing.seller_id !== userId) {
       return Response.json(
@@ -35,10 +29,46 @@ export async function POST(request, { params }) {
       )
     }
 
-    // Toggle the is_sold field
+    // If a buyerId is provided: set sold=true and create a transaction
+    if (buyerId) {
+      if (buyerId === userId) {
+        return Response.json(
+          { error: 'Buyer cannot be the same as the seller' },
+          { status: 400 }
+        )
+      }
+
+      const { data, error: updateError } = await supabaseServer
+        .from('listings')
+        .update({ is_sold: true })
+        .eq('id', id)
+        .select()
+        .single()
+
+      if (updateError) throw updateError
+
+      // Create pending transaction
+      const { error: txError } = await supabaseServer
+        .from('transactions')
+        .insert({
+          listing_id: id,
+          seller_id: userId,
+          buyer_id: buyerId,
+          status: 'pending',
+        })
+
+      if (txError) throw txError
+
+      return Response.json({
+        success: true,
+        data,
+        message: 'Listing marked as sold — awaiting buyer confirmation',
+      })
+    }
+
+    // No buyer: toggle is_sold (original behaviour)
     const newSoldStatus = !listing.is_sold
-    console.log(`Updating listing ${id}: is_sold from ${listing.is_sold} to ${newSoldStatus}`)
-    
+
     const { data, error: updateError } = await supabaseServer
       .from('listings')
       .update({ is_sold: newSoldStatus })
@@ -46,14 +76,7 @@ export async function POST(request, { params }) {
       .select()
       .single()
 
-    console.log('Update response:', { data, error: updateError })
-
-    if (updateError) {
-      console.error('Update error:', updateError)
-      throw updateError
-    }
-
-    console.log(`Listing ${newSoldStatus ? 'marked as sold' : 'marked as available'} successfully`)
+    if (updateError) throw updateError
 
     return Response.json({
       success: true,
@@ -61,9 +84,8 @@ export async function POST(request, { params }) {
       message: newSoldStatus ? 'Listing marked as sold' : 'Listing marked as available',
     })
   } catch (error) {
-    console.error('Mark sold route error:', error)
     return Response.json(
-      { error: error.message || 'Failed to mark listing as sold' },
+      { error: error.message || 'Failed to update listing' },
       { status: 500 }
     )
   }

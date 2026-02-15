@@ -18,7 +18,7 @@ export default function ListingDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [markingSold, setMarkingSold] = useState(false)
+
   const [reviews, setReviews] = useState([])
   const [averageRating, setAverageRating] = useState(0)
   const [showReviewForm, setShowReviewForm] = useState(false)
@@ -80,44 +80,6 @@ export default function ListingDetailPage() {
     }
   }
 
-  const handleToggleSold = async () => {
-    if (!user) {
-      alert('You must be logged in to update listing status')
-      return
-    }
-
-    const newStatus = !listing.is_sold
-    const message = newStatus
-      ? 'Mark this listing as sold?'
-      : 'Mark this listing as available again?'
-
-    if (!confirm(message)) return
-
-    try {
-      setMarkingSold(true)
-
-      const response = await fetch(`/api/listings/${id}/mark-sold`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id })
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update status')
-      }
-
-      // Update local state
-      setListing({ ...listing, is_sold: data.data.is_sold })
-      alert(data.data.is_sold ? 'Listing marked as sold!' : 'Listing marked as available!')
-    } catch (err) {
-      console.error('Error toggling sold status:', err)
-      alert('Failed to update status: ' + err.message)
-    } finally {
-      setMarkingSold(false)
-    }
-  }
 
   const handleSubmitReview = async (e) => {
     e.preventDefault()
@@ -437,21 +399,6 @@ export default function ListingDetailPage() {
                         Edit Listing
                       </Link>
                     )}
-                    <button
-                      onClick={handleToggleSold}
-                      disabled={markingSold}
-                      className={`block w-full py-4 px-4 ${
-                        listing.is_sold
-                          ? 'bg-green-500/20 hover:bg-green-500/30 active:bg-green-500/40 text-green-300'
-                          : 'bg-red-500/20 hover:bg-red-500/30 active:bg-red-500/40 text-red-300'
-                      } disabled:bg-gray-600/20 disabled:cursor-not-allowed rounded-lg font-bold transition text-center text-base touch-manipulation min-h-[48px]`}
-                    >
-                      {markingSold
-                        ? 'Updating...'
-                        : listing.is_sold
-                        ? '↻ Mark as Available'
-                        : 'Mark as Sold'}
-                    </button>
                   </div>
                 )}
               </div>

@@ -1,16 +1,28 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/shared/context/AuthContext'
 import AuthModal from '@/shared/components/AuthModal'
+import { supabase } from '@/services/supabase'
 
 export default function BottomNav() {
   const pathname = usePathname()
   const { isAuthenticated, profile } = useAuth()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [pendingHref, setPendingHref] = useState(null)
+  const [pendingCount, setPendingCount] = useState(0)
+
+  useEffect(() => {
+    if (!isAuthenticated || !profile?.id) return
+    supabase
+      .from('transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq('buyer_id', profile.id)
+      .eq('status', 'pending')
+      .then(({ count }) => setPendingCount(count || 0))
+  }, [isAuthenticated, profile?.id, pathname])
 
   const navItems = [
     {
@@ -136,7 +148,10 @@ export default function BottomNav() {
                 }}
               >
                 {item.name === 'Profile' && profile ? (
-                  <div className="transition-colors">
+                  <div className="relative transition-colors">
+                    {pendingCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-900 z-10" />
+                    )}
                     {profile.avatar_url ? (
                       <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center">
                         <img
