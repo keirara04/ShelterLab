@@ -8,20 +8,42 @@ import { useAuth } from '@/shared/context/AuthContext'
 import { compressImage } from '@/services/utils/helpers'
 import { SchemaScript } from '@/shared/components/SchemaScript'
 import { generateProfileSchema } from '@/schema'
+import { TRUST_SCORE_THRESHOLDS } from '@/services/utils/constants'
+
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const RATING_LABELS = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent']
 const MAX_COMMENT_LENGTH = 500
+
+function getTrustTier(score) {
+  if (score >= TRUST_SCORE_THRESHOLDS.POWER_USER)
+    return { label: 'Power User', color: '#a78bfa', bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.25)' }
+  if (score >= TRUST_SCORE_THRESHOLDS.VERY_TRUSTED)
+    return { label: 'Very Trusted', color: '#34d399', bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.25)' }
+  if (score >= TRUST_SCORE_THRESHOLDS.TRUSTED)
+    return { label: 'Trusted', color: '#60a5fa', bg: 'rgba(96,165,250,0.1)', border: 'rgba(96,165,250,0.25)' }
+  return { label: 'New User', color: '#9ca3af', bg: 'rgba(156,163,175,0.08)', border: 'rgba(156,163,175,0.15)' }
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function SellerProfilePage() {
   const params = useParams()
   const sellerId = params.id
   const { user, isAuthenticated } = useAuth()
+
+  // Data state
   const [seller, setSeller] = useState(null)
   const [listings, setListings] = useState([])
   const [reviews, setReviews] = useState([])
   const [averageRating, setAverageRating] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  // UI state
+  const [listingsTab, setListingsTab] = useState('active')
+  const [showBadgeTooltip, setShowBadgeTooltip] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
 
   // Review form state
   const [showReviewForm, setShowReviewForm] = useState(false)
@@ -32,18 +54,15 @@ export default function SellerProfilePage() {
   const [proofImagePreview, setProofImagePreview] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [reviewError, setReviewError] = useState(null)
-  const [showAllListings, setShowAllListings] = useState(false)
-  const [showReportModal, setShowReportModal] = useState(false)
-  const [showBadgeTooltip, setShowBadgeTooltip] = useState(false)
   const fileInputRef = useRef(null)
   const submittingRef = useRef(false)
   const abortControllerRef = useRef(null)
   const submittingTimeoutRef = useRef(null)
 
+  // ─── Effects ────────────────────────────────────────────────────────────────
+
   useEffect(() => {
-    if (sellerId) {
-      fetchSellerData()
-    }
+    if (sellerId) fetchSellerData()
   }, [sellerId])
 
   useEffect(() => {
@@ -56,56 +75,46 @@ export default function SellerProfilePage() {
         setReviewError('Submission was interrupted. Please try again.')
       }
     }
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') handleInterruption()
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange)
+    const onVisibility = () => { if (document.visibilityState === 'visible') handleInterruption() }
+    document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('focus', handleInterruption)
     window.addEventListener('pageshow', handleInterruption)
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('focus', handleInterruption)
       window.removeEventListener('pageshow', handleInterruption)
     }
   }, [])
 
+  // ─── Data fetching ───────────────────────────────────────────────────────────
+
   const fetchSellerData = async () => {
     try {
       setLoading(true)
       setError(null)
-
       const res = await fetch(`/api/profile/${sellerId}?role=seller`)
       const data = await res.json()
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch seller profile')
-      }
-
+      if (!res.ok || !data.success) throw new Error(data.error || 'Failed to fetch seller profile')
       setSeller(data.profile)
       setListings(data.listings || [])
-
-      if (data.reviews && data.reviews.length > 0) {
+      if (data.reviews?.length > 0) {
         setReviews(data.reviews)
-        const avg = data.reviews.reduce((sum, review) => sum + review.rating, 0) / data.reviews.length
+        const avg = data.reviews.reduce((sum, r) => sum + r.rating, 0) / data.reviews.length
         setAverageRating(parseFloat(avg.toFixed(1)))
       }
     } catch (err) {
-      console.error('Error fetching seller data:', err)
       setError('Seller profile not found')
     } finally {
       setLoading(false)
     }
   }
 
+  // ─── Review handlers ─────────────────────────────────────────────────────────
+
   const handleImageChange = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-
-    if (file.size > 5 * 1024 * 1024) {
-      setReviewError('Image must be under 2MB')
-      return
-    }
-
+    if (file.size > 5 * 1024 * 1024) { setReviewError('Image must be under 5MB'); return }
     setReviewError(null)
     const compressed = await compressImage(file)
     setProofImage(compressed)
@@ -116,21 +125,9 @@ export default function SellerProfilePage() {
 
   const handleSubmitReview = async (e) => {
     e.preventDefault()
-
-    if (!isAuthenticated) {
-      setReviewError('You must be logged in to leave a review')
-      return
-    }
-
-    if (user.id === sellerId) {
-      setReviewError('You cannot review your own profile')
-      return
-    }
-
-    if (!proofImage) {
-      setReviewError('Please upload a proof of purchase image')
-      return
-    }
+    if (!isAuthenticated) { setReviewError('You must be logged in to leave a review'); return }
+    if (user.id === sellerId) { setReviewError('You cannot review your own profile'); return }
+    if (!proofImage) { setReviewError('Please upload a proof of purchase image'); return }
 
     abortControllerRef.current = new AbortController()
     const { signal } = abortControllerRef.current
@@ -152,30 +149,16 @@ export default function SellerProfilePage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Not authenticated')
 
-      // Upload proof image first
       const formData = new FormData()
       formData.append('files', proofImage)
       formData.append('userId', user.id)
-
-      const uploadRes = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-        signal,
-      })
-
+      const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData, signal })
       const uploadData = await uploadRes.json()
+      if (!uploadRes.ok || !uploadData.urls?.[0]) throw new Error(uploadData.error || 'Failed to upload proof image')
 
-      if (!uploadRes.ok || !uploadData.urls?.[0]) {
-        throw new Error(uploadData.error || 'Failed to upload proof image')
-      }
-
-      // Submit review with proof URL
       const response = await fetch('/api/reviews', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({
           reviewee_id: sellerId,
           reviewer_id: user.id,
@@ -186,14 +169,9 @@ export default function SellerProfilePage() {
         }),
         signal,
       })
-
       const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to submit review')
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to submit review')
-      }
-
-      // Reset form and refresh
       setReviewContent('')
       setReviewRating(5)
       setHoveredStar(0)
@@ -203,7 +181,6 @@ export default function SellerProfilePage() {
       await fetchSellerData()
     } catch (err) {
       if (err.name === 'AbortError') return
-      console.error('Error submitting review:', err)
       setReviewError(err.message)
     } finally {
       clearTimeout(submittingTimeoutRef.current)
@@ -213,43 +190,42 @@ export default function SellerProfilePage() {
   }
 
   const handleDeleteReview = async (reviewId) => {
-    if (!confirm('Are you sure you want to delete this review?')) {
-      return
-    }
-
+    if (!confirm('Are you sure you want to delete this review?')) return
     try {
-      const response = await fetch(`/api/reviews?review_id=${reviewId}&reviewee_id=${sellerId}`, {
-        method: 'DELETE',
-      })
-
+      const response = await fetch(`/api/reviews?review_id=${reviewId}&reviewee_id=${sellerId}`, { method: 'DELETE' })
       const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete review')
-      }
-
+      if (!response.ok) throw new Error(data.error || 'Failed to delete review')
       await fetchSellerData()
     } catch (err) {
-      console.error('Error deleting review:', err)
       alert('Failed to delete review: ' + err.message)
     }
   }
 
-  // Generate profile schema before any conditional returns (Rules of Hooks)
+  // ─── Derived state ────────────────────────────────────────────────────────────
+
   const profileSchema = useMemo(
     () => generateProfileSchema(seller, averageRating, reviews.length),
     [seller, averageRating, reviews.length]
   )
 
+  const activeListings = useMemo(() => listings.filter(l => !l.is_sold), [listings])
+  const soldListings = useMemo(() => listings.filter(l => l.is_sold), [listings])
+  const displayedListings = listingsTab === 'active' ? activeListings : soldListings
+
+  const ratingDistribution = useMemo(() => {
+    const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+    reviews.forEach(r => { if (r.rating >= 1 && r.rating <= 5) dist[r.rating]++ })
+    return dist
+  }, [reviews])
+
+  // ─── Loading / error ──────────────────────────────────────────────────────────
+
   if (loading) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: '#000000' }}
-      >
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#000000' }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading seller profile...</p>
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 mx-auto mb-4" />
+          <p className="text-gray-500 text-sm">Loading profile...</p>
         </div>
       </div>
     )
@@ -257,17 +233,11 @@ export default function SellerProfilePage() {
 
   if (error || !seller) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center p-4"
-        style={{ backgroundColor: '#000000' }}
-      >
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#000000' }}>
         <div className="text-center">
-          <h1 className="text-3xl font-black text-white mb-4">Profile Not Found</h1>
-          <p className="text-gray-400 mb-6">{error || 'This seller profile does not exist'}</p>
-          <Link
-            href="/"
-            className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition"
-          >
+          <h1 className="text-3xl font-black text-white mb-3">Profile Not Found</h1>
+          <p className="text-gray-400 mb-6 text-sm">{error || 'This seller profile does not exist'}</p>
+          <Link href="/" className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition">
             Back to Marketplace
           </Link>
         </div>
@@ -276,331 +246,442 @@ export default function SellerProfilePage() {
   }
 
   const activeRating = hoveredStar || reviewRating
+  const tier = getTrustTier(seller.trust_score || 0)
+
+  // Shared glass style tokens
+  const glass = {
+    panel: {
+      background: 'rgba(255,255,255,0.04)',
+      backdropFilter: 'blur(24px) saturate(180%)',
+      border: '1px solid rgba(255,255,255,0.09)',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.12), 0 8px 32px rgba(0,0,0,0.35)',
+    },
+    card: {
+      background: 'rgba(255,255,255,0.04)',
+      backdropFilter: 'blur(16px) saturate(160%)',
+      border: '1px solid rgba(255,255,255,0.08)',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
+    },
+    input: {
+      background: 'rgba(255,255,255,0.05)',
+      backdropFilter: 'blur(8px)',
+      border: '1px solid rgba(255,255,255,0.08)',
+      boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.2)',
+    },
+  }
 
   return (
-    <div
-      className="min-h-screen py-12"
-      style={{ backgroundColor: '#000000' }}
-    >
+    <div className="min-h-screen pb-24 relative overflow-x-hidden" style={{ backgroundColor: '#000000' }}>
       <SchemaScript data={profileSchema} />
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back Button */}
-        <Link href="/" className="text-blue-400 hover:text-blue-300 active:text-blue-200 font-bold mb-6 inline-block py-2 touch-manipulation text-base sm:text-base">
-          ← Back to Marketplace
-        </Link>
 
-        {/* Profile Header */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-8 mb-8">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-            {/* Avatar */}
-            {seller.avatar_url ? (
-              <img
-                src={seller.avatar_url}
-                alt={seller.full_name}
-                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-blue-500"
-              />
-            ) : (
-              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-blue-500 rounded-full flex items-center justify-center text-white font-black text-3xl sm:text-4xl border-4 border-blue-500">
-                {seller.full_name?.charAt(0).toUpperCase()}
-              </div>
-            )}
+      {/* ── Ambient light blobs ─────────────────────────────────────────────── */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full opacity-20"
+          style={{ background: `radial-gradient(ellipse, ${tier.color} 0%, transparent 70%)`, filter: 'blur(60px)' }} />
+        <div className="absolute top-1/3 -left-32 w-80 h-80 rounded-full opacity-10"
+          style={{ background: 'radial-gradient(ellipse, #8b5cf6 0%, transparent 70%)', filter: 'blur(60px)' }} />
+        <div className="absolute bottom-1/4 -right-32 w-96 h-96 rounded-full opacity-10"
+          style={{ background: 'radial-gradient(ellipse, #3b82f6 0%, transparent 70%)', filter: 'blur(80px)' }} />
+      </div>
 
-            {/* Info */}
-            <div className="flex-1 text-center sm:text-left w-full">
-              <div className="flex items-center justify-center sm:justify-start gap-2">
-                <h1 className="text-2xl sm:text-4xl font-black text-white">{seller.full_name}</h1>
-                {seller?.university_email_verified && (
-                <div>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setShowBadgeTooltip(true) }}
-                    className="cursor-pointer flex items-center"
-                  >
-                    <img src="/BadgeIcon.svg" alt="Verified Student" width={24} height={24} className="w-6 h-6 object-contain" />
-                  </button>
-                  {showBadgeTooltip && (
-                    <div
-                      className="fixed inset-0 z-[9999] flex items-center justify-center"
-                      style={{ backdropFilter: 'blur(12px)', background: 'rgba(0,0,0,0.45)' }}
-                      onClick={() => setShowBadgeTooltip(false)}
-                    >
-                      <div
-                        className="rounded-2xl p-6 w-72 max-w-[88vw]"
-                        style={{
-                          background: '#000000',
-                          border: '1px solid rgba(255, 255, 255, 0.12)',
-                          boxShadow: '0 24px 64px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08)',
-                        }}
-                        onClick={e => e.stopPropagation()}
-                      >
-                        <div className="flex items-center gap-3 mb-3">
-                          <img src="/BadgeIcon.svg" alt="" width={28} height={28} className="w-7 h-7 object-contain" />
-                          <p className="text-white font-bold text-base">Verified Student</p>
-                        </div>
-                        <p className="text-gray-400 text-sm leading-relaxed">
-                          This user is a verified student at their registered university.
-                        </p>
-                        <button
-                          onClick={() => setShowBadgeTooltip(false)}
-                          className="mt-5 w-full py-2 rounded-xl text-sm font-semibold text-gray-300 hover:text-white transition-colors cursor-pointer"
-                          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-                        >
-                          Got it
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                )}
-                {isAuthenticated && user?.id !== sellerId && (
-                  <button
-                    onClick={() => setShowReportModal(true)}
-                    className="px-3 py-2 text-gray-400 hover:text-gray-300 active:text-gray-200 rounded-lg font-bold transition text-lg touch-manipulation min-h-[44px] flex items-center justify-center cursor-pointer"
-                  >
-                    ⚠️
-                  </button>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4">
-                <div className="bg-white/5 rounded-lg p-3 sm:p-4">
-                  <p className="text-xs text-gray-400 uppercase font-bold mb-1">Trust Score</p>
-                  <p className="text-xl sm:text-2xl font-black text-green-400">{seller.trust_score || 0}</p>
-                </div>
-                <div className="bg-white/5 rounded-lg p-3 sm:p-4">
-                  <p className="text-xs text-gray-400 uppercase font-bold mb-1">Total Listings</p>
-                  <p className="text-xl sm:text-2xl font-black text-blue-400">{listings.length}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* ── Hero Header ────────────────────────────────────────────────────── */}
+      <div className="relative">
+        {/* Top bar */}
+        <div className="max-w-3xl mx-auto px-4 pt-5 pb-1 flex items-center justify-between">
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 text-sm font-bold text-gray-400 hover:text-white transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 5l-7 7 7 7" />
+            </svg>
+            Back
+          </Link>
+          {isAuthenticated && user?.id !== sellerId && (
+            <button
+              onClick={() => setShowReportModal(true)}
+              className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-red-400 transition px-2.5 py-1.5 rounded-lg hover:bg-red-500/10"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                <line x1="4" y1="22" x2="4" y2="15" />
+              </svg>
+              Report
+            </button>
+          )}
         </div>
 
-        {/* Listings */}
-        <div className="mb-12">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 mb-6">
-            <h2 className="text-xl sm:text-2xl font-black text-white">Recent Items</h2>
-            {listings.length > 3 && (
-              <button
-                onClick={() => setShowAllListings(!showAllListings)}
-                className="w-full sm:w-auto px-6 py-3 sm:px-4 sm:py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-lg transition text-base sm:text-sm touch-manipulation min-h-[44px]"
+        {/* Identity block */}
+        <div className="max-w-3xl mx-auto px-4 pt-8 pb-6">
+          <div
+            className="rounded-3xl p-6 flex flex-col sm:flex-row items-center sm:items-end gap-5"
+            style={glass.panel}
+          >
+            {/* Avatar with ambient glow */}
+            <div className="relative shrink-0">
+              <div
+                className="absolute inset-0 rounded-2xl blur-xl opacity-50 scale-110"
+                style={{ background: `radial-gradient(ellipse, ${tier.color}, transparent 70%)` }}
+                aria-hidden="true"
+              />
+              {seller.avatar_url ? (
+                <img
+                  src={seller.avatar_url}
+                  alt={seller.full_name}
+                  className="relative w-24 h-24 rounded-2xl object-cover"
+                  style={{ border: '1.5px solid rgba(255,255,255,0.15)', boxShadow: `0 0 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)` }}
+                />
+              ) : (
+                <div
+                  className="relative w-24 h-24 rounded-2xl flex items-center justify-center text-white font-black text-4xl"
+                  style={{ background: `linear-gradient(135deg, ${tier.color}99, #8b5cf6)`, border: '1.5px solid rgba(255,255,255,0.15)', boxShadow: '0 0 24px rgba(0,0,0,0.6)' }}
+                >
+                  {seller.full_name?.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+
+            {/* Name + meta */}
+            <div className="flex-1 text-center sm:text-left">
+              <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight">{seller.full_name}</h1>
+                {seller.university_email_verified && (
+                  <button onClick={() => setShowBadgeTooltip(true)} className="shrink-0 cursor-pointer" aria-label="Verified Student">
+                    <img src="/BadgeIcon.svg" alt="Verified Student" width={22} height={22} className="object-contain" />
+                  </button>
+                )}
+              </div>
+              {seller.university && (
+                <p className="text-gray-500 text-sm mt-1">{seller.university}</p>
+              )}
+              <div
+                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+                style={{
+                  color: tier.color,
+                  background: `rgba(0,0,0,0.4)`,
+                  backdropFilter: 'blur(12px)',
+                  border: `1px solid ${tier.border}`,
+                  boxShadow: `inset 0 1px 0 rgba(255,255,255,0.08), 0 0 12px ${tier.color}22`,
+                }}
               >
-                {showAllListings ? 'Show Less' : `View All (${listings.length})`}
-              </button>
-            )}
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: tier.color }} />
+                {tier.label}
+              </div>
+            </div>
           </div>
 
-          {listings.length === 0 ? (
-            <div className="bg-white/5 border border-white/10 rounded-xl p-12 text-center">
-              <p className="text-gray-400">This seller has no active listings</p>
+          {/* Stats bar */}
+          <div
+            className="mt-3 grid grid-cols-4 rounded-2xl overflow-hidden"
+            style={{
+              background: 'rgba(255,255,255,0.03)',
+              backdropFilter: 'blur(20px) saturate(160%)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.07)',
+            }}
+          >
+            {[
+              { label: 'Trust Score', value: seller.trust_score || 0, color: tier.color },
+              { label: 'Avg Rating', value: reviews.length > 0 ? `${averageRating}★` : '—', color: '#facc15' },
+              { label: 'Active', value: activeListings.length, color: '#60a5fa' },
+              { label: 'Reviews', value: reviews.length, color: '#a78bfa' },
+            ].map(({ label, value, color }, i, arr) => (
+              <div
+                key={label}
+                className="text-center py-4 px-2"
+                style={i < arr.length - 1 ? { borderRight: '1px solid rgba(255,255,255,0.05)' } : {}}
+              >
+                <p className="text-xl sm:text-2xl font-black" style={{ color, textShadow: `0 0 20px ${color}66` }}>{value}</p>
+                <p className="text-xs text-gray-600 mt-0.5 font-medium">{label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Page body ──────────────────────────────────────────────────────── */}
+      <div className="max-w-3xl mx-auto px-4 mt-8 space-y-10">
+
+        {/* ── Listings ──────────────────────────────────────────────────────── */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-black text-white">Listings</h2>
+            <div
+              className="flex rounded-xl overflow-hidden text-xs font-bold"
+              style={{
+                backdropFilter: 'blur(12px)',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.09)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)',
+              }}
+            >
+              <button
+                onClick={() => setListingsTab('active')}
+                className="px-3 py-1.5 transition"
+                style={listingsTab === 'active'
+                  ? { background: 'rgba(96,165,250,0.2)', color: '#93c5fd', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)' }
+                  : { color: '#4b5563' }}
+              >
+                Active ({activeListings.length})
+              </button>
+              <button
+                onClick={() => setListingsTab('sold')}
+                className="px-3 py-1.5 transition"
+                style={listingsTab === 'sold'
+                  ? { background: 'rgba(239,68,68,0.18)', color: '#fca5a5', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)' }
+                  : { color: '#4b5563' }}
+              >
+                Sold ({soldListings.length})
+              </button>
+            </div>
+          </div>
+
+          {displayedListings.length === 0 ? (
+            <div
+              className="rounded-2xl py-12 text-center"
+              style={{
+                backdropFilter: 'blur(16px)',
+                background: 'rgba(255,255,255,0.025)',
+                border: '1px solid rgba(255,255,255,0.06)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
+              }}
+            >
+              <p className="text-gray-600 text-sm">
+                {listingsTab === 'active' ? 'No active listings' : 'No sold items yet'}
+              </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {(showAllListings ? listings : listings.slice(0, 3)).map((listing) => (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {displayedListings.map((listing) => (
                 <Link
                   key={listing.id}
                   href={`/listing/${listing.id}`}
-                  className="group block bg-white/8 border border-white/15 rounded-xl overflow-hidden hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 backdrop-blur-xl"
+                  className="group block rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] active:scale-[0.99] hover:-translate-y-0.5"
+                  style={{
+                    ...glass.card,
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
+                  }}
                 >
-                  {/* Image */}
-                  <div className="relative h-40 sm:h-48 bg-gray-800 overflow-hidden">
-                    {listing.image_urls && listing.image_urls.length > 0 ? (
-                      <>
-                        <img
-                          src={listing.image_urls[0]}
-                          alt={listing.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        {listing.image_urls.length > 1 && (
-                          <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-xs text-white font-bold">
-                            +{listing.image_urls.length - 1}
-                          </div>
-                        )}
-                      </>
+                  {/* Thumbnail */}
+                  <div className="relative h-36 sm:h-44 bg-gray-900 overflow-hidden">
+                    {listing.image_urls?.[0] ? (
+                      <img
+                        src={listing.image_urls[0]}
+                        alt={listing.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500/20 to-purple-500/20">
-                        <span className="text-gray-400">No image</span>
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-gray-700 text-xs">No image</span>
                       </div>
                     )}
-
-                    {/* Sold Overlay */}
                     {listing.is_sold && (
-                      <div className="absolute inset-0 bg-gradient-to-br from-gray-900/80 via-gray-800/70 to-gray-900/80 backdrop-blur-md flex items-center justify-center">
-                        <div className="relative">
-                          <div className="absolute inset-0 bg-white/10 backdrop-blur-xl rounded-2xl transform rotate-3 scale-110"></div>
-                          <div className="relative bg-gradient-to-br from-red-500/90 to-red-600/90 backdrop-blur-sm px-4 py-2 sm:px-6 sm:py-3 rounded-xl border-2 border-white/20 shadow-2xl transform -rotate-12">
-                            <p className="text-white font-black text-xl sm:text-2xl tracking-wider drop-shadow-lg">SOLD</p>
-                          </div>
-                        </div>
+                      <div className="absolute inset-0 flex items-center justify-center" style={{ backdropFilter: 'blur(4px)', background: 'rgba(0,0,0,0.45)' }}>
+                        <span
+                          className="px-3 py-1 rounded-xl font-black text-sm text-white"
+                          style={{
+                            background: 'rgba(239,68,68,0.3)',
+                            backdropFilter: 'blur(12px)',
+                            border: '1px solid rgba(239,68,68,0.5)',
+                            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.15)',
+                          }}
+                        >
+                          SOLD
+                        </span>
                       </div>
                     )}
+                    {listing.image_urls?.length > 1 && (
+                      <div
+                        className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded-lg text-xs text-white font-bold"
+                        style={{ backdropFilter: 'blur(8px)', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)' }}
+                      >
+                        +{listing.image_urls.length - 1}
+                      </div>
+                    )}
+                    {/* Glass shine overlay */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                      style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 60%)' }} />
                   </div>
 
-                  {/* Content */}
-                  <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
-                    <h3 className="font-bold text-white text-sm sm:text-base line-clamp-2 group-hover:text-blue-400 transition">
+                  {/* Info */}
+                  <div className="p-3">
+                    <p className="text-white text-sm font-bold line-clamp-1 group-hover:text-blue-300 transition">
                       {listing.title}
-                    </h3>
-
-                    <div className="text-xl sm:text-2xl font-black text-green-400">
+                    </p>
+                    <p className="text-green-400 font-black text-base mt-0.5">
                       ₩{listing.price.toLocaleString()}
-                    </div>
-
-                    <div className="flex gap-2 flex-wrap">
-                      <span className="px-2 py-1 rounded bg-blue-500/30 text-blue-300 text-xs font-bold">
+                    </p>
+                    <div className="flex gap-1 mt-2 flex-wrap">
+                      <span
+                        className="px-1.5 py-0.5 rounded text-xs font-bold"
+                        style={{ background: 'rgba(96,165,250,0.12)', color: '#93c5fd' }}
+                      >
                         {listing.condition}
                       </span>
-                      {listing.categories && listing.categories[0] && (
-                        <span className="px-2 py-1 rounded bg-purple-500/30 text-purple-300 text-xs font-bold">
+                      {listing.categories?.[0] && (
+                        <span
+                          className="px-1.5 py-0.5 rounded text-xs font-bold"
+                          style={{ background: 'rgba(167,139,250,0.12)', color: '#c4b5fd' }}
+                        >
                           {listing.categories[0]}
                         </span>
                       )}
-                    </div>
-
-                    <div className="pt-2 sm:pt-3 border-t border-white/10 flex items-center justify-between">
-                      <span className="text-xs text-gray-400">
-                        {new Date(listing.created_at).toLocaleDateString()}
-                      </span>
-                      <span className="text-xs text-gray-400">View →</span>
                     </div>
                   </div>
                 </Link>
               ))}
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Reviews Section */}
-        <div>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-            <h2 className="text-xl sm:text-2xl font-black text-white">Reviews</h2>
-            <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+        {/* ── Reviews ────────────────────────────────────────────────────────── */}
+        <section>
+          {/* Section header */}
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-black text-white">Reviews</h2>
               {reviews.length > 0 && (
-                <div className="text-left sm:text-right">
-                  <p className="text-xs sm:text-sm text-gray-400">
-                    {reviews.length} review{reviews.length !== 1 ? 's' : ''}
-                  </p>
-                  <p className="text-lg sm:text-xl font-black text-yellow-400">⭐ {averageRating}</p>
-                </div>
-              )}
-              {isAuthenticated && user?.id !== sellerId && (
-                <button
-                  onClick={() => setShowReviewForm(!showReviewForm)}
-                  className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-lg transition text-base whitespace-nowrap touch-manipulation min-h-[44px]"
-                >
-                  {showReviewForm ? 'Cancel' : 'Write Review'}
-                </button>
+                <p className="text-gray-600 text-xs mt-0.5">{reviews.length} review{reviews.length !== 1 ? 's' : ''}</p>
               )}
             </div>
+            {isAuthenticated && user?.id !== sellerId && (
+              <button
+                onClick={() => setShowReviewForm(!showReviewForm)}
+                className="px-4 py-2 rounded-xl text-sm font-bold text-white transition"
+                style={showReviewForm
+                  ? { backdropFilter: 'blur(12px)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)' }
+                  : { backdropFilter: 'blur(12px)', background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 0 16px rgba(59,130,246,0.15)' }}
+              >
+                {showReviewForm ? 'Cancel' : 'Write Review'}
+              </button>
+            )}
           </div>
 
-          {/* Review Form */}
-          {showReviewForm && (
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 sm:p-7 mb-8">
-              {/* Form Header */}
-              <div className="flex items-center gap-3 pb-5 mb-5 border-b border-white/10">
-                <div className="w-9 h-9 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
+          {/* Rating summary */}
+          {reviews.length > 0 && (
+            <div
+              className="rounded-2xl p-4 mb-5 flex items-center gap-6"
+              style={glass.panel}
+            >
+              <div className="text-center shrink-0">
+                <p className="text-4xl font-black text-white" style={{ textShadow: '0 0 24px rgba(250,204,21,0.4)' }}>{averageRating}</p>
+                <div className="flex justify-center gap-0.5 my-1">
+                  {[1, 2, 3, 4, 5].map(s => (
+                    <span key={s} className={`text-sm ${s <= Math.round(averageRating) ? 'text-yellow-400' : 'text-gray-800'}`}>★</span>
+                  ))}
                 </div>
-                <div>
-                  <h3 className="font-bold text-white text-base sm:text-lg leading-tight">Write a Review</h3>
-                  <p className="text-xs text-gray-400">Share your experience transacting with this seller</p>
-                </div>
+                <p className="text-gray-600 text-xs">{reviews.length} reviews</p>
               </div>
+              <div className="flex-1 space-y-1.5">
+                {[5, 4, 3, 2, 1].map(star => (
+                  <div key={star} className="flex items-center gap-2">
+                    <span className="text-xs text-gray-600 w-2 shrink-0">{star}</span>
+                    <span className="text-yellow-400 text-xs shrink-0">★</span>
+                    <div className="flex-1 rounded-full overflow-hidden h-2" style={{ background: 'rgba(255,255,255,0.05)', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)' }}>
+                      <div
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{
+                          width: reviews.length > 0 ? `${(ratingDistribution[star] / reviews.length) * 100}%` : '0%',
+                          background: star >= 4
+                            ? 'linear-gradient(90deg, #ca8a04, #facc15)'
+                            : star === 3
+                            ? 'linear-gradient(90deg, #c2410c, #fb923c)'
+                            : 'linear-gradient(90deg, #991b1b, #f87171)',
+                          boxShadow: star >= 4 ? '0 0 8px rgba(250,204,21,0.4)' : star === 3 ? '0 0 8px rgba(251,146,60,0.4)' : '0 0 8px rgba(248,113,113,0.4)',
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs text-gray-700 w-4 text-right shrink-0">{ratingDistribution[star]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-              <form onSubmit={handleSubmitReview} className="space-y-6">
-                {/* Star Rating */}
+          {/* Review form */}
+          {showReviewForm && (
+            <div className="rounded-2xl p-5 mb-5" style={glass.panel}>
+              <h3 className="font-black text-white text-base mb-4">Write a Review</h3>
+              <form onSubmit={handleSubmitReview} className="space-y-5">
+
+                {/* Star rating */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-300 mb-3">Your Rating</label>
-                  <div className="flex items-center gap-0.5 sm:gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Your Rating</label>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map(star => (
                       <button
                         key={star}
                         type="button"
                         onClick={() => setReviewRating(star)}
                         onMouseEnter={() => setHoveredStar(star)}
                         onMouseLeave={() => setHoveredStar(0)}
-                        className="text-3xl sm:text-4xl transition-transform hover:scale-110 active:scale-95 touch-manipulation p-0.5 leading-none"
+                        className="text-3xl transition-transform hover:scale-110 active:scale-95 touch-manipulation leading-none"
                         aria-label={`Rate ${star} stars`}
                       >
-                        <span className={star <= activeRating ? 'text-yellow-400' : 'text-gray-600'}>★</span>
+                        <span className={star <= activeRating ? 'text-yellow-400' : 'text-gray-800'} style={star <= activeRating ? { textShadow: '0 0 12px rgba(250,204,21,0.6)' } : {}}>★</span>
                       </button>
                     ))}
-                    <span className="ml-3 text-sm font-semibold text-gray-300 min-w-17.5">
-                      {RATING_LABELS[activeRating]}
-                    </span>
+                    <span className="ml-2 text-sm font-bold text-gray-400">{RATING_LABELS[activeRating]}</span>
                   </div>
                 </div>
 
-                {/* Review Comment */}
+                {/* Comment */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-300 mb-2">Your Review</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Your Review</label>
                   <textarea
                     value={reviewContent}
                     onChange={(e) => e.target.value.length <= MAX_COMMENT_LENGTH && setReviewContent(e.target.value)}
-                    placeholder="Was the item as described? Was communication good? Describe your experience..."
+                    placeholder="Was the item as described? How was communication?"
                     required
                     minLength={10}
-                    rows={4}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition text-sm resize-none"
+                    rows={3}
+                    className="w-full px-3 py-2.5 rounded-xl text-white placeholder-gray-600 text-sm resize-none focus:outline-none transition"
+                    style={glass.input}
                   />
-                  <div className="flex items-center justify-between mt-1.5">
-                    <span className="text-xs text-gray-500">Minimum 10 characters</span>
-                    <span className={`text-xs ${reviewContent.length >= MAX_COMMENT_LENGTH ? 'text-red-400' : 'text-gray-500'}`}>
-                      {reviewContent.length} / {MAX_COMMENT_LENGTH}
+                  <div className="flex justify-between mt-1">
+                    <span className="text-xs text-gray-600">Min 10 characters</span>
+                    <span className={`text-xs ${reviewContent.length >= MAX_COMMENT_LENGTH ? 'text-red-400' : 'text-gray-600'}`}>
+                      {reviewContent.length}/{MAX_COMMENT_LENGTH}
                     </span>
                   </div>
                 </div>
 
-                {/* Proof of Purchase - Required */}
+                {/* Proof of purchase */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-300 mb-1">
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                     Proof of Purchase <span className="text-red-400">*</span>
                   </label>
-                  <p className="text-xs text-gray-500 mb-3">
-                    Upload a screenshot or photo showing your transaction (chat, payment receipt, etc.)
+                  <p className="text-xs text-gray-600 mb-3">
+                    Screenshot or photo of your transaction (chat, payment receipt, etc.)
                   </p>
-
                   {!proofImagePreview ? (
-                    <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-white/20 rounded-xl cursor-pointer hover:border-blue-500/60 hover:bg-blue-500/5 transition-all group">
-                      <div className="flex flex-col items-center gap-2 text-gray-500 group-hover:text-gray-300 transition-colors pointer-events-none">
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <label
+                      className="flex flex-col items-center justify-center w-full h-28 rounded-xl cursor-pointer transition-all group"
+                      style={{ border: '2px dashed rgba(255,255,255,0.09)', background: 'rgba(255,255,255,0.02)' }}
+                    >
+                      <div className="flex flex-col items-center gap-1.5 text-gray-600 group-hover:text-gray-400 transition pointer-events-none">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <span className="text-sm font-medium">Click to upload image</span>
+                        <span className="text-sm font-medium">Click to upload</span>
                         <span className="text-xs">PNG, JPG, WEBP · Max 5MB</span>
                       </div>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageChange}
-                      />
+                      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                     </label>
                   ) : (
-                    <div className="relative rounded-xl overflow-hidden border border-white/10 group">
-                      <img
-                        src={proofImagePreview}
-                        alt="Proof of purchase preview"
-                        className="w-full max-h-52 object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                    <div className="relative rounded-xl overflow-hidden group" style={{ border: '1px solid rgba(255,255,255,0.09)' }}>
+                      <img src={proofImagePreview} alt="Proof preview" className="w-full max-h-48 object-cover" />
+                      <div
+                        className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                        style={{ background: 'rgba(0,0,0,0.5)' }}
+                      >
                         <button
                           type="button"
                           onClick={() => { setProofImage(null); setProofImagePreview(null) }}
-                          className="opacity-0 group-hover:opacity-100 bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all"
+                          className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition"
                         >
-                          Remove Image
+                          Remove
                         </button>
-                      </div>
-                      <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 to-transparent px-3 py-2 pointer-events-none">
-                        <div className="flex items-center gap-1.5">
-                          <svg className="w-3.5 h-3.5 text-green-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                          </svg>
-                          <p className="text-white text-xs truncate">{proofImage?.name}</p>
-                        </div>
                       </div>
                     </div>
                   )}
@@ -608,8 +689,11 @@ export default function SellerProfilePage() {
 
                 {/* Error */}
                 {reviewError && (
-                  <div className="flex items-start gap-2.5 p-3.5 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
-                    <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div
+                    className="flex items-center gap-2 p-3 rounded-xl text-red-400 text-sm"
+                    style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}
+                  >
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     {reviewError}
@@ -620,54 +704,65 @@ export default function SellerProfilePage() {
                 <button
                   type="submit"
                   disabled={submitting || reviewContent.trim().length < 10 || !proofImage}
-                  className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all text-sm sm:text-base flex items-center justify-center gap-2 min-h-[48px]"
+                  className="w-full py-3 rounded-xl font-black text-sm text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[48px]"
+                  style={{ background: 'rgba(59,130,246,0.25)', border: '1px solid rgba(59,130,246,0.35)' }}
                 >
                   {submitting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    'Submit Review'
-                  )}
+                    <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Submitting...</>
+                  ) : 'Submit Review'}
                 </button>
               </form>
             </div>
           )}
 
-          {/* Reviews List */}
+          {/* Reviews list */}
           {reviews.length === 0 ? (
-            <div className="bg-white/5 border border-white/10 rounded-xl p-12 text-center">
-              <p className="text-gray-400">No reviews yet</p>
+            <div
+              className="rounded-2xl py-12 text-center"
+              style={{ border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}
+            >
+              <p className="text-gray-600 text-sm">No reviews yet</p>
               {isAuthenticated && user?.id !== sellerId && (
-                <p className="text-gray-500 text-sm mt-2">Be the first to review this seller!</p>
+                <p className="text-gray-700 text-xs mt-1">Be the first to review this seller!</p>
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-3">
               {reviews.map((review) => (
                 <div
                   key={review.id}
-                  className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-3 relative"
+                  className="rounded-2xl p-4"
+                  style={{ border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.025)' }}
                 >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-bold text-white">{review.reviewer?.full_name || 'Anonymous'}</p>
-                      <div className="flex items-center gap-0.5 mt-1">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <span key={s} className={`text-base ${s <= review.rating ? 'text-yellow-400' : 'text-gray-600'}`}>★</span>
-                        ))}
-                        <span className="ml-1.5 text-xs text-gray-400">{RATING_LABELS[review.rating]}</span>
+                  <div className="flex items-start justify-between mb-2.5">
+                    <div className="flex items-center gap-2.5">
+                      {/* Reviewer avatar */}
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white font-black text-sm shrink-0"
+                        style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)' }}
+                      >
+                        {review.reviewer?.full_name?.charAt(0)?.toUpperCase() || '?'}
+                      </div>
+                      <div>
+                        <p className="text-white text-sm font-bold leading-tight">
+                          {review.reviewer?.full_name || 'Anonymous'}
+                        </p>
+                        <div className="flex items-center gap-0.5 mt-0.5">
+                          {[1, 2, 3, 4, 5].map(s => (
+                            <span key={s} className={`text-xs ${s <= review.rating ? 'text-yellow-400' : 'text-gray-700'}`}>★</span>
+                          ))}
+                          <span className="text-xs text-gray-500 ml-1">{RATING_LABELS[review.rating]}</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-400">
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-gray-600">
                         {new Date(review.created_at).toLocaleDateString()}
                       </span>
                       {isAuthenticated && user?.id === sellerId && (
                         <button
                           onClick={() => handleDeleteReview(review.id)}
-                          className="text-red-400 hover:text-red-300 font-bold text-sm px-2 py-1 hover:bg-red-500/10 rounded transition"
+                          className="text-gray-600 hover:text-red-400 transition text-xs px-1 py-0.5 rounded hover:bg-red-500/10"
                           title="Delete review"
                         >
                           ✕
@@ -679,52 +774,87 @@ export default function SellerProfilePage() {
                   <p className="text-gray-300 text-sm leading-relaxed">{review.comment}</p>
 
                   {review.proof_image_url && (
-                    <a href={review.proof_image_url} target="_blank" rel="noopener noreferrer" className="block">
+                    <a href={review.proof_image_url} target="_blank" rel="noopener noreferrer" className="mt-3 block">
                       <img
                         src={review.proof_image_url}
                         alt="Proof of purchase"
-                        className="w-full max-h-40 object-cover rounded-lg border border-white/10 hover:opacity-90 transition"
+                        className="w-full max-h-36 object-cover rounded-xl opacity-75 hover:opacity-100 transition"
+                        style={{ border: '1px solid rgba(255,255,255,0.07)' }}
                       />
-                      <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
-                        <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        Proof of purchase · click to enlarge
-                      </p>
+                      <p className="text-xs text-gray-600 mt-1">Proof of purchase · tap to enlarge</p>
                     </a>
                   )}
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </section>
+      </div>
 
-        {/* Report Modal */}
-        {showReportModal && (
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-900/80 border border-white/10 rounded-xl p-6 max-w-sm w-full space-y-4">
-              <h2 className="text-2xl text-center">⚠️</h2>
-              <p className="text-gray-300 text-sm">
-                Feels like this items are against our Terms of Use
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowReportModal(false)}
-                  className="flex-1 py-3 px-4 bg-gray-600/30 hover:bg-gray-600/40 active:bg-gray-600/50 text-gray-300 rounded-lg font-bold transition touch-manipulation"
-                >
-                  No
-                </button>
-                <a
-                  href={`mailto:admin@shelterlab.shop?subject=${encodeURIComponent('Report Post/User')}&body=${encodeURIComponent(`Reported User: ${seller?.full_name || 'Unknown'}\n\nReason for Report:\n`)}`}
-                  className="flex-1 py-3 px-4 bg-red-500/30 hover:bg-red-500/40 active:bg-red-500/50 text-red-300 rounded-lg font-bold transition touch-manipulation text-center flex items-center justify-center cursor-pointer"
-                >
-                  Yes
-                </a>
-              </div>
+      {/* ── Verified badge tooltip ─────────────────────────────────────────── */}
+      {showBadgeTooltip && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center"
+          style={{ backdropFilter: 'blur(12px)', background: 'rgba(0,0,0,0.45)' }}
+          onClick={() => setShowBadgeTooltip(false)}
+        >
+          <div
+            className="rounded-2xl p-6 w-72 max-w-[88vw]"
+            style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 24px 64px rgba(0,0,0,0.8)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <img src="/BadgeIcon.svg" alt="" width={28} height={28} className="w-7 h-7 object-contain" />
+              <p className="text-white font-bold">Verified Student</p>
+            </div>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              This user has verified their student status at their registered university.
+            </p>
+            <button
+              onClick={() => setShowBadgeTooltip(false)}
+              className="mt-5 w-full py-2 rounded-xl text-sm font-semibold text-gray-300 hover:text-white transition"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Report modal ───────────────────────────────────────────────────── */}
+      {showReportModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backdropFilter: 'blur(8px)', background: 'rgba(0,0,0,0.5)' }}
+        >
+          <div
+            className="rounded-2xl p-6 w-full max-w-sm space-y-4"
+            style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            <h3 className="text-white font-black text-base">Report this user?</h3>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              This will open your email to send a report to our admin team about{' '}
+              <span className="text-white font-bold">{seller?.full_name}</span>.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="flex-1 py-2.5 rounded-xl text-gray-300 font-bold text-sm transition"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                Cancel
+              </button>
+              <a
+                href={`mailto:admin@shelterlab.shop?subject=${encodeURIComponent('Report Post/User')}&body=${encodeURIComponent(`Reported User: ${seller?.full_name || 'Unknown'}\n\nReason for Report:\n`)}`}
+                className="flex-1 py-2.5 rounded-xl text-red-300 font-bold text-sm transition text-center"
+                style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.25)' }}
+              >
+                Send Report
+              </a>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
