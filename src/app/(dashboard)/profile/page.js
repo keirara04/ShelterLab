@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/shared/context/AuthContext'
 import { supabase } from '@/services/supabase'
 import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
+import { Stats } from '@/shared/components/Stats'
 import Link from 'next/link'
 
 export default function ProfilePage() {
@@ -729,30 +730,13 @@ export default function ProfilePage() {
         </div>
 
         {/* Stats Bar */}
-        <div className="glass-strong rounded-2xl p-4 mb-6 flex items-center justify-around">
-          <div className="text-center px-4">
-            <p className="text-2xl font-black text-white">{myListings.length}</p>
-            <p className="text-xs text-teal-400 font-bold uppercase tracking-wider">Listings</p>
-          </div>
-          <div className="w-px h-8" style={{ background: 'rgba(255,255,255,0.1)' }} />
-          <div className="text-center px-4">
-            <p className="text-2xl font-black text-white">{profile?.trust_score || 0}</p>
-            <p className="text-xs text-cyan-400 font-bold uppercase tracking-wider">Trust</p>
-          </div>
-          <div className="w-px h-8" style={{ background: 'rgba(255,255,255,0.1)' }} />
-          <div className="text-center px-4">
-            <p className="text-2xl font-black text-white">{reviews.length}</p>
-            <p className="text-xs text-violet-400 font-bold uppercase tracking-wider">Reviews</p>
-          </div>
-          {averageRating && (
-            <>
-              <div className="w-px h-8" style={{ background: 'rgba(255,255,255,0.1)' }} />
-              <div className="text-center px-4">
-                <p className="text-2xl font-black text-white">{averageRating}</p>
-                <p className="text-xs text-amber-400 font-bold uppercase tracking-wider">Rating</p>
-              </div>
-            </>
-          )}
+        <div className="mb-6">
+          <Stats
+            listingsCount={myListings.length}
+            trustScore={profile?.trust_score || 0}
+            reviewsCount={reviews.length}
+            rating={averageRating}
+          />
         </div>
 
         {/* Tab Switcher */}
