@@ -14,24 +14,6 @@ export default function BottomNav() {
 
   const navItems = [
     {
-      name: 'Home',
-      href: '/',
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <g clipPath="url(#clip0_4039_12377)">
-            <path d="M18.8751 11.9916L10.0001 18.4416L1.12512 11.9916C1.00614 11.9041 0.917886 11.7812 0.872982 11.6405C0.828079 11.4998 0.828827 11.3485 0.87512 11.2083L1.89179 8.0583L3.92512 1.79997C3.94484 1.74897 3.97624 1.70331 4.01679 1.66663C4.08282 1.60632 4.16902 1.57288 4.25845 1.57288C4.34789 1.57288 4.43409 1.60632 4.50012 1.66663C4.54294 1.70802 4.57449 1.75965 4.59179 1.81663L6.62512 8.0583H13.3751L15.4085 1.79997C15.4282 1.74897 15.4596 1.70331 15.5001 1.66663C15.5662 1.60632 15.6524 1.57288 15.7418 1.57288C15.8312 1.57288 15.9174 1.60632 15.9835 1.66663C16.0263 1.70802 16.0578 1.75965 16.0751 1.81663L18.1085 8.07497L19.1668 11.2083C19.2089 11.3529 19.2032 11.5072 19.1507 11.6483C19.0982 11.7894 19.0015 11.9098 18.8751 11.9916Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </g>
-          <defs>
-            <clipPath id="clip0_4039_12377">
-              <rect width="20" height="20" fill="white" />
-            </clipPath>
-          </defs>
-        </svg>
-
-      ),
-      requiresAuth: false,
-    },
-    {
       name: 'Sell',
       href: '/sell',
       icon: (
@@ -51,16 +33,41 @@ export default function BottomNav() {
           <path d="M21 14H14V21H21V14Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           <path d="M10 14H3V21H10V14Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-
-
       ),
       requiresAuth: true,
+    },
+    {
+      name: 'Home',
+      href: '/',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g clipPath="url(#clip0_4039_12377)">
+            <path d="M18.8751 11.9916L10.0001 18.4416L1.12512 11.9916C1.00614 11.9041 0.917886 11.7812 0.872982 11.6405C0.828079 11.4998 0.828827 11.3485 0.87512 11.2083L1.89179 8.0583L3.92512 1.79997C3.94484 1.74897 3.97624 1.70331 4.01679 1.66663C4.08282 1.60632 4.16902 1.57288 4.25845 1.57288C4.34789 1.57288 4.43409 1.60632 4.50012 1.66663C4.54294 1.70802 4.57449 1.75965 4.59179 1.81663L6.62512 8.0583H13.3751L15.4085 1.79997C15.4282 1.74897 15.4596 1.70331 15.5001 1.66663C15.5662 1.60632 15.6524 1.57288 15.7418 1.57288C15.8312 1.57288 15.9174 1.60632 15.9835 1.66663C16.0263 1.70802 16.0578 1.75965 16.0751 1.81663L18.1085 8.07497L19.1668 11.2083C19.2089 11.3529 19.2032 11.5072 19.1507 11.6483C19.0982 11.7894 19.0015 11.9098 18.8751 11.9916Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </g>
+          <defs>
+            <clipPath id="clip0_4039_12377">
+              <rect width="20" height="20" fill="white" />
+            </clipPath>
+          </defs>
+        </svg>
+      ),
+      requiresAuth: false,
+    },
+    {
+      name: 'PasarMalam',
+      href: '/pasarmalam',
+      icon: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 11l19-9-9 19-2-8-8-2z" />
+        </svg>
+      ),
+      requiresAuth: false,
     },
     {
       name: 'Profile',
       href: '/profile',
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
       ),
@@ -82,7 +89,7 @@ export default function BottomNav() {
           borderColor: 'rgba(255, 255, 255, 0.1)',
         }}
       >
-        <div className="flex items-center justify-around h-16 px-2 max-w-screen-sm mx-auto">
+        <div className="flex items-center justify-around h-16 px-1 max-w-screen-sm mx-auto">
           {navItems.map((item) => {
             const isLocked = item.requiresAuth && !isAuthenticated
             const isActive = pathname === item.href
@@ -92,7 +99,7 @@ export default function BottomNav() {
                 <button
                   key={item.name}
                   onClick={() => handleLockedTap(item.href)}
-                  className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg touch-manipulation min-h-[60px] min-w-[64px] text-gray-600"
+                  className="flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg touch-manipulation min-h-[60px] min-w-[52px] text-gray-600"
                 >
                   <div className="relative">
                     {item.icon}
@@ -102,7 +109,7 @@ export default function BottomNav() {
                       </svg>
                     </div>
                   </div>
-                  <span className="text-xs font-bold">{item.name}</span>
+                  <span className="text-[10px] font-bold">{item.name}</span>
                 </button>
               )
             }
@@ -111,10 +118,9 @@ export default function BottomNav() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 touch-manipulation min-h-[60px] min-w-[64px] ${isActive
-                  ? 'text-blue-400'
-                  : 'text-gray-400 hover:text-white active:text-blue-300'
-                  }`}
+                className={`flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg transition-all duration-200 touch-manipulation min-h-[60px] min-w-[52px] ${
+                  isActive ? 'text-blue-400' : 'text-gray-400 hover:text-white active:text-blue-300'
+                }`}
                 style={{
                   background: isActive ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
                 }}
@@ -138,7 +144,7 @@ export default function BottomNav() {
                 ) : (
                   <div>{item.icon}</div>
                 )}
-                <span className="text-xs font-bold">{item.name}</span>
+                <span className="text-[10px] font-bold">{item.name}</span>
               </Link>
             )
           })}

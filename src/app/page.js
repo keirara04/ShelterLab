@@ -360,6 +360,21 @@ export default function HomePage() {
                 )}
               </div>
 
+              <Link
+                href="/pasarmalam"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-bold transition-all duration-200"
+                style={{
+                  background: 'rgba(251,191,36,0.08)',
+                  border: '1px solid rgba(251,191,36,0.2)',
+                  color: '#fbbf24',
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 2h6" /><path d="M12 2v3" /><path d="M6 7a6 6 0 0 0 6 10 6 6 0 0 0 6-10H6z" /><path d="M9 17v2a3 3 0 0 0 6 0v-2" />
+                </svg>
+                Pasar Malam
+              </Link>
+
               <div className="w-px h-6 bg-white/15" />
 
               {/* Notification Bell - Desktop only */}

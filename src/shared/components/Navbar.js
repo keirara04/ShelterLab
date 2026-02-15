@@ -83,6 +83,18 @@ export default function Navbar({ selectedCategory, setSelectedCategory }) {
                   {cat.name}
                 </button>
               ))}
+
+              <div className="w-px h-5 bg-white/20 mx-1" />
+
+              <Link
+                href="/pasarmalam"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all text-yellow-400 hover:bg-yellow-400/10"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 2h6" /><path d="M12 2v3" /><path d="M6 7a6 6 0 0 0 6 10 6 6 0 0 0 6-10H6z" /><path d="M9 17v2a3 3 0 0 0 6 0v-2" />
+                </svg>
+                Pasar Malam
+              </Link>
             </nav>
 
             {/* Right Side - User & Actions */}
