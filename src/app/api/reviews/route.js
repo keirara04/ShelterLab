@@ -59,7 +59,7 @@ export async function POST(request) {
     if (auth instanceof Response) return auth // Return 401 if not authenticated
 
     const body = await request.json()
-    const { reviewee_id, reviewer_id, comment, rating, listing_id, is_seller_review } = body
+    const { reviewee_id, reviewer_id, comment, rating, listing_id, is_seller_review, proof_image_url } = body
 
     // Verify the authenticated user matches the reviewer_id (prevent impersonation)
     if (auth.user.id !== reviewer_id) {
@@ -100,9 +100,12 @@ export async function POST(request) {
       is_seller_review: Boolean(is_seller_review),
     }
 
-    // Add listing_id if provided
     if (listing_id) {
       reviewData.listing_id = listing_id
+    }
+
+    if (proof_image_url) {
+      reviewData.proof_image_url = proof_image_url
     }
 
     const { data, error } = await supabaseServer
