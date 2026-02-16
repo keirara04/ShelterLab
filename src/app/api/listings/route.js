@@ -183,7 +183,7 @@ export async function POST(request) {
 
       const sellerName = sellerProfile?.full_name || 'Someone'
       const university = sellerProfile?.university || ''
-      const formattedPrice = `RM${parseFloat(data.price).toFixed(2)}`
+      const formattedPrice = `₩${parseFloat(data.price).toLocaleString()}`
 
       await sendPushToAll({
         title: `🛒 ${data.title} — ${formattedPrice}`,
