@@ -1,5 +1,6 @@
 import { AuthProvider } from '@/shared/context/AuthContext'
 import LayoutWrapper from '@/shared/components/LayoutWrapper'
+import ServiceWorkerRegistrar from '@/shared/components/ServiceWorkerRegistrar'
 import { Analytics } from '@vercel/analytics/next'
 import { Geist, Geist_Mono } from "next/font/google";
 import './globals.css'
@@ -7,6 +8,7 @@ import './globals.css'
 export const metadata = {
   title: 'ShelterLab - Your Campus Marketplace',
   description: 'Buy and sell items with your campus community',
+  manifest: '/manifest.json',
 }
 
 const geistSans = Geist({
@@ -30,6 +32,7 @@ export default function RootLayout({ children }) {
           </LayoutWrapper>
         </AuthProvider>
         <Analytics />
+        <ServiceWorkerRegistrar />
       </body>
     </html>
   )

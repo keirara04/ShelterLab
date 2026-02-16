@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { supabaseServer } from '@/services/supabaseServer'
+import { sendPushToAll } from '@/services/utils/sendPush'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -132,7 +133,17 @@ export async function POST(request) {
       throw error
     }
 
-    console.log('[API] Notification created successfully')
+    console.log('[API] Notification created successfully, sending push notifications...')
+    
+    // Send push notification to all subscribers
+    await sendPushToAll({
+      title: data.title,
+      body: data.message,
+      tag: 'admin-notification',
+      url: '/',
+    })
+    
+    console.log('[API] Push notifications sent to all subscribers')
     return Response.json({
       success: true,
       data,

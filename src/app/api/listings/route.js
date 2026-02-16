@@ -1,5 +1,6 @@
 // src/app/api/listings/route.js
 import { supabaseServer } from '@/services/supabaseServer'
+import { sendPushToAll } from '@/services/utils/sendPush'
 
 export async function GET(request) {
   try {
@@ -170,6 +171,31 @@ export async function POST(request) {
     }
 
     console.log('Listing created successfully:', data)
+
+    // Send push notification to all subscribers about the new listing
+    try {
+      // Fetch seller profile for notification details
+      const { data: sellerProfile } = await supabaseServer
+        .from('profiles')
+        .select('full_name, university')
+        .eq('id', userId)
+        .single()
+
+      const sellerName = sellerProfile?.full_name || 'Someone'
+      const university = sellerProfile?.university || ''
+      const formattedPrice = `RM${parseFloat(data.price).toFixed(2)}`
+
+      await sendPushToAll({
+        title: `🛒 ${data.title} — ${formattedPrice}`,
+        body: `Listed by ${sellerName}${university ? ` (${university})` : ''}`,
+        tag: 'new-listing',
+        url: `/buyer/${data.id}`,
+      })
+      console.log('Push notification sent for new listing')
+    } catch (pushError) {
+      console.error('Failed to send push notification:', pushError)
+      // Don't fail the listing creation if push fails
+    }
 
     return Response.json({
       success: true,

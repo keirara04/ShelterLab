@@ -1,0 +1,16 @@
+{
+  "name": "ShelterLab",
+  "short_name": "ShelterLab",
+  "description": "Your Campus Marketplace",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}

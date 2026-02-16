@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/shared/context/AuthContext'
+import PWAInstallButton from '@/shared/components/PWAInstallButton'
 import { supabase } from '@/services/supabase'
 import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
 import { Stats } from '@/shared/components/Stats'
@@ -41,6 +43,14 @@ export default function ProfilePage() {
     full_name: '',
     avatar_url: '',
   })
+  
+  // Push notification subscription
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false)
+  const [enableNotifLoading, setEnableNotifLoading] = useState(false)
+  const [enableNotifError, setEnableNotifError] = useState(null)
+  const [enableNotifSuccess, setEnableNotifSuccess] = useState(null)
+  const [showNotifModal, setShowNotifModal] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   // Pending transaction confirmations
   const [pendingTx, setPendingTx] = useState([])
@@ -53,6 +63,10 @@ export default function ProfilePage() {
     await logout()
     router.push('/login')
   }
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (user) {
@@ -219,6 +233,176 @@ export default function ProfilePage() {
       setNotificationError(err.message || 'Failed to push notification')
     } finally {
       setNotificationLoading(false)
+    }
+  }
+
+  const handleEnablePushNotifications = async () => {
+    setEnableNotifLoading(true)
+    setEnableNotifError(null)
+    setEnableNotifSuccess(null)
+
+    try {
+      // Detect iOS
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone
+
+      // Check if browser supports service workers
+      if (!('serviceWorker' in navigator)) {
+        if (isIOS) {
+          throw new Error('To enable notifications on iPhone, first add this app to your Home Screen: tap the Share button ⬆️ then "Add to Home Screen", then open the app from there.')
+        }
+        throw new Error('Your browser does not support push notifications. Try using Chrome or Edge.')
+      }
+
+      // Check if browser supports notifications
+      if (!('Notification' in window)) {
+        if (isIOS && !isStandalone) {
+          throw new Error('To enable notifications on iPhone, first add this app to your Home Screen: tap the Share button ⬆️ then "Add to Home Screen", then open the app from there.')
+        }
+        throw new Error('Notifications are not supported in this browser. Try using Chrome or Edge.')
+      }
+
+      // Check if browser supports PushManager
+      if (!('PushManager' in window)) {
+        if (isIOS) {
+          throw new Error('Push notifications require iOS 16.4 or later. Please update your iPhone and add this app to your Home Screen first.')
+        }
+        throw new Error('Push notifications are not supported in this browser. Try using Chrome or Edge.')
+      }
+
+      // Request notification permission
+      const permission = await Notification.requestPermission()
+      if (permission !== 'granted') {
+        throw new Error('Notification permission denied. Please allow notifications in your browser settings.')
+      }
+
+      // Get service worker registration
+      const registration = await navigator.serviceWorker.ready
+
+      // Check if VAPID key is available
+      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      if (!vapidKey) {
+        throw new Error('Push notification configuration is missing')
+      }
+
+      // Convert base64 string to Uint8Array
+      const urlBase64ToUint8Array = (base64String) => {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4)
+        const base64 = (base64String + padding)
+          .replace(/\-/g, '+')
+          .replace(/_/g, '/')
+        const rawData = window.atob(base64)
+        const outputArray = new Uint8Array(rawData.length)
+        for (let i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i)
+        }
+        return outputArray
+      }
+
+      // Subscribe to push notifications
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+      })
+
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error('Not authenticated')
+      }
+
+      // Get the subscription keys
+      const p256dh = subscription.getKey('p256dh')
+      const auth = subscription.getKey('auth')
+
+      if (!p256dh || !auth) {
+        throw new Error('Failed to get subscription keys')
+      }
+
+      // Convert keys to base64
+      const p256dhBase64 = btoa(String.fromCharCode.apply(null, new Uint8Array(p256dh)))
+      const authBase64 = btoa(String.fromCharCode.apply(null, new Uint8Array(auth)))
+
+      // Save subscription to database via API
+      const response = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          endpoint: subscription.endpoint,
+          keys: {
+            p256dh: p256dhBase64,
+            auth: authBase64,
+          },
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to save subscription')
+      }
+
+      setNotificationsEnabled(true)
+      setEnableNotifSuccess('✅ Push notifications enabled! You will now receive notifications for new listings.')
+      console.log('Push notifications enabled successfully')
+      
+      // Close modal after 2 seconds
+      setTimeout(() => setShowNotifModal(false), 2000)
+    } catch (err) {
+      console.error('Error enabling notifications:', err)
+      setEnableNotifError(err.message || 'Failed to enable notifications')
+    } finally {
+      setEnableNotifLoading(false)
+    }
+  }
+
+  const handleDisablePushNotifications = async () => {
+    setEnableNotifLoading(true)
+    setEnableNotifError(null)
+    setEnableNotifSuccess(null)
+
+    try {
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error('Not authenticated')
+      }
+
+      // Get service worker registration and unsubscribe
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        const registration = await navigator.serviceWorker.ready
+        const subscription = await registration.pushManager.getSubscription()
+        
+        if (subscription) {
+          // Unsubscribe from push manager
+          await subscription.unsubscribe()
+          
+          // Delete subscription from database
+          const response = await fetch('/api/push/subscribe', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+          })
+
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.error || 'Failed to disable notifications')
+          }
+        }
+      }
+
+      setNotificationsEnabled(false)
+      setEnableNotifSuccess('✅ Push notifications disabled.')
+      console.log('Push notifications disabled successfully')
+    } catch (err) {
+      console.error('Error disabling notifications:', err)
+      setEnableNotifError(err.message || 'Failed to disable notifications')
+    } finally {
+      setEnableNotifLoading(false)
     }
   }
 
@@ -637,6 +821,31 @@ export default function ProfilePage() {
                   </svg>
                 )}
               </button>
+
+              {/* Notification Bell Icon */}
+              {mounted && (
+                <button
+                  onClick={() => setShowNotifModal(true)}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 relative group"
+                  style={notificationsEnabled ? {
+                    background: 'rgba(34, 197, 94, 0.15)',
+                    border: '1px solid rgba(34, 197, 94, 0.3)',
+                    color: '#22c55e',
+                  } : {
+                    background: 'rgba(59, 130, 246, 0.15)',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    color: '#60a5fa',
+                  }}
+                  title={notificationsEnabled ? 'Notifications enabled - Click to manage' : 'Enable notifications'}
+                  type="button"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  <span className={`absolute top-0 right-0 w-2 h-2 rounded-full ${notificationsEnabled ? 'bg-green-500' : 'bg-blue-500'}`}></span>
+                </button>
+              )}
+
               <button
                 onClick={handleLogout}
                 className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-500 hover:text-red-400"
@@ -1128,6 +1337,15 @@ export default function ProfilePage() {
           </div>
         )}
 
+        {/* PWA Install Section */}
+        <div className="mt-10 mb-10 flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-black text-white mb-1">📱Install App</h3>
+            <p className="text-sm text-gray-400">Quick access & offline support with notifications functionality !</p>
+          </div>
+          <PWAInstallButton />
+        </div>
+
         {/* Back link */}
         <div className="mt-10 text-center">
           <Link
@@ -1273,6 +1491,133 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Notification Modal */}
+      {mounted && showNotifModal && createPortal(
+        <div
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+          onClick={() => setShowNotifModal(false)}
+        >
+          <div
+            style={{ background: '#0a0a0a', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '16px', padding: '24px', maxWidth: '400px', width: '100%', boxShadow: '0 24px 64px rgba(0,0,0,0.8)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <h3 style={{ color: 'white', fontSize: '18px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg style={{ width: '24px', height: '24px', color: '#60a5fa' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                Notifications
+              </h3>
+              <button onClick={() => setShowNotifModal(false)} style={{ color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }}>✕</button>
+            </div>
+            <p style={{ color: '#d1d5db', fontSize: '14px', marginBottom: '16px' }}>
+              {notificationsEnabled
+                ? 'You are receiving notifications for new listings.'
+                : 'Get instant alerts when someone lists a new item on the marketplace. Never miss great deals!'}
+            </p>
+            {enableNotifError && (
+              <div style={{ background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.5)', borderRadius: '8px', padding: '12px', color: '#f87171', fontSize: '14px', marginBottom: '16px' }}>
+                ⚠️ {enableNotifError}
+              </div>
+            )}
+            {enableNotifSuccess && (
+              <div style={{ background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.5)', borderRadius: '8px', padding: '12px', color: '#4ade80', fontSize: '14px', marginBottom: '16px' }}>
+                ✅ {enableNotifSuccess}
+              </div>
+            )}
+            {(() => {
+              const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+              const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone
+              const canPush = 'serviceWorker' in navigator && 'Notification' in window && 'PushManager' in window
+
+              if (notificationsEnabled) {
+                return (
+                  <div>
+                    <button
+                      onClick={handleDisablePushNotifications}
+                      disabled={enableNotifLoading}
+                      style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'linear-gradient(to right, #dc2626, #b91c1c)', color: 'white', fontWeight: 700, fontSize: '14px', border: 'none', cursor: enableNotifLoading ? 'not-allowed' : 'pointer', opacity: enableNotifLoading ? 0.5 : 1 }}
+                    >
+                      {enableNotifLoading ? '⏳ Disabling...' : '🔴 Disable Notifications'}
+                    </button>
+                    <p style={{ color: '#6b7280', fontSize: '12px', textAlign: 'center', marginTop: '12px' }}>You will stop receiving push notifications</p>
+                  </div>
+                )
+              }
+
+              if (isIOS && !isStandalone) {
+                return (
+                  <div style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: '8px', padding: '16px' }}>
+                    <p style={{ color: '#fbbf24', fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>📱 iPhone Setup Required</p>
+                    <p style={{ color: '#d1d5db', fontSize: '13px', lineHeight: '1.6' }}>
+                      To get notifications on iPhone:<br />
+                      1. Tap the <strong style={{ color: '#60a5fa' }}>Share button</strong> ⬆️ at the bottom<br />
+                      2. Tap <strong style={{ color: '#60a5fa' }}>"Add to Home Screen"</strong><br />
+                      3. Open the app from your Home Screen<br />
+                      4. Come back here and enable notifications
+                    </p>
+                  </div>
+                )
+              }
+
+              if (!canPush) {
+                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'http:'
+                return (
+                  <div style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: '8px', padding: '16px' }}>
+                    {isLocalhost ? (
+                      <>
+                        <p style={{ color: '#fbbf24', fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>🔒 HTTPS Required</p>
+                        <p style={{ color: '#d1d5db', fontSize: '13px', lineHeight: '1.6' }}>
+                          Push notifications require a secure (HTTPS) connection. You&apos;re currently on a local development server.
+                        </p>
+                        <p style={{ color: '#d1d5db', fontSize: '13px', lineHeight: '1.6', marginTop: '8px' }}>
+                          This will work automatically once the app is <strong style={{ color: '#60a5fa' }}>deployed to production</strong> (e.g. Vercel).
+                        </p>
+                        {isIOS && (
+                          <p style={{ color: '#d1d5db', fontSize: '13px', lineHeight: '1.6', marginTop: '8px' }}>
+                            On iPhone, also make sure you&apos;ve added the app to your Home Screen.
+                          </p>
+                        )}
+                      </>
+                    ) : isIOS ? (
+                      <>
+                        <p style={{ color: '#f87171', fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>📱 iOS Setup Required</p>
+                        <p style={{ color: '#d1d5db', fontSize: '13px', lineHeight: '1.6' }}>
+                          {isStandalone
+                            ? 'Push notifications are not available yet. Please make sure you\'re on iOS 16.4 or later (Settings → General → Software Update).'
+                            : 'To get notifications on iPhone, first add this app to your Home Screen: tap Share ⬆️ → "Add to Home Screen", then open the app from there.'}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p style={{ color: '#f87171', fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>❌ Not Supported</p>
+                        <p style={{ color: '#d1d5db', fontSize: '13px' }}>
+                          Push notifications are not supported in this browser. Try using <strong style={{ color: '#60a5fa' }}>Chrome</strong> or <strong style={{ color: '#60a5fa' }}>Edge</strong> on desktop.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )
+              }
+
+              return (
+                <div>
+                  <button
+                    onClick={handleEnablePushNotifications}
+                    disabled={enableNotifLoading}
+                    style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'linear-gradient(to right, #2563eb, #0891b2)', color: 'white', fontWeight: 700, fontSize: '14px', border: 'none', cursor: enableNotifLoading ? 'not-allowed' : 'pointer', opacity: enableNotifLoading ? 0.5 : 1 }}
+                  >
+                    {enableNotifLoading ? '⏳ Enabling...' : '✓ Enable Notifications'}
+                  </button>
+                  <p style={{ color: '#6b7280', fontSize: '12px', textAlign: 'center', marginTop: '12px' }}>Your browser will ask for permission to send notifications</p>
+                </div>
+              )
+            })()}
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   )
@@ -1585,6 +1930,7 @@ function AdminStats() {
           ))}
         </div>
       )}
+
     </div>
   )
 }
