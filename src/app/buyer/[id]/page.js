@@ -297,7 +297,7 @@ export default function BuyerProfilePage() {
               )}
               <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4">
                 <div className="bg-white/5 rounded-lg p-3 sm:p-4">
-                  <p className="text-xs text-gray-400 uppercase font-bold mb-1">Trust Score</p>
+                  <p className="text-xs text-gray-400 uppercase font-bold mb-1">LabCred</p>
                   <p className="text-xl sm:text-2xl font-black text-green-400">{buyer.trust_score || 0}</p>
                 </div>
                 <div className="bg-white/5 rounded-lg p-3 sm:p-4">

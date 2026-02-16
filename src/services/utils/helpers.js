@@ -120,7 +120,7 @@ export const fileToBase64 = (file) => {
 }
 
 /**
- * Format trust score as badge
+ * Format LabCred as badge
  */
 export const getTrustBadge = (score) => {
   if (score >= 50) return { label: 'Power User', color: 'bg-purple-500' }

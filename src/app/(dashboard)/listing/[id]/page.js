@@ -356,7 +356,7 @@ export default function ListingDetailPage() {
                   <div>
                     <p className="font-bold text-white hover:text-blue-400">{seller.full_name}</p>
                     <p className="text-xs text-gray-400">
-                      Trust Score: {seller.trust_score || 0}
+                      LabCred: {seller.trust_score || 0}
                     </p>
                     {seller.university && (
                       <div className="flex items-center gap-1.5 mt-1">

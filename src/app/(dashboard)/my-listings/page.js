@@ -8,7 +8,7 @@ import { supabase } from '@/services/supabase'
 
 export default function MyListingsPage() {
   const router = useRouter()
-  const { user, isAuthenticated } = useAuth()
+  const { user, isAuthenticated, loading: authLoading } = useAuth()
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -23,6 +23,7 @@ export default function MyListingsPage() {
   const searchTimeout = useRef(null)
 
   useEffect(() => {
+    if (authLoading) return
     if (!isAuthenticated) {
       router.push('/login')
       return
@@ -30,7 +31,19 @@ export default function MyListingsPage() {
     if (user?.id) {
       fetchMyListings()
     }
-  }, [isAuthenticated, filter, user?.id])
+  }, [isAuthenticated, authLoading, filter, user?.id])
+
+  // Refetch when user returns to this tab after being away
+  useEffect(() => {
+    if (!user?.id) return
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchMyListings()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [user?.id])
 
   // Debounced buyer search
   useEffect(() => {
@@ -153,7 +166,19 @@ export default function MyListingsPage() {
           <Link href="/profile" className="text-blue-400 hover:text-blue-300 font-bold mb-4 inline-block py-2 touch-manipulation text-base">
             ← Back to Profile
           </Link>
-          <h1 className="text-4xl font-black text-white mb-2">My Listings</h1>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-4xl font-black text-white">My Listings</h1>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 transition touch-manipulation"
+              title="Refresh"
+            >
+              <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+              </svg>
+            </button>
+          </div>
           <p className="text-gray-400">Manage your items for sale</p>
         </div>
 
@@ -281,7 +306,7 @@ export default function MyListingsPage() {
           <div className="w-full max-w-md rounded-2xl p-6" style={{ background: 'rgba(18,24,39,0.98)', border: '1px solid rgba(255,255,255,0.12)' }}>
             <h2 className="text-xl font-black text-white mb-1">Mark as Sold</h2>
             <p className="text-gray-400 text-sm mb-5">
-              Search for the buyer by name to link the sale. Their trust score will update when they confirm.
+              Search for the buyer by name to link the sale. Their LabCred will update when they confirm.
             </p>
 
             {/* Item preview */}
@@ -362,7 +387,7 @@ export default function MyListingsPage() {
                 disabled={soldLoading}
                 className="w-full py-3 rounded-xl font-bold text-sm text-gray-400 hover:text-white hover:bg-white/5 transition"
               >
-                Skip — sold offline (no trust score update)
+                Skip — sold offline (no LabCred update)
               </button>
               <button
                 onClick={() => setSoldModal(null)}

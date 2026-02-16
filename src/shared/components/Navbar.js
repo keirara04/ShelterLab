@@ -142,7 +142,7 @@ export default function Navbar({ selectedCategory, setSelectedCategory }) {
                           <div>
                             <p className="text-sm font-black text-white">{profile?.full_name || 'User'}</p>
                             <p className="text-xs text-gray-400">{user?.email}</p>
-                            <p className="text-xs text-blue-400 font-bold mt-1">Trust Score: {profile?.trust_score || 0}</p>
+                            <p className="text-xs text-blue-400 font-bold mt-1">LabCred: {profile?.trust_score || 0}</p>
                           </div>
                         </div>
                       </div>

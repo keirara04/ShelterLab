@@ -20,6 +20,7 @@ export default function ProfilePage() {
   const [reviews, setReviews] = useState([])
   const [activeTab, setActiveTab] = useState('listings')
   const [showBadgeTooltip, setShowBadgeTooltip] = useState(false)
+  const [showLabCredInfo, setShowLabCredInfo] = useState(false)
   const [showVerifyModal, setShowVerifyModal] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [avatarFile, setAvatarFile] = useState(null)
@@ -64,6 +65,20 @@ export default function ProfilePage() {
       fetchPendingTransactions()
     }
   }, [user, profile])
+
+  // Refetch when user returns to this tab after being away
+  useEffect(() => {
+    if (!user?.id) return
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchMyListings()
+        fetchReviews()
+        fetchPendingTransactions()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [user?.id])
 
   const fetchMyListings = async () => {
     if (!user) return
@@ -585,38 +600,70 @@ export default function ProfilePage() {
           <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-teal-500/5 rounded-3xl pointer-events-none" />
 
           {/* Card action buttons */}
-          <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200"
-              style={{
-                background: isEditing ? 'rgba(45, 212, 191, 0.15)' : 'rgba(255,255,255,0.06)',
-                border: isEditing ? '1px solid rgba(45, 212, 191, 0.3)' : '1px solid rgba(255,255,255,0.1)',
-                color: isEditing ? '#2dd4bf' : '#9ca3af',
-              }}
-              title={isEditing ? 'Cancel' : 'Edit Profile'}
-            >
-              {isEditing ? (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-1">
+            {/* Row: Refresh (desktop only) + Edit + Logout */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => window.location.reload()}
+                className="hidden sm:flex w-9 h-9 items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-500 hover:text-white"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                }}
+                title="Refresh"
+              >
+                <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                  <path d="M3 3v5h5"/>
                 </svg>
-              ) : (
+              </button>
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200"
+                style={{
+                  background: isEditing ? 'rgba(45, 212, 191, 0.15)' : 'rgba(255,255,255,0.06)',
+                  border: isEditing ? '1px solid rgba(45, 212, 191, 0.3)' : '1px solid rgba(255,255,255,0.1)',
+                  color: isEditing ? '#2dd4bf' : '#9ca3af',
+                }}
+                title={isEditing ? 'Cancel' : 'Edit Profile'}
+              >
+                {isEditing ? (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                )}
+              </button>
+              <button
+                onClick={handleLogout}
+                className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-500 hover:text-red-400"
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                }}
+                title="Log Out"
+              >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-              )}
-            </button>
+              </button>
+            </div>
+            {/* Refresh — mobile only, below logout */}
             <button
-              onClick={handleLogout}
-              className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-500 hover:text-red-400"
+              onClick={() => window.location.reload()}
+              className="sm:hidden w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-500 hover:text-white"
               style={{
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.1)',
               }}
-              title="Log Out"
+              title="Refresh"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
               </svg>
             </button>
           </div>
@@ -790,6 +837,7 @@ export default function ProfilePage() {
             trustScore={profile?.trust_score || 0}
             reviewsCount={reviews.length}
             rating={averageRating}
+            onLabCredClick={() => setShowLabCredInfo(true)}
           />
         </div>
 
@@ -1097,12 +1145,93 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* LabCred Info Modal */}
+      {showLabCredInfo && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
+          style={{ backdropFilter: 'blur(12px)', background: 'rgba(0,0,0,0.6)' }}
+          onClick={() => setShowLabCredInfo(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl p-6"
+            style={{ background: '#0a0a0a', border: '1px solid rgba(192,132,252,0.25)', boxShadow: '0 24px 64px rgba(0,0,0,0.8), 0 0 32px rgba(192,132,252,0.08)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(192,132,252,0.12)', border: '1px solid rgba(192,132,252,0.2)' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><polyline points="9 12 11 14 15 10" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-white font-black text-base">What is LabCred?</p>
+                <p className="text-purple-400 text-xs font-semibold">ShelterLab Credibility Score</p>
+              </div>
+            </div>
+
+            {/* Description */}
+            <p className="text-gray-400 text-sm leading-relaxed mb-5">
+              LabCred is your credibility score on ShelterLab. It reflects how trustworthy and active you are as a buyer or seller in our campus community.
+            </p>
+
+            {/* How to earn */}
+            <div className="mb-5">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">How to earn LabCred</p>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2.5">
+                  <span className="text-purple-400 mt-0.5 shrink-0">+</span>
+                  <p className="text-gray-300 text-sm">Complete a sale as a seller</p>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="text-purple-400 mt-0.5 shrink-0">+</span>
+                  <p className="text-gray-300 text-sm">Confirm a purchase as a buyer</p>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="text-purple-400 mt-0.5 shrink-0">+</span>
+                  <p className="text-gray-300 text-sm">Receive positive reviews from the community</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tiers */}
+            <div className="mb-5">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">LabCred Tiers</p>
+              <div className="space-y-2">
+                {[
+                  { label: 'New User', range: '0–9', color: '#9ca3af' },
+                  { label: 'Trusted', range: '10–24', color: '#60a5fa' },
+                  { label: 'Very Trusted', range: '25–49', color: '#34d399' },
+                  { label: 'Power User', range: '50+', color: '#a78bfa' },
+                ].map(({ label, range, color }) => (
+                  <div key={label} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
+                      <span className="text-sm font-bold" style={{ color }}>{label}</span>
+                    </div>
+                    <span className="text-xs text-gray-600 font-mono">{range} pts</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowLabCredInfo(false)}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold text-gray-300 hover:text-white transition"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Confirm Transaction Modal */}
       {confirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}>
           <div className="w-full max-w-md rounded-2xl p-6" style={{ background: 'rgba(18,24,39,0.98)', border: '1px solid rgba(255,255,255,0.12)' }}>
             <h2 className="text-xl font-black text-white mb-1">Confirm Purchase</h2>
-            <p className="text-gray-400 text-sm mb-5">Leave a review for the seller to complete the sale and update trust scores.</p>
+            <p className="text-gray-400 text-sm mb-5">Leave a review for the seller to complete the sale and update LabCred.</p>
             <div className="flex items-center gap-3 mb-5 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)' }}>
               {confirmModal.listing?.image_urls?.[0] && (
                 <img src={confirmModal.listing.image_urls[0]} alt={confirmModal.listing.title} className="w-12 h-12 rounded-lg object-cover" />

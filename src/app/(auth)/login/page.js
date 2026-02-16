@@ -45,7 +45,7 @@ function LoginContent() {
       const result = await login(formData.email, formData.password)
 
       if (result.success) {
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        router.push(redirectPath || '/')
       } else {
         setError(result.error || 'Login failed. Check your credentials.')
         setLoading(false)

@@ -43,37 +43,41 @@ export function AuthProvider({ children }) {
         const {
           data: { subscription },
         } = supabase.auth.onAuthStateChange(async (event, session) => {
-          setUser(session?.user || null)
-
-          if (session?.user) {
-            // Check if user is still approved
-            const { data: approvedUser } = await supabase
-              .from('approved_users')
-              .select('*')
-              .eq('email', session.user.email.toLowerCase())
-              .eq('status', 'approved')
-              .single()
-
-            if (!approvedUser) {
-              // User is no longer approved - sign them out
-              await supabase.auth.signOut()
-              setUser(null)
-              setProfile(null)
-              return
-            }
-
-            const { data, error: profileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-
-            if (data && data.length > 0) {
-              setProfile(data[0])
-            } else if (profileError) {
-              console.warn('Profile fetch error:', profileError)
-            }
-          } else {
+          if (event === 'SIGNED_OUT') {
+            setUser(null)
             setProfile(null)
+            return
+          }
+
+          if (!session?.user) return
+
+          setUser(session.user)
+
+          // Check if user is still approved
+          const { data: approvedUser } = await supabase
+            .from('approved_users')
+            .select('*')
+            .eq('email', session.user.email.toLowerCase())
+            .eq('status', 'approved')
+            .single()
+
+          if (!approvedUser) {
+            // User is no longer approved - sign them out
+            await supabase.auth.signOut()
+            setUser(null)
+            setProfile(null)
+            return
+          }
+
+          const { data, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+
+          if (data && data.length > 0) {
+            setProfile(data[0])
+          } else if (profileError) {
+            console.warn('Profile fetch error:', profileError)
           }
         })
 

@@ -1,6 +1,6 @@
-//Stats component to display user stats like listings count, trust score, reviews count, and rating
+//Stats component to display user stats like listings count, LabCred, reviews count, and rating
 
-export function Stats({ listingsCount = 0, trustScore = 0, reviewsCount = 0, rating = null }) {
+export function Stats({ listingsCount = 0, trustScore = 0, reviewsCount = 0, rating = null, onLabCredClick }) {
   const stats = [
     {
       label: 'Listings',
@@ -15,11 +15,12 @@ export function Stats({ listingsCount = 0, trustScore = 0, reviewsCount = 0, rat
       ),
     },
     {
-      label: 'Trust Score',
+      label: 'LabCred',
       value: trustScore,
       color: 'text-purple-400',
       bg: 'rgba(192,132,252,0.1)',
       border: 'rgba(192,132,252,0.15)',
+      clickable: true,
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><polyline points="9 12 11 14 15 10" />
@@ -54,27 +55,37 @@ export function Stats({ listingsCount = 0, trustScore = 0, reviewsCount = 0, rat
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      {stats.map((stat) => (
-        <div
-          key={stat.label}
-          className="flex flex-col items-center justify-center rounded-2xl p-4 text-center transition-all duration-200 hover:scale-[1.02]"
-          style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.08)',
-          }}
-        >
-          <div
-            className={`mb-3 rounded-full p-2.5 ${stat.color}`}
-            style={{ background: stat.bg, border: `1px solid ${stat.border}` }}
+      {stats.map((stat) => {
+        const isClickable = stat.clickable && onLabCredClick
+        const Wrapper = isClickable ? 'button' : 'div'
+        return (
+          <Wrapper
+            key={stat.label}
+            onClick={isClickable ? onLabCredClick : undefined}
+            className={`flex flex-col items-center justify-center rounded-2xl p-4 text-center transition-all duration-200 hover:scale-[1.02] ${isClickable ? 'cursor-pointer hover:border-purple-500/40 w-full' : ''}`}
+            style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
           >
-            {stat.icon}
-          </div>
-          <span className="text-2xl font-black text-white leading-none">{stat.value}</span>
-          <span className="mt-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-            {stat.label}
-          </span>
-        </div>
-      ))}
+            <div
+              className={`mb-3 rounded-full p-2.5 ${stat.color}`}
+              style={{ background: stat.bg, border: `1px solid ${stat.border}` }}
+            >
+              {stat.icon}
+            </div>
+            <span className="text-2xl font-black text-white leading-none">{stat.value}</span>
+            <span className="mt-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+              {stat.label}
+              {isClickable && (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-purple-400/60">
+                  <circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />
+                </svg>
+              )}
+            </span>
+          </Wrapper>
+        )
+      })}
     </div>
   )
 }

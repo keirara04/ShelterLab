@@ -381,7 +381,7 @@ export default function SellerProfilePage() {
             }}
           >
             {[
-              { label: 'Trust Score', value: seller.trust_score || 0, color: tier.color },
+              { label: 'LabCred', value: seller.trust_score || 0, color: tier.color },
               { label: 'Avg Rating', value: reviews.length > 0 ? `${averageRating}★` : '—', color: '#facc15' },
               { label: 'Active', value: activeListings.length, color: '#60a5fa' },
               { label: 'Reviews', value: reviews.length, color: '#a78bfa' },
