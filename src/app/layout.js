@@ -9,6 +9,10 @@ export const metadata = {
   title: 'ShelterLab - Your Campus Marketplace',
   description: 'Buy and sell items with your campus community',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/logo.svg',
+    apple: '/logo.svg',
+  },
 }
 
 const geistSans = Geist({

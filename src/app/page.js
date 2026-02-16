@@ -191,7 +191,7 @@ export default function HomePage() {
                 >
                   <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center">
                     <img
-                      src="/logo.png"
+                      src="/logo.svg"
                       alt="ShelterLab"
                       width={40}
                       height={40}
@@ -754,7 +754,7 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-8">
             {/* Brand */}
             <div className="flex items-center gap-3">
-              <img src="/logo.png" alt="ShelterLab" width={40} height={40} className="w-10 h-10 object-contain" />
+              <img src="/logo.svg" alt="ShelterLab" width={40} height={40} className="w-10 h-10 object-contain" />
               <span className="text-white font-black text-2xl bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">ShelterLab</span>
             </div>
 

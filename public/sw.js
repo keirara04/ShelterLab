@@ -3,8 +3,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title || 'ShelterLab', {
       body: data.body || '',
-      icon: '/logo.png',
-      badge: '/logo.png',
+      icon: '/logo.svg',
+      badge: '/logo.svg',
       tag: data.tag || 'shelterlab',
       data: { url: data.url || '/' },
     })

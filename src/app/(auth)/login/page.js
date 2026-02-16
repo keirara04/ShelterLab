@@ -79,14 +79,16 @@ function LoginContent() {
         {/* Content */}
         <div className="relative z-10 text-center">
           <div className="mb-12">
-            <Image
-              src="/logo.png"
-              alt="ShelterLab Logo"
-              width={200}
-              height={200}
-              priority
-              className="mx-auto drop-shadow-2xl"
-            />
+            <div className="inline-flex items-center justify-center p-6 rounded-3xl bg-white/10 border border-white/20 backdrop-blur-xl shadow-2xl">
+              <Image
+                src="/logo.svg"
+                alt="ShelterLab Logo"
+                width={160}
+                height={160}
+                priority
+                className="drop-shadow-2xl"
+              />
+            </div>
           </div>
           <h1 className="text-5xl font-black text-white mb-4">ShelterLab</h1>
           <p className="text-xl text-gray-300 mb-8">Student Marketplace</p>
@@ -101,7 +103,7 @@ function LoginContent() {
           <div className="md:hidden text-center mb-8">
             <div className="flex justify-center mb-6">
               <Image
-                src="/logo.png"
+                src="/logo.svg"
                 alt="ShelterLab Logo"
                 width={80}
                 height={80}

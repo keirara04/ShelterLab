@@ -172,7 +172,7 @@ export default function AuthModal({ isOpen, onClose, redirectPath = null }) {
           {/* Logo & Title */}
           <div className="text-center mb-6">
             <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
-              <img src="/logo.png" alt="ShelterLab" className="w-12 h-12 object-contain" />
+              <img src="/logo.svg" alt="ShelterLab" className="w-12 h-12 object-contain" />
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-white mb-2">
               {mode === 'login' ? 'Welcome Back!' : 'Join ShelterLab'}

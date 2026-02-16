@@ -43,7 +43,7 @@ export default function Navbar({ selectedCategory, setSelectedCategory }) {
               className="flex items-center gap-2 group flex-shrink-0 hover:opacity-80 transition"
             >
               <Image
-                src="/logo.png"
+                src="/logo.svg"
                 alt="ShelterLab"
                 width={40}
                 height={40}

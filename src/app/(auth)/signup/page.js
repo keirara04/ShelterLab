@@ -97,7 +97,7 @@ function SignupContent() {
         </div>
         <div className="relative z-10 text-center">
           <div className="mb-12">
-            <Image src="/logo.png" alt="ShelterLab Logo" width={200} height={200} priority className="mx-auto drop-shadow-2xl" />
+            <Image src="/logo.svg" alt="ShelterLab Logo" width={200} height={200} priority className="mx-auto drop-shadow-2xl" />
           </div>
           <h1 className="text-5xl font-black text-white mb-4">ShelterLab</h1>
           <p className="text-xl text-gray-300 mb-8">Student Marketplace</p>
@@ -110,7 +110,7 @@ function SignupContent() {
         <div className="w-full max-w-md py-8">
           <div className="md:hidden text-center mb-8">
             <div className="flex justify-center mb-6">
-              <Image src="/logo.png" alt="ShelterLab Logo" width={80} height={80} priority />
+              <Image src="/logo.svg" alt="ShelterLab Logo" width={80} height={80} priority />
             </div>
             <h1 className="text-4xl font-black text-white mb-2">ShelterLab</h1>
             <p className="text-gray-400">Student Marketplace</p>

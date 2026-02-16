@@ -9,7 +9,7 @@ export function generateOrganizationSchema() {
     name: 'Shelter Lab - University Marketplace',
     description: 'Buy and sell items within your university community',
     url: process.env.NEXT_PUBLIC_SITE_URL || 'https://shelter-lab.vercel.app',
-    logo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shelter-lab.vercel.app'}/logo.png`,
+    logo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://shelter-lab.vercel.app'}/logo.svg`,
     sameAs: [
       'https://www.facebook.com/shelterlab',
       'https://www.twitter.com/shelterlab',

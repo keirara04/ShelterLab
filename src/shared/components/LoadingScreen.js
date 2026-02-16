@@ -10,7 +10,7 @@ const UNIVERSITY_LOGOS = {
 
 export default function LoadingScreen() {
   const { profile } = useAuth()
-  const logoSrc = UNIVERSITY_LOGOS[profile?.university] || '/logo.png'
+  const logoSrc = UNIVERSITY_LOGOS[profile?.university] || '/logo.svg'
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-950 z-50">
