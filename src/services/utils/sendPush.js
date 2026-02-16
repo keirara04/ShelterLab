@@ -1,17 +1,29 @@
 import webpush from 'web-push'
 import { supabaseServer } from '@/services/supabaseServer'
 
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT,
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-)
+// Only configure VAPID if all required env vars are present
+const vapidSubject = process.env.VAPID_SUBJECT
+const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
+
+let pushEnabled = false
+if (vapidSubject && vapidPublicKey && vapidPrivateKey) {
+  webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey)
+  pushEnabled = true
+} else {
+  console.warn('Push notifications disabled: Missing VAPID environment variables')
+}
 
 /**
  * Send a push notification to all subscribers.
  * @param {{ title: string, body: string, tag?: string, url?: string }} payload
  */
 export async function sendPushToAll(payload) {
+  if (!pushEnabled) {
+    console.log('Push notifications not configured, skipping')
+    return
+  }
+  
   try {
     const { data: subs } = await supabaseServer
       .from('push_subscriptions')
