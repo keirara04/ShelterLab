@@ -1009,8 +1009,14 @@ export default function ProfilePage() {
           <div>
             <h2 className="text-lg font-black text-white mb-4">🔐 Admin Controls</h2>
             
+            {/* Analytics */}
+            <AdminStats />
+
             {/* Manage Approved Users Card */}
             <AdminApprovedUsers />
+
+            {/* Listing Management */}
+            <AdminListings />
 
             {/* Push Notifications Card */}
             <div className="glass rounded-2xl p-6 mb-6">
@@ -1407,6 +1413,145 @@ function AdminApprovedUsers() {
         </div>
       )}
       </div>
+    </div>
+  )
+}
+
+function AdminStats() {
+  const [stats, setStats] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/admin/stats')
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setStats(d.data) })
+      .finally(() => setLoading(false))
+  }, [])
+
+  return (
+    <div className="glass rounded-2xl p-6 mb-6">
+      <h3 className="text-xl font-black text-white mb-4">📊 Analytics</h3>
+      {loading ? (
+        <p className="text-gray-400 text-sm">Loading stats...</p>
+      ) : !stats ? (
+        <p className="text-red-400 text-sm">Failed to load stats</p>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {[
+            { label: 'Total Listings', value: stats.totalListings ?? 0, color: 'text-blue-400' },
+            { label: 'Active Listings', value: stats.activeListings ?? 0, color: 'text-emerald-400' },
+            { label: 'Sold Listings', value: stats.soldListings ?? 0, color: 'text-gray-400' },
+            { label: 'Total Users', value: stats.totalUsers ?? 0, color: 'text-purple-400' },
+            { label: 'New Signups (7d)', value: stats.newSignupsThisWeek ?? 0, color: 'text-teal-400' },
+            {
+              label: 'Top University',
+              value: stats.topUniversity ? `${stats.topUniversity.name.split(' ')[0]} (${stats.topUniversity.count})` : '—',
+              color: 'text-yellow-400',
+            },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="bg-white/5 rounded-xl p-4 border border-white/8">
+              <p className={`text-xl font-black ${color}`}>{value}</p>
+              <p className="text-xs text-gray-500 mt-1">{label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function AdminListings() {
+  const [listings, setListings] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState(null)
+
+  const fetchListings = () => {
+    setLoading(true)
+    fetch('/api/admin/listings')
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setListings(d.data || []) })
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { fetchListings() }, [])
+
+  const toggleSold = async (listing) => {
+    setActionLoading(listing.id + '-sold')
+    await fetch('/api/admin/listings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listingId: listing.id, isSold: !listing.is_sold }),
+    })
+    setListings((prev) => prev.map((l) => l.id === listing.id ? { ...l, is_sold: !l.is_sold } : l))
+    setActionLoading(null)
+  }
+
+  const deleteListing = async (listingId) => {
+    if (!confirm('Permanently delete this listing?')) return
+    setActionLoading(listingId + '-delete')
+    await fetch('/api/admin/listings', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listingId }),
+    })
+    setListings((prev) => prev.filter((l) => l.id !== listingId))
+    setActionLoading(null)
+  }
+
+  return (
+    <div className="glass rounded-2xl p-6 mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xl font-black text-white">🗂 Listing Management</h3>
+        <button
+          onClick={fetchListings}
+          className="text-xs text-gray-400 hover:text-white transition font-bold px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10"
+        >
+          Refresh
+        </button>
+      </div>
+
+      {loading ? (
+        <p className="text-gray-400 text-sm">Loading listings...</p>
+      ) : listings.length === 0 ? (
+        <p className="text-gray-500 text-sm">No listings found.</p>
+      ) : (
+        <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+          {listings.map((listing) => (
+            <div key={listing.id} className="flex items-center gap-3 bg-white/5 rounded-xl p-3 border border-white/8">
+              {listing.image_urls?.[0] ? (
+                <img src={listing.image_urls[0]} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+              ) : (
+                <div className="w-10 h-10 rounded-lg bg-white/10 flex-shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-sm font-bold truncate">{listing.title}</p>
+                <p className="text-gray-500 text-xs truncate">
+                  {listing.profiles?.full_name || 'Unknown'} · ₩{Number(listing.price).toLocaleString()}
+                </p>
+              </div>
+              <span className={`text-xs font-bold px-2 py-1 rounded-full flex-shrink-0 ${
+                listing.is_sold ? 'bg-gray-700/50 text-gray-400' : 'bg-emerald-500/15 text-emerald-400'
+              }`}>
+                {listing.is_sold ? 'Sold' : 'Active'}
+              </span>
+              <button
+                onClick={() => toggleSold(listing)}
+                disabled={!!actionLoading}
+                className="text-xs font-bold px-2.5 py-1.5 rounded-lg bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 transition disabled:opacity-40 flex-shrink-0"
+              >
+                {actionLoading === listing.id + '-sold' ? '...' : listing.is_sold ? 'Unmark' : 'Mark Sold'}
+              </button>
+              <button
+                onClick={() => deleteListing(listing.id)}
+                disabled={!!actionLoading}
+                className="text-xs font-bold px-2.5 py-1.5 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25 transition disabled:opacity-40 flex-shrink-0"
+              >
+                {actionLoading === listing.id + '-delete' ? '...' : 'Delete'}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
