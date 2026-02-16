@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuth } from '@/shared/context/AuthContext'
 import { CATEGORIES, UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
 import AuthModal from '@/shared/components/AuthModal'
@@ -461,7 +462,7 @@ export default function HomePage() {
                 >
                   {profile?.avatar_url ? (
                     <div className="w-9 h-9 flex items-center justify-center">
-                      <img
+                      <Image
                         src={profile.avatar_url}
                         alt={profile.full_name || 'Profile'}
                         width={36}
@@ -557,12 +558,12 @@ export default function HomePage() {
                 <div className="relative aspect-square bg-gradient-to-br from-gray-800 to-gray-900 overflow-hidden">
                   {listing.image_urls && listing.image_urls.length > 0 ? (
                     <>
-                      <img
+                      <Image
                         src={listing.image_urls[0]}
                         alt={listing.title}
-                        width={400}
-                        height={400}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        fill
+                        sizes="(max-width: 1024px) 50vw, 33vw"
+                        className="object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       {listing.image_urls.length > 1 && (

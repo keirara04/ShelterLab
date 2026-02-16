@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuth } from '@/shared/context/AuthContext'
 import { supabase } from '@/services/supabase'
 import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
@@ -201,12 +202,12 @@ export default function ListingDetailPage() {
             <div className="relative bg-gray-800 rounded-xl overflow-hidden h-64 sm:h-80 lg:aspect-square lg:h-auto group">
               {listing.image_urls && listing.image_urls.length > 0 ? (
                 <>
-                  <img
+                  <Image
                     src={listing.image_urls[currentImageIndex]}
                     alt={listing.title}
-                    width={600}
-                    height={600}
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 66vw"
+                    className="object-cover"
                   />
 
                   {/* Navigation Arrows */}
@@ -262,18 +263,18 @@ export default function ListingDetailPage() {
                   <button
                     key={idx}
                     onClick={() => setCurrentImageIndex(idx)}
-                    className={`flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden border-2 transition touch-manipulation ${
+                    className={`relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden border-2 transition touch-manipulation ${
                       idx === currentImageIndex
                         ? 'border-blue-500'
                         : 'border-white/20 hover:border-white/40 active:border-white/60'
                     }`}
                   >
-                    <img
+                    <Image
                       src={img}
                       alt={`Thumbnail ${idx}`}
-                      width={96}
-                      height={96}
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="96px"
+                      className="object-cover"
                     />
                   </button>
                 ))}
@@ -339,7 +340,7 @@ export default function ListingDetailPage() {
                   className="flex items-center gap-3 hover:opacity-80 transition"
                 >
                   {seller.avatar_url ? (
-                    <img
+                    <Image
                       src={seller.avatar_url}
                       alt={seller.full_name}
                       width={48}

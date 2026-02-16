@@ -4,45 +4,8 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/shared/context/AuthContext'
 import { CATEGORIES, CONDITIONS } from '@/services/utils/constants'
-import { validateImageFile } from '@/services/utils/helpers'
+import { validateImageFile, compressImage } from '@/services/utils/helpers'
 import Link from 'next/link'
-
-// Image compression function
-const compressImage = async (file) => {
-    return new Promise((resolve) => {
-        const reader = new FileReader()
-        reader.readAsDataURL(file)
-        reader.onload = (event) => {
-            const img = new Image()
-            img.src = event.target.result
-            img.onload = () => {
-                const canvas = document.createElement('canvas')
-                let width = img.width
-                let height = img.height
-
-                // Resize if larger than 1920px
-                if (width > 1920) {
-                    height = (height * 1920) / width
-                    width = 1920
-                }
-
-                canvas.width = width
-                canvas.height = height
-
-                const ctx = canvas.getContext('2d')
-                ctx.drawImage(img, 0, 0, width, height)
-
-                canvas.toBlob(
-                    (blob) => {
-                        resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }))
-                    },
-                    'image/jpeg',
-                    0.8
-                )
-            }
-        }
-    })
-}
 
 export default function SellPage() {
     const router = useRouter()
