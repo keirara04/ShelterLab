@@ -169,9 +169,13 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-3">
           {/* Warning Banner for Mobile */}
           <div className="flex sm:hidden gap-2 mb-2 pb-2 border-b border-white/10">
-            <span className="text-sm flex-shrink-0 mt-0.5">⚠️</span>
+            <svg className="w-4 h-4 flex-shrink-0 mt-0.5 text-yellow-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+              <path d="M12 9v4"/>
+              <path d="M12 17h.01"/>
+            </svg>
             <div className="flex-1 min-w-0 flex flex-col gap-1">
-              <p className="text-xs font-bold text-yellow-200">Testing Phase (Beta on 17th)</p>
+              <p className="text-xs font-bold text-yellow-200">Version 0.1.0-beta</p>
               <p className="text-xs text-yellow-200/70">Lag & bugs possible. <a href="mailto:admin@shelterlab.shop?subject=ShelterLab%20Bug%20Report" className="underline hover:text-yellow-100">Report</a></p>
               <p className="text-xs text-gray-400">Best experience on desktop</p>
             </div>
@@ -199,9 +203,13 @@ export default function HomePage() {
                 {/* Warning Text - Desktop only */}
                 <div className="hidden sm:flex flex-col gap-2">
                   <div className="flex items-center gap-3 text-xs">
-                    <span>⚠️</span>
+                    <svg className="w-4 h-4 flex-shrink-0 text-yellow-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                      <path d="M12 9v4"/>
+                      <path d="M12 17h.01"/>
+                    </svg>
                     <div className="flex items-center gap-2">
-                      <span className="text-yellow-200 font-semibold">Beta Phase:</span>
+                      <span className="text-yellow-200 font-semibold">Version 0.1.0-beta:</span>
                       <span className="text-yellow-200/80">Site in development. May experience lag, bugs, or data loss.</span>
                       <a
                         href="mailto:admin@shelterlab.shop?subject=ShelterLab%20Bug%20Report"
