@@ -68,6 +68,25 @@ export default function ProfilePage() {
     setMounted(true)
   }, [])
 
+  // Check if push notifications are already enabled on mount
+  useEffect(() => {
+    const checkNotificationStatus = async () => {
+      if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+        return
+      }
+      try {
+        const registration = await navigator.serviceWorker.ready
+        const subscription = await registration.pushManager.getSubscription()
+        if (subscription) {
+          setNotificationsEnabled(true)
+        }
+      } catch (err) {
+        console.error('Error checking notification status:', err)
+      }
+    }
+    checkNotificationStatus()
+  }, [])
+
   useEffect(() => {
     if (user) {
       setFormData({
