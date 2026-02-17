@@ -33,8 +33,9 @@ export async function middleware(request) {
 
   // 2. Skip middleware for public routes (no auth needed)
   const publicApiPrefixes = ['/api/listings', '/api/notifications']
+  const publicPagePaths = ['/', '/pasarmalam']
   if (
-    pathname === '/' ||
+    publicPagePaths.includes(pathname) ||
     publicApiPrefixes.some((p) => pathname.startsWith(p))
   ) {
     return withSecurityHeaders(NextResponse.next({ request }))
