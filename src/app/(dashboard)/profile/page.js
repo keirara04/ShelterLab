@@ -42,6 +42,7 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     full_name: '',
     avatar_url: '',
+    kakao_link: '',
   })
   
   // Push notification subscription
@@ -92,6 +93,7 @@ export default function ProfilePage() {
       setFormData({
         full_name: profile?.full_name || '',
         avatar_url: profile?.avatar_url || '',
+        kakao_link: profile?.kakao_link || '',
       })
       fetchMyListings()
       fetchReviews()
@@ -486,7 +488,7 @@ export default function ProfilePage() {
       }
 
       // Update profile — include avatar_url so it doesn't get wiped
-      const updates = { full_name: formData.full_name }
+      const updates = { full_name: formData.full_name, kakao_link: formData.kakao_link || null }
       if (newAvatarUrl) {
         updates.avatar_url = newAvatarUrl
       } else if (profile?.avatar_url) {
@@ -1036,7 +1038,7 @@ export default function ProfilePage() {
                   type="text"
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl text-white outline-none transition-all duration-200 placeholder-gray-500"
+                  className="w-full px-4 py-3 rounded-xl text-white outline-none transition-all duration-200 placeholder-gray-400"
                   style={{
                     background: 'rgba(255,255,255,0.06)',
                     border: '1px solid rgba(255,255,255,0.1)',
@@ -1044,6 +1046,36 @@ export default function ProfilePage() {
                   placeholder="Enter your name"
                   disabled={loading}
                 />
+              </div>
+
+              {/* Kakao Open Chat Link */}
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-2">
+                  Kakao Open Chat Link
+                  <span className="ml-2 text-xs font-normal text-gray-400">— saved to your profile, auto-fills on sell page</span>
+                </label>
+                <input
+                  type="url"
+                  value={formData.kakao_link}
+                  onChange={(e) => setFormData({ ...formData, kakao_link: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl text-white outline-none transition-all duration-200 placeholder-gray-400"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                  }}
+                  placeholder="https://open.kakao.com/o/..."
+                  disabled={loading}
+                />
+                <details className="mt-2 cursor-pointer">
+                  <summary className="text-xs text-teal-400 font-bold select-none">How to get your Kakao Open Chat link</summary>
+                  <ol className="mt-2 text-xs text-gray-400 space-y-1 pl-4 list-decimal">
+                    <li>Open <strong className="text-gray-300">KakaoTalk</strong> → tap the <strong className="text-gray-300">chat bubble</strong> icon at the bottom</li>
+                    <li>Tap <strong className="text-gray-300">Open Chat</strong> at the top → tap <strong className="text-gray-300">+ Create</strong></li>
+                    <li>Choose <strong className="text-gray-300">1:1 Chat</strong>, enter a title (e.g. ShelterLab), tap <strong className="text-gray-300">Open</strong></li>
+                    <li>Tap <strong className="text-gray-300">Share</strong> → copy the link (starts with <span className="text-teal-400">open.kakao.com/o/...</span>)</li>
+                    <li>Paste the link above</li>
+                  </ol>
+                </details>
               </div>
 
               <button

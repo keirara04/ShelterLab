@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/shared/context/AuthContext'
 import { CATEGORIES, CONDITIONS } from '@/services/utils/constants'
@@ -9,7 +9,7 @@ import Link from 'next/link'
 
 export default function SellPage() {
     const router = useRouter()
-    const { user, isAuthenticated } = useAuth()
+    const { user, profile, isAuthenticated } = useAuth()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [uploadingImages, setUploadingImages] = useState(false)
@@ -29,6 +29,13 @@ export default function SellPage() {
         condition: 'good',
         kakaoLink: '',
     })
+
+    // Pre-fill kakaoLink from profile if user has saved one
+    useEffect(() => {
+        if (profile?.kakao_link && !formData.kakaoLink) {
+            setFormData(prev => ({ ...prev, kakaoLink: profile.kakao_link }))
+        }
+    }, [profile])
 
     if (!isAuthenticated) {
         return (
@@ -531,9 +538,14 @@ export default function SellPage() {
                                     placeholder="https://open.kakao.com/o/..."
                                     value={formData.kakaoLink}
                                     onChange={(e) => setFormData({ ...formData, kakaoLink: e.target.value })}
-                                    className="w-full px-4 py-4 rounded-xl text-white outline-none transition-all duration-200 placeholder-gray-500 focus:ring-2 focus:ring-teal-500/50 text-base"
+                                    className="w-full px-4 py-4 rounded-xl text-white outline-none transition-all duration-200 placeholder-gray-400 focus:ring-2 focus:ring-teal-500/50 text-base"
                                     style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                                 />
+                                {profile?.kakao_link && (
+                                    <p className="text-xs text-teal-400 mt-1.5">
+                                        Auto-filled from your profile — you can change it for this listing only.
+                                    </p>
+                                )}
                                 <details className="mt-2 cursor-pointer">
                                     <summary className="text-xs text-teal-400 hover:text-teal-300">
                                         How to get your Kakao Open Chat link?
