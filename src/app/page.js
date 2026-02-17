@@ -184,11 +184,11 @@ export default function HomePage() {
           <div className="flex sm:hidden gap-2 mb-2 pb-2 border-b border-white/10">
             <svg className="w-4 h-4 flex-shrink-0 mt-0.5 text-yellow-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-              <path d="M12 9v4"/>
+              <path d="M12 9v4"/> 
               <path d="M12 17h.01"/>
             </svg>
             <div className="flex-1 min-w-0 flex flex-col gap-1">
-              <p className="text-xs font-bold text-yellow-200">Version 0.1.0-beta</p>
+              <p className="text-xs font-bold text-yellow-200">Version 0.1.1-beta</p>
               <p className="text-xs text-yellow-200/70">Lag & bugs possible. <a href="mailto:admin@shelterlab.shop?subject=ShelterLab%20Bug%20Report" className="underline hover:text-yellow-100">Report</a></p>
               <p className="text-xs text-gray-400">Best experience on desktop</p>
             </div>
@@ -222,7 +222,7 @@ export default function HomePage() {
                       <path d="M12 17h.01"/>
                     </svg>
                     <div className="flex items-center gap-2">
-                      <span className="text-yellow-200 font-semibold">Version 0.1.0-beta:</span>
+                      <span className="text-yellow-200 font-semibold">Version 0.1.1-beta:</span>
                       <span className="text-yellow-200/80">Site in development. May experience lag, bugs, or data loss.</span>
                       <a
                         href="mailto:admin@shelterlab.shop?subject=ShelterLab%20Bug%20Report"
@@ -524,7 +524,7 @@ export default function HomePage() {
                 />
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2 text-center">Search items by name, category, or seller</p>
+            <p className="text-xs text-gray-400 mt-2 text-center">Search items by name, category, or seller</p>
           </div>
 
           {/* University Filter */}
@@ -744,7 +744,7 @@ export default function HomePage() {
         {/* Page Info */}
         {!loading && !error && filteredListings.length > 0 && (
           <div className="flex flex-col items-center gap-3 mt-8 mb-4">
-            <p className="text-center text-xs text-gray-500 h-4">
+            <p className="text-center text-xs text-gray-400 h-4">
               Showing {startIndex + 1} to {Math.min(endIndex, filteredListings.length)} of {filteredListings.length}
             </p>
 
@@ -844,7 +844,7 @@ export default function HomePage() {
 
           {/* Copyright - Simple */}
           <div className="border-t border-white/5 mt-8 pt-8">
-            <p className="text-gray-600 text-xs text-center">© 2025 ShelterLab. All rights reserved.</p>
+            <p className="text-gray-400 text-xs text-center">© 2025 ShelterLab. All rights reserved.</p>
           </div>
         </div>
       </footer>

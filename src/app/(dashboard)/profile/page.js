@@ -651,7 +651,7 @@ export default function ProfilePage() {
               </div>
               <button
                 onClick={() => setShowVerifyModal(false)}
-                className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-white transition-colors cursor-pointer"
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-white transition-colors cursor-pointer"
                 style={{ background: 'rgba(255,255,255,0.06)' }}
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -675,7 +675,7 @@ export default function ProfilePage() {
                     className="w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none placeholder-gray-600"
                     style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                   />
-                  <p className="text-gray-600 text-xs mt-1.5">Must use @university.ac.kr or another approved domain by University. Ensure you are using desktop version to verify your profile</p>
+                  <p className="text-gray-400 text-xs mt-1.5">Must use @university.ac.kr or another approved domain by University. Ensure you are using desktop version to verify your profile</p>
                 </div>
                 <button
                   type="submit"
@@ -691,11 +691,11 @@ export default function ProfilePage() {
                 {univSending && (
                   <div className="text-center py-4">
                     <div className="inline-block w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                    <p className="text-gray-500 text-xs animate-pulse">Sending code to your university email...</p>
+                    <p className="text-gray-400 text-xs animate-pulse">Sending code to your university email...</p>
                     <button
                       type="button"
                       onClick={() => { setUnivSending(false); setUnivOtpSent(false); setUnivLoading(false) }}
-                      className="mt-3 text-xs text-gray-600 hover:text-gray-400 underline"
+                      className="mt-3 text-xs text-gray-400 hover:text-gray-400 underline"
                     >
                       Cancel
                     </button>
@@ -720,7 +720,7 @@ export default function ProfilePage() {
                         className="w-full px-4 py-3.5 rounded-xl text-white text-lg outline-none placeholder-gray-600 tracking-[0.3em] font-mono text-center disabled:opacity-40"
                         style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                       />
-                      <p className="text-gray-600 text-xs mt-1.5 text-center">Check your university inbox for the code</p>
+                      <p className="text-gray-400 text-xs mt-1.5 text-center">Check your university inbox for the code</p>
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -740,7 +740,7 @@ export default function ProfilePage() {
                         type="button"
                         disabled={univLoading}
                         onClick={() => { setUnivOtpSent(false); setUnivOtp(''); setUnivError(null); setUnivSuccess(null) }}
-                        className="px-4 py-3 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-300 transition-colors cursor-pointer disabled:opacity-50"
+                        className="px-4 py-3 rounded-xl text-xs font-bold text-gray-400 hover:text-gray-300 transition-colors cursor-pointer disabled:opacity-50"
                         style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
                       >
                         Back
@@ -808,7 +808,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => window.location.reload()}
-                className="hidden sm:flex w-9 h-9 items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-500 hover:text-white"
+                className="hidden sm:flex w-9 h-9 items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-400 hover:text-white"
                 style={{
                   background: 'rgba(255,255,255,0.06)',
                   border: '1px solid rgba(255,255,255,0.1)',
@@ -867,7 +867,7 @@ export default function ProfilePage() {
 
               <button
                 onClick={handleLogout}
-                className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-500 hover:text-red-400"
+                className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-400 hover:text-red-400"
                 style={{
                   background: 'rgba(255,255,255,0.06)',
                   border: '1px solid rgba(255,255,255,0.1)',
@@ -882,7 +882,7 @@ export default function ProfilePage() {
             {/* Refresh — mobile only, below logout */}
             <button
               onClick={() => window.location.reload()}
-              className="sm:hidden w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-500 hover:text-white"
+              className="sm:hidden w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-400 hover:text-white"
               style={{
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.1)',
@@ -1022,7 +1022,7 @@ export default function ProfilePage() {
                     >
                       {avatarPreview ? 'Change Photo' : 'Upload Photo'}
                     </button>
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-gray-400 mt-2">
                       JPEG, PNG, or WebP. Max 2MB.
                     </p>
                   </div>
@@ -1087,7 +1087,7 @@ export default function ProfilePage() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm font-bold line-clamp-1">{tx.listing?.title}</p>
-                    <p className="text-gray-500 text-xs">
+                    <p className="text-gray-400 text-xs">
                       from <span className="text-gray-400">{tx.seller?.full_name}</span> · ₩{tx.listing?.price?.toLocaleString()}
                     </p>
                   </div>
@@ -1120,7 +1120,7 @@ export default function ProfilePage() {
             className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
               activeTab === 'listings'
                 ? 'text-white shadow-sm'
-                : 'text-gray-500 hover:text-gray-300'
+                : 'text-gray-400 hover:text-gray-300'
             }`}
             style={activeTab === 'listings' ? { background: 'rgba(255,255,255,0.1)' } : {}}
           >
@@ -1131,7 +1131,7 @@ export default function ProfilePage() {
             className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
               activeTab === 'reviews'
                 ? 'text-white shadow-sm'
-                : 'text-gray-500 hover:text-gray-300'
+                : 'text-gray-400 hover:text-gray-300'
             }`}
             style={activeTab === 'reviews' ? { background: 'rgba(255,255,255,0.1)' } : {}}
           >
@@ -1143,7 +1143,7 @@ export default function ProfilePage() {
               className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
                 activeTab === 'admin'
                   ? 'text-white shadow-sm'
-                  : 'text-gray-500 hover:text-gray-300'
+                  : 'text-gray-400 hover:text-gray-300'
               }`}
               style={activeTab === 'admin' ? { background: 'rgba(59, 130, 246, 0.3)' } : {}}
             >
@@ -1187,7 +1187,7 @@ export default function ProfilePage() {
                   &#x1f4e6;
                 </div>
                 <p className="text-gray-400 font-medium">No listings yet</p>
-                <p className="text-gray-500 text-sm mt-1">Create your first listing to start selling</p>
+                <p className="text-gray-400 text-sm mt-1">Create your first listing to start selling</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -1208,7 +1208,7 @@ export default function ProfilePage() {
                         />
                       ) : (
                         <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-800/40 to-cyan-800/40 flex items-center justify-center">
-                          <span className="text-gray-500 text-xs">No img</span>
+                          <span className="text-gray-400 text-xs">No img</span>
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
@@ -1241,7 +1241,7 @@ export default function ProfilePage() {
                   &#x2B50;
                 </div>
                 <p className="text-gray-400 font-medium">No reviews yet</p>
-                <p className="text-gray-500 text-sm mt-1">Reviews from buyers will appear here</p>
+                <p className="text-gray-400 text-sm mt-1">Reviews from buyers will appear here</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -1259,7 +1259,7 @@ export default function ProfilePage() {
                       </div>
                       <div className="flex gap-0.5">
                         {Array.from({ length: 5 }).map((_, i) => (
-                          <span key={i} className={`text-sm ${i < review.rating ? 'text-amber-400' : 'text-gray-600'}`}>
+                          <span key={i} className={`text-sm ${i < review.rating ? 'text-amber-400' : 'text-gray-400'}`}>
                             {'\u2605'}
                           </span>
                         ))}
@@ -1270,7 +1270,7 @@ export default function ProfilePage() {
                         &ldquo;{review.comment}&rdquo;
                       </p>
                     )}
-                    <p className="text-xs text-gray-500 mt-2 pl-10">
+                    <p className="text-xs text-gray-400 mt-2 pl-10">
                       {new Date(review.created_at).toLocaleDateString()}
                     </p>
                   </div>
@@ -1349,7 +1349,7 @@ export default function ProfilePage() {
                 </button>
               </form>
 
-              <p className="text-xs text-gray-500 mt-4 pt-4 border-t border-white/10">
+              <p className="text-xs text-gray-400 mt-4 pt-4 border-t border-white/10">
                 💡 Only one notification can be active at a time. Pushing a new notification will replace the previous one.
               </p>
             </div>
@@ -1373,9 +1373,9 @@ export default function ProfilePage() {
           >
             {'\u2190'} Back to Marketplace
           </Link>
-          <p className="text-gray-600 text-xs mt-3">
+          <p className="text-gray-400 text-xs mt-3">
             Wrong university?{' '}
-            <a href="mailto:admin@shelterlab.shop" className="text-gray-500 hover:text-gray-400 transition">
+            <a href="mailto:admin@shelterlab.shop" className="text-gray-400 hover:text-gray-400 transition">
               Contact admin@shelterlab.shop
             </a>
           </p>
@@ -1414,7 +1414,7 @@ export default function ProfilePage() {
 
             {/* How to earn */}
             <div className="mb-5">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">How to earn LabCred</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">How to earn LabCred</p>
               <div className="space-y-2">
                 <div className="flex items-start gap-2.5">
                   <span className="text-purple-400 mt-0.5 shrink-0">+</span>
@@ -1433,7 +1433,7 @@ export default function ProfilePage() {
 
             {/* Tiers */}
             <div className="mb-5">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">LabCred Tiers</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">LabCred Tiers</p>
               <div className="space-y-2">
                 {[
                   { label: 'New User', range: '0–9', color: '#9ca3af' },
@@ -1446,7 +1446,7 @@ export default function ProfilePage() {
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
                       <span className="text-sm font-bold" style={{ color }}>{label}</span>
                     </div>
-                    <span className="text-xs text-gray-600 font-mono">{range} pts</span>
+                    <span className="text-xs text-gray-400 font-mono">{range} pts</span>
                   </div>
                 ))}
               </div>
@@ -1504,7 +1504,7 @@ export default function ProfilePage() {
               >
                 {confirmLoading ? 'Confirming...' : 'Confirm & Submit Review'}
               </button>
-              <button onClick={() => setConfirmModal(null)} disabled={confirmLoading} className="w-full py-2 rounded-xl font-bold text-xs text-gray-600 hover:text-gray-400 transition">
+              <button onClick={() => setConfirmModal(null)} disabled={confirmLoading} className="w-full py-2 rounded-xl font-bold text-xs text-gray-400 hover:text-gray-400 transition">
                 Cancel
               </button>
             </div>
@@ -1775,7 +1775,7 @@ function AdminApprovedUsers() {
                   className={`flex-1 md:flex-none px-3 py-2 rounded-lg font-bold transition-all duration-200 text-xs whitespace-nowrap flex items-center gap-1 ${
                     user.university_email_verified
                       ? 'bg-teal-600/20 hover:bg-red-600/20 text-teal-400 hover:text-red-400'
-                      : 'bg-white/5 hover:bg-teal-600/20 text-gray-500 hover:text-teal-400'
+                      : 'bg-white/5 hover:bg-teal-600/20 text-gray-400 hover:text-teal-400'
                   }`}
                   title={user.university_email_verified ? 'Revoke badge' : 'Grant badge'}
                 >
@@ -1833,7 +1833,7 @@ function AdminStats() {
           ].map(({ label, value, color }) => (
             <div key={label} className="bg-white/5 rounded-xl p-4 border border-white/8">
               <p className={`text-xl font-black ${color}`}>{value}</p>
-              <p className="text-xs text-gray-500 mt-1">{label}</p>
+              <p className="text-xs text-gray-400 mt-1">{label}</p>
             </div>
           ))}
         </div>
@@ -1896,7 +1896,7 @@ function AdminListings() {
       {loading ? (
         <p className="text-gray-400 text-sm">Loading listings...</p>
       ) : listings.length === 0 ? (
-        <p className="text-gray-500 text-sm">No listings found.</p>
+        <p className="text-gray-400 text-sm">No listings found.</p>
       ) : (
         <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
           {listings.map((listing) => (
@@ -1908,7 +1908,7 @@ function AdminListings() {
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-white text-sm font-bold truncate">{listing.title}</p>
-                <p className="text-gray-500 text-xs truncate">
+                <p className="text-gray-400 text-xs truncate">
                   {listing.profiles?.full_name || 'Unknown'} · ₩{Number(listing.price).toLocaleString()}
                 </p>
               </div>

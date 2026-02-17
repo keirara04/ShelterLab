@@ -116,11 +116,11 @@ export default function PrivacyPage() {
             </div>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
-                <span className="text-gray-500 mt-0.5 shrink-0">•</span>
+                <span className="text-gray-400 mt-0.5 shrink-0">•</span>
                 <span className="text-gray-300 text-sm">We only provide your nickname and verified badge to other users during the listing process to facilitate trade.</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-gray-500 mt-0.5 shrink-0">•</span>
+                <span className="text-gray-400 mt-0.5 shrink-0">•</span>
                 <span className="text-gray-300 text-sm">We may disclose data if required by a legal warrant from the South Korean police or court order.</span>
               </li>
             </ul>

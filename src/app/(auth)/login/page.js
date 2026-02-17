@@ -176,7 +176,7 @@ function LoginContent() {
             </p>
           </div>
 
-          <p className="text-center text-gray-500 text-xs mt-8">
+          <p className="text-center text-gray-400 text-xs mt-8">
             Protected by Supabase Authentication
           </p>
         </div>

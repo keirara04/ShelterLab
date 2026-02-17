@@ -303,7 +303,7 @@ export default function SellPage() {
                                 style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                                 required
                             />
-                            <p className="text-xs text-gray-500 mt-1">3-100 characters</p>
+                            <p className="text-xs text-gray-400 mt-1">3-100 characters</p>
                         </div>
 
                         {/* Description */}
@@ -324,7 +324,7 @@ export default function SellPage() {
                                 style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                                 required
                             />
-                            <p className="text-xs text-gray-500 mt-1">{formData.description.length}/1000 characters</p>
+                            <p className="text-xs text-gray-400 mt-1">{formData.description.length}/1000 characters</p>
                         </div>
 
                         {/* Categories */}
@@ -371,7 +371,7 @@ export default function SellPage() {
                                 ))}
                             </div>
                             {formData.categories?.length > 0 && (
-                                <p className="text-xs text-gray-500 mt-2">
+                                <p className="text-xs text-gray-400 mt-2">
                                     Selected: {formData.categories[0]}
                                 </p>
                             )}
@@ -463,14 +463,14 @@ export default function SellPage() {
                                         }}
                                     >
                                         <p className="text-white font-bold mb-1">Click to upload images</p>
-                                        <p className="text-sm text-gray-500">
+                                        <p className="text-sm text-gray-400">
                                             {uploadingImages ? 'Uploading...' : 'JPG, PNG, WebP up to 5MB each'}
                                         </p>
                                     </label>
                                 </div>
                             )}
 
-                            <p className="text-xs text-gray-500 mt-2">
+                            <p className="text-xs text-gray-400 mt-2">
                                 {imageFiles.length}/5 images selected
                             </p>
                         </div>
@@ -497,7 +497,7 @@ export default function SellPage() {
                                     style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                                     required
                                 />
-                                <p className="text-xs text-gray-500 mt-1">(Max. ₩9,999,999)</p>
+                                <p className="text-xs text-gray-400 mt-1">(Max. ₩9,999,999)</p>
                             </div>
 
                             {/* Pricing Suggestion */}
@@ -570,7 +570,7 @@ export default function SellPage() {
                                 </details>
                             </div>
 
-                            <p className="text-xs text-gray-500 mt-4">
+                            <p className="text-xs text-gray-400 mt-4">
                                 Buyers will use this to contact you about your item
                             </p>
                         </div>

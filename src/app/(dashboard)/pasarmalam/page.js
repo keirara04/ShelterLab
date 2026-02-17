@@ -47,7 +47,7 @@ export default function PasarMalamPage() {
         </Link>
 
         {/* ShelterLab tagline */}
-        <p className="text-xs font-bold uppercase tracking-[0.25em] text-gray-600 mb-8">
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-gray-400 mb-8">
           ShelterLab · Upcoming Feature
         </p>
 
@@ -78,7 +78,7 @@ export default function PasarMalamPage() {
         <p className="text-gray-400 text-sm sm:text-base max-w-sm leading-relaxed">
           A dedicated space for flash deals, bundles, and limited-time offers from students around campus.
         </p>
-        <p className="text-gray-600 text-xs mt-6">Coming soon — check back later!</p>
+        <p className="text-gray-400 text-xs mt-6">Coming soon — check back later!</p>
       </div>
     </div>
   )

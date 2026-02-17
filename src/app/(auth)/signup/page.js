@@ -233,7 +233,7 @@ function SignupContent() {
 
             <div className="my-6 flex items-center gap-4">
               <div className="h-px bg-white/10 flex-1"></div>
-              <p className="text-xs text-gray-500 uppercase font-bold">or</p>
+              <p className="text-xs text-gray-400 uppercase font-bold">or</p>
               <div className="h-px bg-white/10 flex-1"></div>
             </div>
 
@@ -245,7 +245,7 @@ function SignupContent() {
             </p>
           </div>
 
-          <p className="text-center text-gray-500 text-xs mt-8">
+          <p className="text-center text-gray-400 text-xs mt-8">
             Protected by Supabase Authentication
           </p>
           </>

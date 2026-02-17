@@ -305,7 +305,7 @@ export default function AuthModal({ isOpen, onClose, redirectPath = null }) {
           <div className="mt-4 text-center">
             <button
               onClick={onClose}
-              className="text-xs text-gray-500 hover:text-gray-400 transition"
+              className="text-xs text-gray-400 hover:text-gray-400 transition"
             >
               Continue browsing as guest
             </button>
