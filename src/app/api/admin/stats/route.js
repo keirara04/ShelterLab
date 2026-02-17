@@ -1,6 +1,10 @@
 import { supabaseServer } from '@/services/supabaseServer'
+import { verifyAdmin } from '@/services/utils/verifyAdmin'
 
-export async function GET() {
+export async function GET(request) {
+  const admin = await verifyAdmin(request)
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 })
+
   try {
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
@@ -39,6 +43,6 @@ export async function GET() {
       },
     })
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 })
+    return Response.json({ error: 'An error occurred' }, { status: 500 })
   }
 }

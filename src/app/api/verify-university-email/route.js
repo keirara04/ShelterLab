@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { sendOtpEmail } from '@/services/brevoEmail'
 import { ALLOWED_UNIVERSITY_EMAIL_DOMAINS } from '@/services/utils/constants'
+import { emailVerificationLimiter } from '@/services/utils/rateLimit'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -20,6 +21,20 @@ export async function POST(request) {
 
     if (authError || !user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limit: 3 OTP emails per 10 minutes per user
+    try {
+      const { success: withinLimit } = await emailVerificationLimiter.limit(user.id)
+      if (!withinLimit) {
+        return Response.json(
+          { error: 'Too many attempts. Please wait 10 minutes before requesting another code.' },
+          { status: 429 }
+        )
+      }
+    } catch {
+      // If Redis is unavailable, skip rate limiting rather than blocking the request
+      console.warn('Rate limiter unavailable, skipping')
     }
 
     const { university_email } = await request.json()

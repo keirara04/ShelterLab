@@ -21,6 +21,8 @@ export default function HomePage() {
   const [showCategoryPicker, setShowCategoryPicker] = useState(false)
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
   const categoryDropdownRef = useRef(null)
+  const [showUniversityPicker, setShowUniversityPicker] = useState(false)
+  const universityPickerRef = useRef(null)
   const [showHeader, setShowHeader] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
   const [notification, setNotification] = useState(null)
@@ -44,6 +46,17 @@ export default function HomePage() {
     const handleClickOutside = (e) => {
       if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target)) {
         setShowCategoryDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Close university picker on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (universityPickerRef.current && !universityPickerRef.current.contains(e.target)) {
+        setShowUniversityPicker(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -515,29 +528,91 @@ export default function HomePage() {
           </div>
 
           {/* University Filter */}
-          <div className="flex gap-2 justify-center flex-wrap mb-6 sm:mb-8 px-4">
-            <button
-              onClick={() => setSelectedUniversity('all')}
-              className={`px-4 py-2 rounded-full font-bold text-sm transition ${selectedUniversity === 'all'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white/5 hover:bg-white/10 text-gray-300'
-                }`}
-            >
-              All Universities
-            </button>
-            {UNIVERSITIES.map((u) => (
+          <div className="flex justify-center mb-6 sm:mb-8" ref={universityPickerRef}>
+            <div className="relative">
+              {/* Trigger button */}
               <button
-                key={u.id}
-                onClick={() => setSelectedUniversity(u.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition ${selectedUniversity === u.id
-                  ? 'bg-teal-600 text-white'
-                  : 'bg-white/5 hover:bg-white/10 text-gray-300'
-                  }`}
+                onClick={() => setShowUniversityPicker(!showUniversityPicker)}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-200 cursor-pointer"
+                style={{
+                  background: selectedUniversity !== 'all' ? 'rgba(20,184,166,0.2)' : 'rgba(255,255,255,0.08)',
+                  border: selectedUniversity !== 'all' ? '1px solid rgba(20,184,166,0.4)' : '1px solid rgba(255,255,255,0.15)',
+                  color: 'white',
+                  backdropFilter: 'blur(24px)',
+                }}
               >
-                <img src={UNIVERSITY_LOGOS[u.id]} alt="" width={20} height={20} className="w-5 h-5 object-contain rounded-full" />
-                {u.name}
+                {selectedUniversity !== 'all' ? (
+                  <>
+                    <img src={UNIVERSITY_LOGOS[selectedUniversity]} alt="" width={18} height={18} className="w-4 h-4 object-contain rounded-full" />
+                    <span>{UNIVERSITIES.find(u => u.id === selectedUniversity)?.name}</span>
+                  </>
+                ) : (
+                  <span>All Universities</span>
+                )}
+                <svg className={`w-3.5 h-3.5 opacity-60 transition-transform duration-200 ${showUniversityPicker ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                </svg>
               </button>
-            ))}
+
+              {/* Grid popover */}
+              {showUniversityPicker && (
+                <div
+                  className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-80 sm:w-96 rounded-2xl p-3 z-50"
+                  style={{
+                    background: 'rgba(15,15,20,0.92)',
+                    backdropFilter: 'blur(40px) saturate(200%)',
+                    WebkitBackdropFilter: 'blur(40px) saturate(200%)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    boxShadow: '0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
+                  }}
+                >
+                  {/* All Universities option */}
+                  <button
+                    onClick={() => { setSelectedUniversity('all'); setShowUniversityPicker(false) }}
+                    className="w-full text-left px-3 py-2 rounded-xl text-sm font-bold mb-2 transition-all duration-150 flex items-center gap-2"
+                    style={selectedUniversity === 'all'
+                      ? { background: 'rgba(59,130,246,0.25)', color: 'rgba(147,197,253,1)' }
+                      : { color: 'rgba(255,255,255,0.7)' }
+                    }
+                  >
+                    <span className="text-base">🏫</span>
+                    All Universities
+                    {selectedUniversity === 'all' && (
+                      <svg className="w-4 h-4 ml-auto" style={{ color: 'rgba(147,197,253,1)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
+
+                  <div className="h-px mb-2" style={{ background: 'rgba(255,255,255,0.08)' }} />
+
+                  {/* University grid */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {UNIVERSITIES.map((u) => (
+                      <button
+                        key={u.id}
+                        onClick={() => { setSelectedUniversity(u.id); setShowUniversityPicker(false) }}
+                        className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all duration-150"
+                        style={selectedUniversity === u.id
+                          ? { background: 'rgba(20,184,166,0.2)', border: '1px solid rgba(20,184,166,0.4)' }
+                          : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }
+                        }
+                      >
+                        <img src={UNIVERSITY_LOGOS[u.id]} alt="" width={32} height={32} className="w-8 h-8 object-contain rounded-full" />
+                        <span className="text-xs font-bold leading-tight text-center" style={{ color: selectedUniversity === u.id ? 'rgba(94,234,212,1)' : 'rgba(255,255,255,0.75)' }}>
+                          {u.name}
+                        </span>
+                        {selectedUniversity === u.id && (
+                          <svg className="w-3.5 h-3.5" style={{ color: 'rgba(94,234,212,1)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

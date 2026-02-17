@@ -1,6 +1,10 @@
 import { supabaseServer } from '@/services/supabaseServer'
+import { verifyAdmin } from '@/services/utils/verifyAdmin'
 
-export async function GET() {
+export async function GET(request) {
+  const admin = await verifyAdmin(request)
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 })
+
   try {
     const { data, error } = await supabaseServer
       .from('listings')
@@ -11,11 +15,14 @@ export async function GET() {
     if (error) return Response.json({ error: error.message }, { status: 500 })
     return Response.json({ success: true, data })
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 })
+    return Response.json({ error: 'An error occurred' }, { status: 500 })
   }
 }
 
 export async function PATCH(request) {
+  const admin = await verifyAdmin(request)
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 })
+
   try {
     const { listingId, isSold } = await request.json()
     if (!listingId) return Response.json({ error: 'Missing listingId' }, { status: 400 })
@@ -28,11 +35,14 @@ export async function PATCH(request) {
     if (error) return Response.json({ error: error.message }, { status: 500 })
     return Response.json({ success: true })
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 })
+    return Response.json({ error: 'An error occurred' }, { status: 500 })
   }
 }
 
 export async function DELETE(request) {
+  const admin = await verifyAdmin(request)
+  if (!admin) return Response.json({ error: 'Forbidden' }, { status: 403 })
+
   try {
     const { listingId } = await request.json()
     if (!listingId) return Response.json({ error: 'Missing listingId' }, { status: 400 })
@@ -45,6 +55,6 @@ export async function DELETE(request) {
     if (error) return Response.json({ error: error.message }, { status: 500 })
     return Response.json({ success: true })
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 })
+    return Response.json({ error: 'An error occurred' }, { status: 500 })
   }
 }

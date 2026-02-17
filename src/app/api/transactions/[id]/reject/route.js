@@ -1,13 +1,19 @@
 import { supabaseServer } from '@/services/supabaseServer'
+import { getSessionUser } from '@/services/utils/getSessionUser'
 
 export async function POST(request, { params }) {
   try {
-    const { id } = await params
-    const body = await request.json()
-    const { userId } = body
+    // Get the authenticated user from session — never trust userId from the body
+    const sessionUser = await getSessionUser(request)
+    if (!sessionUser) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const userId = sessionUser.id
 
-    if (!id || !userId) {
-      return Response.json({ error: 'Missing required fields' }, { status: 400 })
+    const { id } = await params
+
+    if (!id) {
+      return Response.json({ error: 'Missing transaction id' }, { status: 400 })
     }
 
     // Fetch the transaction
@@ -47,9 +53,6 @@ export async function POST(request, { params }) {
 
     return Response.json({ success: true, message: 'Transaction rejected — listing is now available again' })
   } catch (error) {
-    return Response.json(
-      { error: error.message || 'Failed to reject transaction' },
-      { status: 500 }
-    )
+    return Response.json({ error: 'Failed to reject transaction' }, { status: 500 })
   }
 }

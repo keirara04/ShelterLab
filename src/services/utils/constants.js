@@ -20,13 +20,25 @@ export const CONDITIONS = [
 
 export const UNIVERSITIES = [
   { id: 'Korea University', name: 'Korea University', icon: '🎓' },
+  { id: 'Yonsei University', name: 'Yonsei University', icon: '🎓' },
   { id: 'Hanyang University', name: 'Hanyang University', icon: '🎓' },
+  { id: 'Sungkyunkwan University', name: 'Sungkyunkwan University', icon: '🎓' },
+  { id: 'Kyung Hee University', name: 'Kyung Hee University', icon: '🎓' },
+  { id: 'Ewha Womans University', name: 'Ewha Womans University', icon: '🎓' },
+  { id: 'Sejong University', name: 'Sejong University', icon: '🎓' },
+  { id: 'Konkuk University', name: 'Konkuk University', icon: '🎓' },
   { id: 'Seoultech', name: 'Seoultech', icon: '🎓' },
 ]
 
 export const UNIVERSITY_LOGOS = {
   'Korea University': '/KoreaUniversityLogo.png',
+  'Yonsei University': '/YonseiUniversityLogo.png',
   'Hanyang University': '/HanyangUniversityLogo.png',
+  'Sungkyunkwan University': '/SungkyunkwanUniversityLogo.png',
+  'Kyung Hee University': '/KyungHeeUniversityLogo.png',
+  'Ewha Womans University': '/EwhaWomansUniversityLogo.png',
+  'Sejong University': '/SejongUniversityLogo.png',
+  'Konkuk University': '/KonkukUniversityLogo.png',
   'Seoultech': '/SeoultechLogo.png',
 }
 

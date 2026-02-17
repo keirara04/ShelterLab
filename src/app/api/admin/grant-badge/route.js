@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { verifyAdmin } from '@/services/utils/verifyAdmin'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -6,6 +7,11 @@ const supabaseAdmin = createClient(
 )
 
 export async function PATCH(request) {
+  const admin = await verifyAdmin(request)
+  if (!admin) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   try {
     const { user_id, grant } = await request.json()
 
@@ -17,7 +23,6 @@ export async function PATCH(request) {
       return Response.json({ error: 'grant must be a boolean' }, { status: 400 })
     }
 
-    // Update the user's badge status
     const { error } = await supabaseAdmin
       .from('profiles')
       .update({ university_email_verified: grant })
@@ -28,12 +33,12 @@ export async function PATCH(request) {
       return Response.json({ error: 'Failed to update badge' }, { status: 500 })
     }
 
-    return Response.json({ 
-      success: true, 
-      message: grant ? 'Badge granted' : 'Badge revoked' 
+    return Response.json({
+      success: true,
+      message: grant ? 'Badge granted' : 'Badge revoked',
     })
   } catch (err) {
     console.error('Grant badge error:', err)
-    return Response.json({ error: err.message || 'An error occurred' }, { status: 500 })
+    return Response.json({ error: 'An error occurred' }, { status: 500 })
   }
 }

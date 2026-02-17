@@ -1,12 +1,13 @@
 import { supabaseServer } from '@/services/supabaseServer'
+import { getSessionUser } from '@/services/utils/getSessionUser'
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url)
-  const userId = searchParams.get('userId')
-
-  if (!userId) {
-    return Response.json({ error: 'Missing userId' }, { status: 400 })
+  // Get the authenticated user from session — never trust userId from query params
+  const sessionUser = await getSessionUser(request)
+  if (!sessionUser) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const userId = sessionUser.id
 
   const { data, error } = await supabaseServer
     .from('transactions')
@@ -20,7 +21,7 @@ export async function GET(request) {
     .order('created_at', { ascending: false })
 
   if (error) {
-    return Response.json({ error: error.message }, { status: 500 })
+    return Response.json({ error: 'Failed to fetch transactions' }, { status: 500 })
   }
 
   return Response.json({ transactions: data || [] })

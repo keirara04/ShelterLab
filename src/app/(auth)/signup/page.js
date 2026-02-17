@@ -118,25 +118,25 @@ function SignupContent() {
 
           {showConfirmEmail ? (
             <div className="bg-white/10 border border-white/20 rounded-3xl p-8 backdrop-blur-xl text-center">
-              <div className="text-6xl mb-6 animate-pulse">⏳</div>
-              <h2 className="text-3xl font-black mb-3 text-white">Account Pending Review</h2>
-              <p className="text-gray-300 mb-2 text-base">We've received your signup request:</p>
+              <div className="text-6xl mb-6">📧</div>
+              <h2 className="text-3xl font-black mb-3 text-white">Check Your Email</h2>
+              <p className="text-gray-300 mb-2 text-base">A confirmation link has been sent to:</p>
               <p className="text-blue-400 font-bold text-lg mb-8 break-all">{formData.email}</p>
               <p className="text-gray-400 text-sm mb-8 leading-relaxed">
-                Your account is pending approval from our administrators. We'll review your application and you'll be able to access ShelterLab shortly. Thank you for your patience!
+                Click the link in the email to confirm your account. Once confirmed, you can sign in straight away.
               </p>
               <div className="space-y-3">
                 <Link
-                  href="/"
+                  href="/login"
                   className="block w-full py-3 rounded-xl font-black text-white bg-blue-600 hover:bg-blue-700 transition text-center text-base"
                 >
-                  Go Home
+                  Go to Sign In
                 </Link>
                 <Link
-                  href="/login"
+                  href="/"
                   className="block w-full py-3 rounded-xl font-bold text-gray-300 bg-white/10 hover:bg-white/20 transition text-center text-base"
                 >
-                  Try Signing In
+                  Go Home
                 </Link>
               </div>
             </div>

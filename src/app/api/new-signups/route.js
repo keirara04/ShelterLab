@@ -1,6 +1,10 @@
 import { supabaseServer } from '@/services/supabaseServer'
+import { verifyAdmin } from '@/services/utils/verifyAdmin'
 
-export async function GET(req) {
+export async function GET(request) {
+  const admin = await verifyAdmin(request)
+  if (!admin) return Response.json({ success: false, error: 'Forbidden' }, { status: 403 })
+
   try {
     // Get all users with their approval status, sorted by newest first
     const { data: allUsers, error: usersError } = await supabaseServer

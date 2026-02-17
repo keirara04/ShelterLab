@@ -10,6 +10,7 @@ function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectPath = searchParams.get('redirect')
+  const confirmed = searchParams.get('confirmed')
   const { login, isAuthenticated, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -118,6 +119,12 @@ function LoginContent() {
           <div className="bg-white/10 border border-white/20 rounded-3xl p-8 backdrop-blur-xl">
             <h2 className="text-3xl font-black mb-2 text-white text-center">Welcome Back</h2>
             <p className="text-gray-400 text-center mb-8">Sign in to your Shelter account</p>
+
+            {confirmed && (
+              <div className="bg-green-500/20 border border-green-500 text-green-400 p-4 rounded-xl mb-6 text-sm">
+                Email confirmed! You can now sign in.
+              </div>
+            )}
 
             {error && (
               <div className="bg-red-500/20 border border-red-500 text-red-400 p-4 rounded-xl mb-6 text-sm">

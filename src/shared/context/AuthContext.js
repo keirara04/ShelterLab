@@ -14,6 +14,8 @@ export function AuthProvider({ children }) {
 
   // Initialize auth state
   useEffect(() => {
+    let unsubscribe = () => {}
+
     const initAuth = async () => {
       try {
         setLoading(true)
@@ -53,22 +55,6 @@ export function AuthProvider({ children }) {
 
           setUser(session.user)
 
-          // Check if user is still approved
-          const { data: approvedUser } = await supabase
-            .from('approved_users')
-            .select('*')
-            .eq('email', session.user.email.toLowerCase())
-            .eq('status', 'approved')
-            .single()
-
-          if (!approvedUser) {
-            // User is no longer approved - sign them out
-            await supabase.auth.signOut()
-            setUser(null)
-            setProfile(null)
-            return
-          }
-
           const { data, error: profileError } = await supabase
             .from('profiles')
             .select('*')
@@ -81,7 +67,7 @@ export function AuthProvider({ children }) {
           }
         })
 
-        return () => subscription.unsubscribe()
+        unsubscribe = () => subscription.unsubscribe()
       } catch (err) {
         console.error('Auth error:', err)
         setError(err.message)
@@ -91,6 +77,8 @@ export function AuthProvider({ children }) {
     }
 
     initAuth()
+
+    return () => unsubscribe()
   }, [])
 
   const signup = async (email, password, fullName, university) => {
@@ -102,11 +90,7 @@ export function AuthProvider({ children }) {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/email-confirmation`,
-          data: {
-            full_name: fullName,
-            university: university,
-          }
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 
@@ -141,8 +125,7 @@ export function AuthProvider({ children }) {
         throw new Error(profileData.error || 'Failed to create profile')
       }
 
-      // Pending admin approval
-      return { success: true, pending: true }
+      return { success: true }
     } catch (err) {
       setError(err.message)
       return { success: false, error: err.message }
@@ -160,21 +143,6 @@ export function AuthProvider({ children }) {
 
       if (error) throw error
 
-      // Check if email is approved
-      const { data: approvedUser, error: approvalError } = await supabase
-        .from('approved_users')
-        .select('*')
-        .eq('email', email.toLowerCase())
-        .eq('status', 'approved')
-        .single()
-
-      if (!approvedUser || approvalError?.code === 'PGRST116') {
-        // Email not approved - sign them out
-        await supabase.auth.signOut()
-        throw new Error('Your account has been revoked. Please contact the administrator.')
-      }
-
-      // Set user first
       if (data.user) {
         setUser(data.user)
 
