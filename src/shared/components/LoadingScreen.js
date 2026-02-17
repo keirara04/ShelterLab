@@ -1,12 +1,7 @@
 'use client'
 
 import { useAuth } from '@/shared/context/AuthContext'
-
-const UNIVERSITY_LOGOS = {
-  'Korea University': '/KoreaUniversityLogo.png',
-  'Hanyang University': '/HanyangUniversityLogo.png',
-  'Seoultech': '/Seoultech.png',
-}
+import { UNIVERSITY_LOGOS } from '@/services/utils/constants'
 
 export default function LoadingScreen() {
   const { profile } = useAuth()

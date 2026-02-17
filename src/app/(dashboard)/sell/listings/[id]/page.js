@@ -170,7 +170,7 @@ export default function ListingDetailPage() {
                 </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-teal-800/20 to-cyan-800/20">
-                  <span className="text-gray-500">No image available</span>
+                  <span className="text-gray-400">No image available</span>
                 </div>
               )}
             </div>
@@ -270,7 +270,7 @@ export default function ListingDetailPage() {
                   )}
 
                   {!listing.kakao_link && (
-                    <p className="text-xs text-gray-500 text-center py-2">
+                    <p className="text-xs text-gray-400 text-center py-2">
                       No contact info available
                     </p>
                   )}

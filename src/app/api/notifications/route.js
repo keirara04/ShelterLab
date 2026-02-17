@@ -49,10 +49,8 @@ export async function POST(request) {
     }
 
     const token = authHeader.replace('Bearer ', '')
-    console.log('[API] Token received:', token.substring(0, 20) + '...')
 
-    // Get user directly from token using server client (simpler approach)
-    console.log('[API] Verifying token...')
+    // Get user directly from token using server client
     let user = null
     
     try {
@@ -84,12 +82,7 @@ export async function POST(request) {
       )
     }
 
-    // Check if user is authorized admin
-    const ADMIN_EMAIL = 'keiratestaccount@yahoo.com'
-    console.log('[API] User email:', user.email, 'Admin email:', ADMIN_EMAIL)
-    
-    if (user.email !== ADMIN_EMAIL) {
-      console.log('[API] User is not admin')
+    if (user.email !== process.env.ADMIN_EMAIL) {
       return Response.json(
         { success: false, error: 'Only admin can push notifications' },
         { status: 403 }

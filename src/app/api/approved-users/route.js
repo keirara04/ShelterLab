@@ -1,6 +1,10 @@
 import { supabaseServer } from '@/services/supabaseServer'
+import { verifyAdmin } from '@/services/utils/verifyAdmin'
 
 export async function GET(req) {
+  const admin = await verifyAdmin(req)
+  if (!admin) return Response.json({ success: false, error: 'Forbidden' }, { status: 403 })
+
   try {
     const { searchParams } = new URL(req.url)
     const includeAll = searchParams.get('includeAll') === 'true'
@@ -46,6 +50,9 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
+  const admin = await verifyAdmin(req)
+  if (!admin) return Response.json({ success: false, error: 'Forbidden' }, { status: 403 })
+
   try {
     const { email, approval_notes } = await req.json()
 
@@ -102,6 +109,9 @@ export async function POST(req) {
 }
 
 export async function DELETE(req) {
+  const admin = await verifyAdmin(req)
+  if (!admin) return Response.json({ success: false, error: 'Forbidden' }, { status: 403 })
+
   try {
     const { id, email } = await req.json()
 

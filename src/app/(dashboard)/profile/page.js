@@ -42,6 +42,7 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     full_name: '',
     avatar_url: '',
+    kakao_link: '',
   })
   
   // Push notification subscription
@@ -92,26 +93,14 @@ export default function ProfilePage() {
       setFormData({
         full_name: profile?.full_name || '',
         avatar_url: profile?.avatar_url || '',
+        kakao_link: profile?.kakao_link || '',
       })
       fetchMyListings()
       fetchReviews()
       fetchPendingTransactions()
     }
-  }, [user, profile])
-
-  // Refetch when user returns to this tab after being away
-  useEffect(() => {
-    if (!user?.id) return
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchMyListings()
-        fetchReviews()
-        fetchPendingTransactions()
-      }
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [user?.id])
+
 
   const fetchMyListings = async () => {
     if (!user) return
@@ -486,7 +475,7 @@ export default function ProfilePage() {
       }
 
       // Update profile — include avatar_url so it doesn't get wiped
-      const updates = { full_name: formData.full_name }
+      const updates = { full_name: formData.full_name, kakao_link: formData.kakao_link || null }
       if (newAvatarUrl) {
         updates.avatar_url = newAvatarUrl
       } else if (profile?.avatar_url) {
@@ -651,7 +640,7 @@ export default function ProfilePage() {
               </div>
               <button
                 onClick={() => setShowVerifyModal(false)}
-                className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-500 hover:text-white transition-colors cursor-pointer"
+                className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-white transition-colors cursor-pointer"
                 style={{ background: 'rgba(255,255,255,0.06)' }}
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -675,7 +664,7 @@ export default function ProfilePage() {
                     className="w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none placeholder-gray-600"
                     style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                   />
-                  <p className="text-gray-600 text-xs mt-1.5">Must use @university.ac.kr or another approved domain by University. Ensure you are using desktop version to verify your profile</p>
+                  <p className="text-gray-400 text-xs mt-1.5">Must use @university.ac.kr or another approved domain by University. Ensure you are using desktop version to verify your profile</p>
                 </div>
                 <button
                   type="submit"
@@ -691,11 +680,11 @@ export default function ProfilePage() {
                 {univSending && (
                   <div className="text-center py-4">
                     <div className="inline-block w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                    <p className="text-gray-500 text-xs animate-pulse">Sending code to your university email...</p>
+                    <p className="text-gray-400 text-xs animate-pulse">Sending code to your university email...</p>
                     <button
                       type="button"
                       onClick={() => { setUnivSending(false); setUnivOtpSent(false); setUnivLoading(false) }}
-                      className="mt-3 text-xs text-gray-600 hover:text-gray-400 underline"
+                      className="mt-3 text-xs text-gray-400 hover:text-gray-400 underline"
                     >
                       Cancel
                     </button>
@@ -720,7 +709,7 @@ export default function ProfilePage() {
                         className="w-full px-4 py-3.5 rounded-xl text-white text-lg outline-none placeholder-gray-600 tracking-[0.3em] font-mono text-center disabled:opacity-40"
                         style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                       />
-                      <p className="text-gray-600 text-xs mt-1.5 text-center">Check your university inbox for the code</p>
+                      <p className="text-gray-400 text-xs mt-1.5 text-center">Check your university inbox for the code</p>
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -740,7 +729,7 @@ export default function ProfilePage() {
                         type="button"
                         disabled={univLoading}
                         onClick={() => { setUnivOtpSent(false); setUnivOtp(''); setUnivError(null); setUnivSuccess(null) }}
-                        className="px-4 py-3 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-300 transition-colors cursor-pointer disabled:opacity-50"
+                        className="px-4 py-3 rounded-xl text-xs font-bold text-gray-400 hover:text-gray-300 transition-colors cursor-pointer disabled:opacity-50"
                         style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
                       >
                         Back
@@ -808,7 +797,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => window.location.reload()}
-                className="hidden sm:flex w-9 h-9 items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-500 hover:text-white"
+                className="hidden sm:flex w-9 h-9 items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-400 hover:text-white"
                 style={{
                   background: 'rgba(255,255,255,0.06)',
                   border: '1px solid rgba(255,255,255,0.1)',
@@ -867,7 +856,7 @@ export default function ProfilePage() {
 
               <button
                 onClick={handleLogout}
-                className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-500 hover:text-red-400"
+                className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-400 hover:text-red-400"
                 style={{
                   background: 'rgba(255,255,255,0.06)',
                   border: '1px solid rgba(255,255,255,0.1)',
@@ -882,7 +871,7 @@ export default function ProfilePage() {
             {/* Refresh — mobile only, below logout */}
             <button
               onClick={() => window.location.reload()}
-              className="sm:hidden w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-500 hover:text-white"
+              className="sm:hidden w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-400 hover:text-white"
               style={{
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.1)',
@@ -1022,7 +1011,7 @@ export default function ProfilePage() {
                     >
                       {avatarPreview ? 'Change Photo' : 'Upload Photo'}
                     </button>
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-gray-400 mt-2">
                       JPEG, PNG, or WebP. Max 2MB.
                     </p>
                   </div>
@@ -1036,7 +1025,7 @@ export default function ProfilePage() {
                   type="text"
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl text-white outline-none transition-all duration-200 placeholder-gray-500"
+                  className="w-full px-4 py-3 rounded-xl text-white outline-none transition-all duration-200 placeholder-gray-400"
                   style={{
                     background: 'rgba(255,255,255,0.06)',
                     border: '1px solid rgba(255,255,255,0.1)',
@@ -1044,6 +1033,36 @@ export default function ProfilePage() {
                   placeholder="Enter your name"
                   disabled={loading}
                 />
+              </div>
+
+              {/* Kakao Open Chat Link */}
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-2">
+                  Kakao Open Chat Link
+                  <span className="ml-2 text-xs font-normal text-gray-400">— saved to your profile, auto-fills on sell page</span>
+                </label>
+                <input
+                  type="url"
+                  value={formData.kakao_link}
+                  onChange={(e) => setFormData({ ...formData, kakao_link: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl text-white outline-none transition-all duration-200 placeholder-gray-400"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                  }}
+                  placeholder="https://open.kakao.com/o/..."
+                  disabled={loading}
+                />
+                <details className="mt-2 cursor-pointer">
+                  <summary className="text-xs text-teal-400 font-bold select-none">How to get your Kakao Open Chat link</summary>
+                  <ol className="mt-2 text-xs text-gray-400 space-y-1 pl-4 list-decimal">
+                    <li>Open <strong className="text-gray-300">KakaoTalk</strong> → tap the <strong className="text-gray-300">chat bubble</strong> icon at the bottom</li>
+                    <li>Tap <strong className="text-gray-300">Open Chat</strong> at the top → tap <strong className="text-gray-300">+ Create</strong></li>
+                    <li>Choose <strong className="text-gray-300">1:1 Chat</strong>, enter a title (e.g. ShelterLab), tap <strong className="text-gray-300">Open</strong></li>
+                    <li>Tap <strong className="text-gray-300">Share</strong> → copy the link (starts with <span className="text-teal-400">open.kakao.com/o/...</span>)</li>
+                    <li>Paste the link above</li>
+                  </ol>
+                </details>
               </div>
 
               <button
@@ -1087,7 +1106,7 @@ export default function ProfilePage() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm font-bold line-clamp-1">{tx.listing?.title}</p>
-                    <p className="text-gray-500 text-xs">
+                    <p className="text-gray-400 text-xs">
                       from <span className="text-gray-400">{tx.seller?.full_name}</span> · ₩{tx.listing?.price?.toLocaleString()}
                     </p>
                   </div>
@@ -1120,7 +1139,7 @@ export default function ProfilePage() {
             className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
               activeTab === 'listings'
                 ? 'text-white shadow-sm'
-                : 'text-gray-500 hover:text-gray-300'
+                : 'text-gray-400 hover:text-gray-300'
             }`}
             style={activeTab === 'listings' ? { background: 'rgba(255,255,255,0.1)' } : {}}
           >
@@ -1131,7 +1150,7 @@ export default function ProfilePage() {
             className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
               activeTab === 'reviews'
                 ? 'text-white shadow-sm'
-                : 'text-gray-500 hover:text-gray-300'
+                : 'text-gray-400 hover:text-gray-300'
             }`}
             style={activeTab === 'reviews' ? { background: 'rgba(255,255,255,0.1)' } : {}}
           >
@@ -1143,7 +1162,7 @@ export default function ProfilePage() {
               className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
                 activeTab === 'admin'
                   ? 'text-white shadow-sm'
-                  : 'text-gray-500 hover:text-gray-300'
+                  : 'text-gray-400 hover:text-gray-300'
               }`}
               style={activeTab === 'admin' ? { background: 'rgba(59, 130, 246, 0.3)' } : {}}
             >
@@ -1187,7 +1206,7 @@ export default function ProfilePage() {
                   &#x1f4e6;
                 </div>
                 <p className="text-gray-400 font-medium">No listings yet</p>
-                <p className="text-gray-500 text-sm mt-1">Create your first listing to start selling</p>
+                <p className="text-gray-400 text-sm mt-1">Create your first listing to start selling</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -1208,7 +1227,7 @@ export default function ProfilePage() {
                         />
                       ) : (
                         <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-800/40 to-cyan-800/40 flex items-center justify-center">
-                          <span className="text-gray-500 text-xs">No img</span>
+                          <span className="text-gray-400 text-xs">No img</span>
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
@@ -1241,7 +1260,7 @@ export default function ProfilePage() {
                   &#x2B50;
                 </div>
                 <p className="text-gray-400 font-medium">No reviews yet</p>
-                <p className="text-gray-500 text-sm mt-1">Reviews from buyers will appear here</p>
+                <p className="text-gray-400 text-sm mt-1">Reviews from buyers will appear here</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -1259,7 +1278,7 @@ export default function ProfilePage() {
                       </div>
                       <div className="flex gap-0.5">
                         {Array.from({ length: 5 }).map((_, i) => (
-                          <span key={i} className={`text-sm ${i < review.rating ? 'text-amber-400' : 'text-gray-600'}`}>
+                          <span key={i} className={`text-sm ${i < review.rating ? 'text-amber-400' : 'text-gray-400'}`}>
                             {'\u2605'}
                           </span>
                         ))}
@@ -1270,7 +1289,7 @@ export default function ProfilePage() {
                         &ldquo;{review.comment}&rdquo;
                       </p>
                     )}
-                    <p className="text-xs text-gray-500 mt-2 pl-10">
+                    <p className="text-xs text-gray-400 mt-2 pl-10">
                       {new Date(review.created_at).toLocaleDateString()}
                     </p>
                   </div>
@@ -1349,7 +1368,7 @@ export default function ProfilePage() {
                 </button>
               </form>
 
-              <p className="text-xs text-gray-500 mt-4 pt-4 border-t border-white/10">
+              <p className="text-xs text-gray-400 mt-4 pt-4 border-t border-white/10">
                 💡 Only one notification can be active at a time. Pushing a new notification will replace the previous one.
               </p>
             </div>
@@ -1373,9 +1392,9 @@ export default function ProfilePage() {
           >
             {'\u2190'} Back to Marketplace
           </Link>
-          <p className="text-gray-600 text-xs mt-3">
+          <p className="text-gray-400 text-xs mt-3">
             Wrong university?{' '}
-            <a href="mailto:admin@shelterlab.shop" className="text-gray-500 hover:text-gray-400 transition">
+            <a href="mailto:admin@shelterlab.shop" className="text-gray-400 hover:text-gray-400 transition">
               Contact admin@shelterlab.shop
             </a>
           </p>
@@ -1414,7 +1433,7 @@ export default function ProfilePage() {
 
             {/* How to earn */}
             <div className="mb-5">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">How to earn LabCred</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">How to earn LabCred</p>
               <div className="space-y-2">
                 <div className="flex items-start gap-2.5">
                   <span className="text-purple-400 mt-0.5 shrink-0">+</span>
@@ -1433,7 +1452,7 @@ export default function ProfilePage() {
 
             {/* Tiers */}
             <div className="mb-5">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">LabCred Tiers</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">LabCred Tiers</p>
               <div className="space-y-2">
                 {[
                   { label: 'New User', range: '0–9', color: '#9ca3af' },
@@ -1446,7 +1465,7 @@ export default function ProfilePage() {
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
                       <span className="text-sm font-bold" style={{ color }}>{label}</span>
                     </div>
-                    <span className="text-xs text-gray-600 font-mono">{range} pts</span>
+                    <span className="text-xs text-gray-400 font-mono">{range} pts</span>
                   </div>
                 ))}
               </div>
@@ -1504,7 +1523,7 @@ export default function ProfilePage() {
               >
                 {confirmLoading ? 'Confirming...' : 'Confirm & Submit Review'}
               </button>
-              <button onClick={() => setConfirmModal(null)} disabled={confirmLoading} className="w-full py-2 rounded-xl font-bold text-xs text-gray-600 hover:text-gray-400 transition">
+              <button onClick={() => setConfirmModal(null)} disabled={confirmLoading} className="w-full py-2 rounded-xl font-bold text-xs text-gray-400 hover:text-gray-400 transition">
                 Cancel
               </button>
             </div>
@@ -1644,13 +1663,9 @@ export default function ProfilePage() {
 
 function AdminApprovedUsers() {
   const [allUsers, setAllUsers] = useState([])
-  const [newSignups, setNewSignups] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
-  const [email, setEmail] = useState('')
-  const [notes, setNotes] = useState('')
-  const [submitting, setSubmitting] = useState(false)
 
   const fetchAllUsers = async () => {
     try {
@@ -1666,100 +1681,6 @@ function AdminApprovedUsers() {
       setError('Error fetching users')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const fetchNewSignups = async () => {
-    try {
-      const response = await fetch('/api/new-signups')
-      const result = await response.json()
-      if (response.ok && result.success) {
-        setNewSignups(result.data || [])
-      }
-    } catch (err) {
-      console.warn('Error fetching new signups')
-    }
-  }
-
-  const handleAddApprovedUser = async (e) => {
-    e.preventDefault()
-    if (!email.trim()) return
-
-    try {
-      setSubmitting(true)
-      setError(null)
-      setSuccess(null)
-
-      const response = await fetch('/api/approved-users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email.toLowerCase(),
-          notes: notes.trim() || null,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (response.ok && data.success) {
-        setSuccess(`✓ ${email} approved successfully`)
-        setEmail('')
-        setNotes('')
-        await fetchAllUsers()
-      } else {
-        setError(data.error || 'Failed to add approved user')
-      }
-    } catch (err) {
-      setError('Error adding approved user')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const handleRemoveApprovedUser = async (email) => {
-    try {
-      const response = await fetch('/api/approved-users', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.toLowerCase() }),
-      })
-
-      if (response.ok && (await response.json()).success) {
-        setSuccess('✓ User removed from approved list')
-        await fetchAllUsers()
-      } else {
-        const data = await response.json()
-        setError(data.error || 'Failed to remove user')
-      }
-    } catch (err) {
-      setError('Error removing user')
-    }
-  }
-
-  const handleApproveUser = async (userEmail) => {
-    try {
-      setError(null)
-      setSuccess(null)
-
-      const response = await fetch('/api/approved-users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: userEmail.toLowerCase(),
-          notes: null,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (response.ok && data.success) {
-        setSuccess(`✓ ${userEmail} approved successfully`)
-        await fetchAllUsers()
-      } else {
-        setError(data.error || 'Failed to approve user')
-      }
-    } catch (err) {
-      setError('Error approving user')
     }
   }
 
@@ -1787,46 +1708,42 @@ function AdminApprovedUsers() {
     }
   }
 
+  const handleDeleteUser = async (userId, userEmail) => {
+    if (!window.confirm(`Delete ${userEmail}? This is permanent and cannot be undone.`)) return
+
+    try {
+      setError(null)
+      setSuccess(null)
+
+      const response = await fetch('/api/admin/delete-user', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setSuccess(`✓ ${userEmail} deleted successfully`)
+        await fetchAllUsers()
+      } else {
+        setError(data.error || 'Failed to delete user')
+      }
+    } catch (err) {
+      setError('Error deleting user')
+    }
+  }
+
   useEffect(() => {
     fetchAllUsers()
-    fetchNewSignups()
   }, [])
 
   return (
     <div className="space-y-6">
-      {/* New Signups Notification */}
-      {newSignups.length > 0 && (
-        <div className="glass rounded-2xl p-6 border-l-4 border-orange-500">
-          <h3 className="text-xl font-black text-white mb-4">🔔 New Signups ({newSignups.length})</h3>
-          <p className="text-gray-400 text-sm mb-4">Users who clicked their confirmation email</p>
-          <div className="space-y-2 max-h-40 overflow-y-auto">
-            {newSignups.map((user) => (
-              <div
-                key={user.id}
-                className="flex items-center justify-between p-3 bg-orange-500/10 rounded-lg border border-orange-500/30"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-white font-medium text-sm truncate">{user.email}</p>
-                  {user.full_name && (
-                    <p className="text-gray-400 text-xs mt-1">{user.full_name}</p>
-                  )}
-                </div>
-                <button
-                  onClick={() => handleApproveUser(user.email)}
-                  className="ml-2 px-3 py-2 rounded-lg bg-green-600/20 hover:bg-green-600/40 text-green-400 hover:text-green-300 font-bold transition-all duration-200 text-xs whitespace-nowrap"
-                >
-                  Approve
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* All Users Management */}
       <div className="glass rounded-2xl p-6 mb-6">
       <h3 className="text-xl font-black text-white mb-4">👥 Manage User Access</h3>
-      <p className="text-sm text-gray-400 mb-6">Approve or reject new signups</p>
+      <p className="text-sm text-gray-400 mb-6">Manage user accounts and access</p>
 
       {error && (
         <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm mb-4">
@@ -1872,34 +1789,25 @@ function AdminApprovedUsers() {
                 )}
               </div>
               <div className="flex gap-2">
-                {user.status === 'pending' && (
-                  <button
-                    onClick={() => handleApproveUser(user.email)}
-                    className="flex-1 md:flex-none px-3 py-2 rounded-lg bg-green-600/20 hover:bg-green-600/40 text-green-400 hover:text-green-300 font-bold transition-all duration-200 text-xs whitespace-nowrap"
-                  >
-                    Approve
-                  </button>
-                )}
                 <button
                   onClick={() => handleGrantBadge(user.id, !user.university_email_verified)}
                   className={`flex-1 md:flex-none px-3 py-2 rounded-lg font-bold transition-all duration-200 text-xs whitespace-nowrap flex items-center gap-1 ${
                     user.university_email_verified
                       ? 'bg-teal-600/20 hover:bg-red-600/20 text-teal-400 hover:text-red-400'
-                      : 'bg-white/5 hover:bg-teal-600/20 text-gray-500 hover:text-teal-400'
+                      : 'bg-white/5 hover:bg-teal-600/20 text-gray-400 hover:text-teal-400'
                   }`}
                   title={user.university_email_verified ? 'Revoke badge' : 'Grant badge'}
                 >
                   <img src="/BadgeIcon.svg" alt="" className="w-3 h-3" />
                   {user.university_email_verified ? 'Revoke' : 'Badge'}
                 </button>
-                {user.status === 'approved' && (
-                  <button
-                    onClick={() => handleRemoveApprovedUser(user.email)}
-                    className="flex-1 md:flex-none px-3 py-2 rounded-lg bg-red-600/20 hover:bg-red-600/40 text-red-400 hover:text-red-300 font-bold transition-all duration-200 text-xs whitespace-nowrap"
-                  >
-                    Revoke
-                  </button>
-                )}
+                <button
+                  onClick={() => handleDeleteUser(user.id, user.email)}
+                  className="flex-1 md:flex-none px-3 py-2 rounded-lg bg-red-900/30 hover:bg-red-700/50 text-red-500 hover:text-red-300 font-bold transition-all duration-200 text-xs whitespace-nowrap"
+                  title="Permanently delete this user"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           ))}
@@ -1944,7 +1852,7 @@ function AdminStats() {
           ].map(({ label, value, color }) => (
             <div key={label} className="bg-white/5 rounded-xl p-4 border border-white/8">
               <p className={`text-xl font-black ${color}`}>{value}</p>
-              <p className="text-xs text-gray-500 mt-1">{label}</p>
+              <p className="text-xs text-gray-400 mt-1">{label}</p>
             </div>
           ))}
         </div>
@@ -2007,7 +1915,7 @@ function AdminListings() {
       {loading ? (
         <p className="text-gray-400 text-sm">Loading listings...</p>
       ) : listings.length === 0 ? (
-        <p className="text-gray-500 text-sm">No listings found.</p>
+        <p className="text-gray-400 text-sm">No listings found.</p>
       ) : (
         <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
           {listings.map((listing) => (
@@ -2019,7 +1927,7 @@ function AdminListings() {
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-white text-sm font-bold truncate">{listing.title}</p>
-                <p className="text-gray-500 text-xs truncate">
+                <p className="text-gray-400 text-xs truncate">
                   {listing.profiles?.full_name || 'Unknown'} · ₩{Number(listing.price).toLocaleString()}
                 </p>
               </div>

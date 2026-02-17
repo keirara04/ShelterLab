@@ -51,19 +51,19 @@ export default function TermsPage() {
             </div>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
-                <span className="text-gray-500 mt-0.5 shrink-0">•</span>
+                <span className="text-gray-400 mt-0.5 shrink-0">•</span>
                 <span className="text-gray-300 text-sm">We are not the seller or the buyer.</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-gray-500 mt-0.5 shrink-0">•</span>
+                <span className="text-gray-400 mt-0.5 shrink-0">•</span>
                 <span className="text-gray-300 text-sm">We do not own, inspect, or store the items listed.</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-gray-500 mt-0.5 shrink-0">•</span>
+                <span className="text-gray-400 mt-0.5 shrink-0">•</span>
                 <span className="text-gray-300 text-sm">The contract of sale is strictly between the two users.</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-gray-500 mt-0.5 shrink-0">•</span>
+                <span className="text-gray-400 mt-0.5 shrink-0">•</span>
                 <span className="text-gray-300 text-sm">ShelterLab is not responsible for any defects, payment issues, or failed meetups.</span>
               </li>
             </ul>
@@ -77,11 +77,11 @@ export default function TermsPage() {
             </div>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
-                <span className="text-gray-500 mt-0.5 shrink-0">•</span>
+                <span className="text-gray-400 mt-0.5 shrink-0">•</span>
                 <span className="text-gray-300 text-sm"><strong className="text-white">One Person, One Account:</strong> You must use your own verified email. Lending your account to outsiders is a violation of service.</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-gray-500 mt-0.5 shrink-0">•</span>
+                <span className="text-gray-400 mt-0.5 shrink-0">•</span>
                 <span className="text-gray-300 text-sm"><strong className="text-white">Duty of Care:</strong> Users are responsible for maintaining the security of their login credentials.</span>
               </li>
             </ul>

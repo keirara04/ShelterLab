@@ -72,7 +72,7 @@ export default function PWAInstallButton() {
       <button
         disabled
         type="button"
-        className="relative p-3 rounded-lg bg-gray-700/50 text-gray-500 cursor-not-allowed"
+        className="relative p-3 rounded-lg bg-gray-700/50 text-gray-400 cursor-not-allowed"
         title="Not available on this browser or device"
       >
         <svg

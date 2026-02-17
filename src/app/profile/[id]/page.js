@@ -225,7 +225,7 @@ export default function SellerProfilePage() {
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#000000' }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500 mx-auto mb-4" />
-          <p className="text-gray-500 text-sm">Loading profile...</p>
+          <p className="text-gray-400 text-sm">Loading profile...</p>
         </div>
       </div>
     )
@@ -300,7 +300,7 @@ export default function SellerProfilePage() {
           {isAuthenticated && user?.id !== sellerId && (
             <button
               onClick={() => setShowReportModal(true)}
-              className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-red-400 transition px-2.5 py-1.5 rounded-lg hover:bg-red-500/10"
+              className="flex items-center gap-1.5 text-xs font-bold text-gray-400 hover:text-red-400 transition px-2.5 py-1.5 rounded-lg hover:bg-red-500/10"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
@@ -352,7 +352,7 @@ export default function SellerProfilePage() {
                 )}
               </div>
               {seller.university && (
-                <p className="text-gray-500 text-sm mt-1">{seller.university}</p>
+                <p className="text-gray-400 text-sm mt-1">{seller.university}</p>
               )}
               <div
                 className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
@@ -392,7 +392,7 @@ export default function SellerProfilePage() {
                 style={i < arr.length - 1 ? { borderRight: '1px solid rgba(255,255,255,0.05)' } : {}}
               >
                 <p className="text-xl sm:text-2xl font-black" style={{ color, textShadow: `0 0 20px ${color}66` }}>{value}</p>
-                <p className="text-xs text-gray-600 mt-0.5 font-medium">{label}</p>
+                <p className="text-xs text-gray-400 mt-0.5 font-medium">{label}</p>
               </div>
             ))}
           </div>
@@ -446,7 +446,7 @@ export default function SellerProfilePage() {
                 boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
               }}
             >
-              <p className="text-gray-600 text-sm">
+              <p className="text-gray-400 text-sm">
                 {listingsTab === 'active' ? 'No active listings' : 'No sold items yet'}
               </p>
             </div>
@@ -541,7 +541,7 @@ export default function SellerProfilePage() {
             <div>
               <h2 className="text-lg font-black text-white">Reviews</h2>
               {reviews.length > 0 && (
-                <p className="text-gray-600 text-xs mt-0.5">{reviews.length} review{reviews.length !== 1 ? 's' : ''}</p>
+                <p className="text-gray-400 text-xs mt-0.5">{reviews.length} review{reviews.length !== 1 ? 's' : ''}</p>
               )}
             </div>
             {isAuthenticated && user?.id !== sellerId && (
@@ -570,12 +570,12 @@ export default function SellerProfilePage() {
                     <span key={s} className={`text-sm ${s <= Math.round(averageRating) ? 'text-yellow-400' : 'text-gray-800'}`}>★</span>
                   ))}
                 </div>
-                <p className="text-gray-600 text-xs">{reviews.length} reviews</p>
+                <p className="text-gray-400 text-xs">{reviews.length} reviews</p>
               </div>
               <div className="flex-1 space-y-1.5">
                 {[5, 4, 3, 2, 1].map(star => (
                   <div key={star} className="flex items-center gap-2">
-                    <span className="text-xs text-gray-600 w-2 shrink-0">{star}</span>
+                    <span className="text-xs text-gray-400 w-2 shrink-0">{star}</span>
                     <span className="text-yellow-400 text-xs shrink-0">★</span>
                     <div className="flex-1 rounded-full overflow-hidden h-2" style={{ background: 'rgba(255,255,255,0.05)', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.3)' }}>
                       <div
@@ -606,7 +606,7 @@ export default function SellerProfilePage() {
 
                 {/* Star rating */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Your Rating</label>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Your Rating</label>
                   <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map(star => (
                       <button
@@ -627,7 +627,7 @@ export default function SellerProfilePage() {
 
                 {/* Comment */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Your Review</label>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Your Review</label>
                   <textarea
                     value={reviewContent}
                     onChange={(e) => e.target.value.length <= MAX_COMMENT_LENGTH && setReviewContent(e.target.value)}
@@ -639,8 +639,8 @@ export default function SellerProfilePage() {
                     style={glass.input}
                   />
                   <div className="flex justify-between mt-1">
-                    <span className="text-xs text-gray-600">Min 10 characters</span>
-                    <span className={`text-xs ${reviewContent.length >= MAX_COMMENT_LENGTH ? 'text-red-400' : 'text-gray-600'}`}>
+                    <span className="text-xs text-gray-400">Min 10 characters</span>
+                    <span className={`text-xs ${reviewContent.length >= MAX_COMMENT_LENGTH ? 'text-red-400' : 'text-gray-400'}`}>
                       {reviewContent.length}/{MAX_COMMENT_LENGTH}
                     </span>
                   </div>
@@ -648,10 +648,10 @@ export default function SellerProfilePage() {
 
                 {/* Proof of purchase */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
                     Proof of Purchase <span className="text-red-400">*</span>
                   </label>
-                  <p className="text-xs text-gray-600 mb-3">
+                  <p className="text-xs text-gray-400 mb-3">
                     Screenshot or photo of your transaction (chat, payment receipt, etc.)
                   </p>
                   {!proofImagePreview ? (
@@ -659,7 +659,7 @@ export default function SellerProfilePage() {
                       className="flex flex-col items-center justify-center w-full h-28 rounded-xl cursor-pointer transition-all group"
                       style={{ border: '2px dashed rgba(255,255,255,0.09)', background: 'rgba(255,255,255,0.02)' }}
                     >
-                      <div className="flex flex-col items-center gap-1.5 text-gray-600 group-hover:text-gray-400 transition pointer-events-none">
+                      <div className="flex flex-col items-center gap-1.5 text-gray-400 group-hover:text-gray-400 transition pointer-events-none">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
@@ -721,7 +721,7 @@ export default function SellerProfilePage() {
               className="rounded-2xl py-12 text-center"
               style={{ border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}
             >
-              <p className="text-gray-600 text-sm">No reviews yet</p>
+              <p className="text-gray-400 text-sm">No reviews yet</p>
               {isAuthenticated && user?.id !== sellerId && (
                 <p className="text-gray-700 text-xs mt-1">Be the first to review this seller!</p>
               )}
@@ -751,18 +751,18 @@ export default function SellerProfilePage() {
                           {[1, 2, 3, 4, 5].map(s => (
                             <span key={s} className={`text-xs ${s <= review.rating ? 'text-yellow-400' : 'text-gray-700'}`}>★</span>
                           ))}
-                          <span className="text-xs text-gray-500 ml-1">{RATING_LABELS[review.rating]}</span>
+                          <span className="text-xs text-gray-400 ml-1">{RATING_LABELS[review.rating]}</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs text-gray-600">
+                      <span className="text-xs text-gray-400">
                         {new Date(review.created_at).toLocaleDateString()}
                       </span>
                       {isAuthenticated && user?.id === sellerId && (
                         <button
                           onClick={() => handleDeleteReview(review.id)}
-                          className="text-gray-600 hover:text-red-400 transition text-xs px-1 py-0.5 rounded hover:bg-red-500/10"
+                          className="text-gray-400 hover:text-red-400 transition text-xs px-1 py-0.5 rounded hover:bg-red-500/10"
                           title="Delete review"
                         >
                           ✕
@@ -781,7 +781,7 @@ export default function SellerProfilePage() {
                         className="w-full max-h-36 object-cover rounded-xl opacity-75 hover:opacity-100 transition"
                         style={{ border: '1px solid rgba(255,255,255,0.07)' }}
                       />
-                      <p className="text-xs text-gray-600 mt-1">Proof of purchase · tap to enlarge</p>
+                      <p className="text-xs text-gray-400 mt-1">Proof of purchase · tap to enlarge</p>
                     </a>
                   )}
                 </div>

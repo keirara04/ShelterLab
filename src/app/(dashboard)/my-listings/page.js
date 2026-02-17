@@ -348,7 +348,7 @@ export default function MyListingsPage() {
                     )}
                     <div>
                       <p className="text-white text-sm font-bold">{u.full_name}</p>
-                      {u.university && <p className="text-gray-500 text-xs">{u.university}</p>}
+                      {u.university && <p className="text-gray-400 text-xs">{u.university}</p>}
                     </div>
                   </button>
                 ))}
@@ -369,7 +369,7 @@ export default function MyListingsPage() {
                   <p className="text-blue-300 text-sm font-bold">{selectedBuyer.full_name}</p>
                   <p className="text-blue-400/60 text-xs">Selected as buyer</p>
                 </div>
-                <button onClick={() => { setSelectedBuyer(null); setBuyerSearch('') }} className="text-gray-500 hover:text-white text-xs">✕</button>
+                <button onClick={() => { setSelectedBuyer(null); setBuyerSearch('') }} className="text-gray-400 hover:text-white text-xs">✕</button>
               </div>
             )}
 
@@ -392,7 +392,7 @@ export default function MyListingsPage() {
               <button
                 onClick={() => setSoldModal(null)}
                 disabled={soldLoading}
-                className="w-full py-2 rounded-xl font-bold text-xs text-gray-600 hover:text-gray-400 transition"
+                className="w-full py-2 rounded-xl font-bold text-xs text-gray-400 hover:text-gray-400 transition"
               >
                 Cancel
               </button>

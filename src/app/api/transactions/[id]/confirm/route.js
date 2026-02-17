@@ -1,6 +1,5 @@
 import { supabaseServer } from '@/services/supabaseServer'
-import { createClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { getSessionUser } from '@/services/utils/getSessionUser'
 
 function getRatingBonus(rating) {
   if (rating === 5) return 5
@@ -12,15 +11,18 @@ function getRatingBonus(rating) {
 
 export async function POST(request, { params }) {
   try {
-    const { id } = await params
-    const body = await request.json()
-    const { userId, rating, comment } = body
+    // Get the authenticated user from session — never trust userId from the body
+    const sessionUser = await getSessionUser(request)
+    if (!sessionUser) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const userId = sessionUser.id
 
-    if (!id || !userId || !rating) {
-      return Response.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
+    const { id } = await params
+    const { rating, comment } = await request.json()
+
+    if (!id || !rating) {
+      return Response.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     if (rating < 1 || rating > 5) {
@@ -95,9 +97,6 @@ export async function POST(request, { params }) {
 
     return Response.json({ success: true, message: 'Transaction confirmed and review submitted' })
   } catch (error) {
-    return Response.json(
-      { error: error.message || 'Failed to confirm transaction' },
-      { status: 500 }
-    )
+    return Response.json({ error: 'Failed to confirm transaction' }, { status: 500 })
   }
 }

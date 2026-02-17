@@ -1,8 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
+import { useAuth } from '@/shared/context/AuthContext'
+import AuthModal from '@/shared/components/AuthModal'
 
 export default function PasarMalamPage() {
+  const { isAuthenticated } = useAuth()
+  const [showAuthModal, setShowAuthModal] = useState(false)
+
   return (
     <div className="min-h-screen pt-20 pb-24 relative" style={{ backgroundColor: '#000000' }}>
 
@@ -47,7 +53,7 @@ export default function PasarMalamPage() {
         </Link>
 
         {/* ShelterLab tagline */}
-        <p className="text-xs font-bold uppercase tracking-[0.25em] text-gray-600 mb-8">
+        <p className="text-xs font-bold uppercase tracking-[0.25em] text-gray-400 mb-8">
           ShelterLab · Upcoming Feature
         </p>
 
@@ -78,8 +84,26 @@ export default function PasarMalamPage() {
         <p className="text-gray-400 text-sm sm:text-base max-w-sm leading-relaxed">
           A dedicated space for flash deals, bundles, and limited-time offers from students around campus.
         </p>
-        <p className="text-gray-600 text-xs mt-6">Coming soon — check back later!</p>
+
+        {isAuthenticated ? (
+          <p className="text-gray-400 text-xs mt-6">Coming soon — check back later!</p>
+        ) : (
+          <div className="mt-6 flex flex-col items-center gap-3">
+            <p className="text-gray-400 text-xs">Sign in to get notified when this launches.</p>
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="px-5 py-2 rounded-full bg-yellow-400/10 border border-yellow-400/30 text-yellow-300 font-bold text-sm hover:bg-yellow-400/20 transition-all duration-200"
+            >
+              Sign in
+            </button>
+          </div>
+        )}
       </div>
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </div>
   )
 }

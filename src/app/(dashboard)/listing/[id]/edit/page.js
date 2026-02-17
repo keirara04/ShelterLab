@@ -134,7 +134,7 @@ export default function EditListingPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
           <p className="text-gray-300 font-semibold">Loading listing...</p>
-          <p className="text-gray-500 text-sm mt-2">Please wait a moment</p>
+          <p className="text-gray-400 text-sm mt-2">Please wait a moment</p>
         </div>
       </div>
     )

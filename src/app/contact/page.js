@@ -101,7 +101,7 @@ export default function ContactPage() {
 
         {/* Dispute Handling Disclaimer */}
         <div className="mt-8 border-t border-white/5 pt-6">
-          <p className="text-gray-500 text-xs leading-relaxed">
+          <p className="text-gray-400 text-xs leading-relaxed">
             <strong className="text-gray-400">Dispute Handling:</strong> ShelterLab will review reports of fraud or misconduct within 3 business days. While we cannot force refunds, we will take action (banning/blacklisting) against users who violate our Terms of Service.
           </p>
         </div>

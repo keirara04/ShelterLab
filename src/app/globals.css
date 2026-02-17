@@ -98,3 +98,58 @@ body {
 .animate-fadeIn {
   animation: fadeIn 0.2s ease-out;
 }
+
+/* Sell page — input focus teal glow */
+.sell-input {
+  transition: all 0.3s ease;
+}
+.sell-input:focus {
+  border-color: rgba(20, 184, 166, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.12), 0 0 20px rgba(20, 184, 166, 0.08) !important;
+}
+
+/* Category card hover lift */
+.category-card-hover {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.category-card-hover:hover {
+  transform: scale(1.02) translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Upload zone pulsing glow when empty
+   NOTE: animates box-shadow (not border-color) because the element
+   has an inline border shorthand that would override a border-color keyframe */
+@keyframes upload-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
+  50%       { box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.18), 0 0 20px rgba(20, 184, 166, 0.07); }
+}
+.upload-zone-pulse {
+  animation: upload-pulse 2.8s ease-in-out infinite;
+}
+
+/* Upload zone drag-over highlight */
+.upload-zone-drag {
+  border-color: rgba(20, 184, 166, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.18), 0 0 24px rgba(20, 184, 166, 0.1) !important;
+}
+
+/* Submit button shimmer sweep */
+@keyframes shimmer-sweep {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.btn-shimmer-loading {
+  background: linear-gradient(90deg, #14b8a6 0%, #06b6d4 25%, #67e8f9 50%, #06b6d4 75%, #14b8a6 100%) !important;
+  background-size: 200% 100% !important;
+  animation: shimmer-sweep 1.5s linear infinite;
+}
+
+/* Character counter slide-in */
+@keyframes counter-slide-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.char-counter-enter {
+  animation: counter-slide-in 0.3s ease-out forwards;
+}

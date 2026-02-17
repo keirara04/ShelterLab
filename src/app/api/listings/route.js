@@ -72,77 +72,38 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    console.log('Listings POST called')
-    
+    // Verify auth — derive userId from session token, never trust client-supplied id
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: authError } = await supabaseServer.auth.getUser(token)
+    if (authError || !user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const userId = user.id
+
     // Parse request body
     const body = await request.json()
-    console.log('Request body:', body)
-    
-    const {
-      title,
-      description,
-      price,
-      categories,
-      condition,
-      kakaoLink,
-      imageUrls,
-      userId,
-    } = body
+    const { title, description, price, categories, condition, kakaoLink, imageUrls } = body
 
-    console.log('Creating listing with:', { title, price, categories, imageUrls, userId })
-
-    // Validate required fields
-    if (!title || !price || !categories || categories.length === 0 || !imageUrls || imageUrls.length === 0) {
-      const details = {
-        title: !!title,
-        price: !!price,
-        categories: categories?.length > 0,
-        imageUrls: imageUrls?.length > 0
-      }
-      console.log('Validation failed:', details)
-      return Response.json(
-        { 
-          error: 'Missing required fields',
-          details
-        },
-        { status: 400 }
-      )
+    // Server-side validation
+    const errors = []
+    const trimmedTitle = (title || '').trim()
+    if (!trimmedTitle || trimmedTitle.length < 3) errors.push('Title must be at least 3 characters')
+    if (trimmedTitle.length > 100) errors.push('Title must be 100 characters or less')
+    const parsedPrice = parseFloat(price)
+    if (!price || parsedPrice <= 0) errors.push('Price must be greater than 0')
+    if (parsedPrice > 9999999) errors.push('Price cannot exceed 9,999,999')
+    if (!categories || categories.length === 0) errors.push('At least one category is required')
+    if (!imageUrls || imageUrls.length === 0) errors.push('At least one image is required')
+    if (kakaoLink && !kakaoLink.trim().startsWith('https://open.kakao.com/o/')) {
+      errors.push('Kakao link must start with https://open.kakao.com/o/')
     }
-
-    if (!userId) {
-      return Response.json(
-        { error: 'User ID is required' },
-        { status: 400 }
-      )
+    if (errors.length > 0) {
+      return Response.json({ error: errors.join(', ') }, { status: 400 })
     }
-
-    // Ensure the user profile exists (create if missing)
-    const { data: existingProfile } = await supabaseServer
-      .from('profiles')
-      .select('id')
-      .eq('id', userId)
-      .single()
-
-    if (!existingProfile) {
-      console.log('Profile not found for userId:', userId, 'Creating profile...')
-      const { error: profileError } = await supabaseServer
-        .from('profiles')
-        .insert({
-          id: userId,
-          full_name: 'User',
-          email: 'user@example.com',
-        })
-
-      if (profileError) {
-        console.error('Failed to create profile:', profileError)
-        return Response.json(
-          { error: 'Failed to create user profile' },
-          { status: 500 }
-        )
-      }
-    }
-
-    console.log('All validations passed, inserting into database...')
 
     // Calculate expiry date (90 days from now)
     const expiryDate = new Date()
@@ -170,32 +131,24 @@ export async function POST(request) {
       throw insertError
     }
 
-    console.log('Listing created successfully:', data)
-
-    // Send push notification to all subscribers about the new listing
-    try {
-      // Fetch seller profile for notification details
-      const { data: sellerProfile } = await supabaseServer
-        .from('profiles')
-        .select('full_name, university')
-        .eq('id', userId)
-        .single()
-
-      const sellerName = sellerProfile?.full_name || 'Someone'
-      const university = sellerProfile?.university || ''
-      const formattedPrice = `₩${parseFloat(data.price).toLocaleString()}`
-
-      await sendPushToAll({
-        title: `🛒 ${data.title} — ${formattedPrice}`,
-        body: `Listed by ${sellerName}${university ? ` (${university})` : ''}`,
-        tag: 'new-listing',
-        url: `/buyer/${data.id}`,
+    // Return immediately — push runs fully detached so it never blocks the response
+    supabaseServer
+      .from('profiles')
+      .select('full_name, university')
+      .eq('id', userId)
+      .single()
+      .then(({ data: sellerProfile }) => {
+        const sellerName = sellerProfile?.full_name || 'Someone'
+        const university = sellerProfile?.university || ''
+        const formattedPrice = `₩${parseFloat(data.price).toLocaleString()}`
+        return sendPushToAll({
+          title: `New listing: ${data.title} — ${formattedPrice}`,
+          body: `Listed by ${sellerName}${university ? ` (${university})` : ''}`,
+          tag: 'new-listing',
+          url: `/buyer/${data.id}`,
+        })
       })
-      console.log('Push notification sent for new listing')
-    } catch (pushError) {
-      console.error('Failed to send push notification:', pushError)
-      // Don't fail the listing creation if push fails
-    }
+      .catch((err) => console.error('Push notification failed:', err))
 
     return Response.json({
       success: true,
