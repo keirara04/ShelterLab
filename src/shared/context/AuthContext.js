@@ -51,6 +51,11 @@ export function AuthProvider({ children }) {
             return
           }
 
+          // Token silently refreshed on tab return — Supabase handles this internally.
+          // Do NOT update React state here: creating a new user reference triggers
+          // downstream useEffects that fire 3+ network requests simultaneously.
+          if (event === 'TOKEN_REFRESHED') return
+
           if (!session?.user) return
 
           setUser(session.user)

@@ -99,21 +99,8 @@ export default function ProfilePage() {
       fetchReviews()
       fetchPendingTransactions()
     }
-  }, [user, profile])
-
-  // Refetch when user returns to this tab after being away
-  useEffect(() => {
-    if (!user?.id) return
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchMyListings()
-        fetchReviews()
-        fetchPendingTransactions()
-      }
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [user?.id])
+
 
   const fetchMyListings = async () => {
     if (!user) return

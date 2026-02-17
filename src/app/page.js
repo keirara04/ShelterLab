@@ -18,28 +18,27 @@ export default function HomePage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [selectedListingId, setSelectedListingId] = useState(null)
-  const [showCategoryPicker, setShowCategoryPicker] = useState(false)
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
   const categoryDropdownRef = useRef(null)
   const [showUniversityPicker, setShowUniversityPicker] = useState(false)
   const universityPickerRef = useRef(null)
   const [showHeader, setShowHeader] = useState(true)
-  const [lastScrollY, setLastScrollY] = useState(0)
+  const lastScrollYRef = useRef(0)
   const [notification, setNotification] = useState(null)
   const [showNotificationPanel, setShowNotificationPanel] = useState(false)
   const [hasUnreadNotification, setHasUnreadNotification] = useState(false)
 
-  // Hide/show header on scroll
+  // Hide/show header on scroll — uses ref to avoid recreating listener on every scroll
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
-      setShowHeader(currentScrollY < lastScrollY || currentScrollY < 10)
-      setLastScrollY(currentScrollY)
+      setShowHeader(currentScrollY < lastScrollYRef.current || currentScrollY < 10)
+      lastScrollYRef.current = currentScrollY
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [lastScrollY])
+  }, [])
 
   // Close category dropdown on click outside
   useEffect(() => {
@@ -235,29 +234,6 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Category Button - Mobile only */}
-              <button
-                onClick={() => setShowCategoryPicker(true)}
-                className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white font-bold text-xs touch-manipulation"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255,255,255,0.18)',
-                }}
-              >
-                {(() => {
-                  const cat = CATEGORIES.find(c => c.id === selectedCategory) || CATEGORIES[0]
-                  return (
-                    <>
-                      {cat.icon && <span>{cat.icon}</span>}
-                      <span>{cat.name}</span>
-                      <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </>
-                  )
-                })()}
-              </button>
-
               {/* Notification Bell - Mobile only */}
               <div className="lg:hidden relative">
                 <button
@@ -314,74 +290,7 @@ export default function HomePage() {
             </div>
 
             {/* Right side actions - Desktop only */}
-            <div className="hidden lg:flex items-center gap-4">              {/* Category Dropdown */}
-              <div className="relative" ref={categoryDropdownRef}>
-                <button
-                  onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full text-white font-bold text-sm transition-all duration-200 cursor-pointer"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    backdropFilter: 'blur(24px) saturate(180%)',
-                    WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-                    border: '1px solid rgba(255,255,255,0.18)',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)',
-                  }}
-                >
-                  <span>{CATEGORIES.find(c => c.id === selectedCategory)?.name || 'All'}</span>
-                  <svg className={`w-3.5 h-3.5 opacity-60 transition-transform duration-200 ${showCategoryDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {showCategoryDropdown && (
-                  <div
-                    className="absolute top-full right-0 mt-2 w-48 rounded-2xl overflow-hidden py-1.5 opacity-100 pointer-events-auto transition-opacity duration-150"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      backdropFilter: 'blur(40px) saturate(200%)',
-                      WebkitBackdropFilter: 'blur(40px) saturate(200%)',
-                      border: '1px solid rgba(255,255,255,0.15)',
-                      boxShadow: '0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)',
-                    }}
-                  >
-                    {CATEGORIES.map((cat) => (
-                      <button
-                        key={cat.id}
-                        onClick={() => {
-                          setSelectedCategory(cat.id)
-                          setShowCategoryDropdown(false)
-                        }}
-                        className="w-full text-left px-4 py-2.5 text-sm font-bold transition-all duration-150 flex items-center gap-2 cursor-pointer"
-                        style={
-                          selectedCategory === cat.id
-                            ? { background: 'rgba(59, 130, 246, 0.25)', color: 'rgba(147, 197, 253, 1)' }
-                            : { color: 'rgba(255, 255, 255, 0.75)' }
-                        }
-                        onMouseEnter={(e) => {
-                          if (selectedCategory !== cat.id) {
-                            e.currentTarget.style.background = 'rgba(255,255,255,0.1)'
-                            e.currentTarget.style.color = 'white'
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (selectedCategory !== cat.id) {
-                            e.currentTarget.style.background = 'transparent'
-                            e.currentTarget.style.color = 'rgba(255, 255, 255, 0.75)'
-                          }
-                        }}
-                      >
-                        {cat.icon && <span>{cat.icon}</span>}
-                        <span>{cat.name}</span>
-                        {selectedCategory === cat.id && (
-                          <svg className="w-4 h-4 ml-auto" style={{ color: 'rgba(147, 197, 253, 1)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
+            <div className="hidden lg:flex items-center gap-4">
               <Link
                 href="/pasarmalam"
                 className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-bold transition-all duration-200"
@@ -527,10 +436,64 @@ export default function HomePage() {
             <p className="text-xs text-gray-400 mt-2 text-center">Search items by name, category, or seller</p>
           </div>
 
-          {/* University Filter */}
-          <div className="flex justify-center mb-6 sm:mb-8" ref={universityPickerRef}>
-            <div className="relative">
-              {/* Trigger button */}
+          {/* Filters Row — Category + University */}
+          <div className="flex justify-center items-center gap-3 mb-6 sm:mb-8">
+            {/* Category Filter */}
+            <div className="relative" ref={categoryDropdownRef}>
+              <button
+                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-200 cursor-pointer"
+                style={{
+                  background: selectedCategory !== 'all' ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.08)',
+                  border: selectedCategory !== 'all' ? '1px solid rgba(59,130,246,0.4)' : '1px solid rgba(255,255,255,0.15)',
+                  color: 'white',
+                  backdropFilter: 'blur(24px)',
+                }}
+              >
+                {CATEGORIES.find(c => c.id === selectedCategory)?.icon && (
+                  <span>{CATEGORIES.find(c => c.id === selectedCategory)?.icon}</span>
+                )}
+                <span>{CATEGORIES.find(c => c.id === selectedCategory)?.name || 'All'}</span>
+                <svg className={`w-3.5 h-3.5 opacity-60 transition-transform duration-200 ${showCategoryDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {showCategoryDropdown && (
+                <div
+                  className="absolute top-full left-0 mt-2 w-48 rounded-2xl overflow-hidden py-1.5 z-50"
+                  style={{
+                    background: 'rgba(15,15,20,0.92)',
+                    backdropFilter: 'blur(40px) saturate(200%)',
+                    WebkitBackdropFilter: 'blur(40px) saturate(200%)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    boxShadow: '0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
+                  }}
+                >
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => { setSelectedCategory(cat.id); setShowCategoryDropdown(false) }}
+                      className="w-full text-left px-4 py-2.5 text-sm font-bold transition-all duration-150 flex items-center gap-2 cursor-pointer"
+                      style={selectedCategory === cat.id
+                        ? { background: 'rgba(59,130,246,0.25)', color: 'rgba(147,197,253,1)' }
+                        : { color: 'rgba(255,255,255,0.75)' }
+                      }
+                    >
+                      {cat.icon && <span>{cat.icon}</span>}
+                      <span>{cat.name}</span>
+                      {selectedCategory === cat.id && (
+                        <svg className="w-4 h-4 ml-auto" style={{ color: 'rgba(147,197,253,1)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* University Filter */}
+            <div className="relative" ref={universityPickerRef}>
               <button
                 onClick={() => setShowUniversityPicker(!showUniversityPicker)}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-200 cursor-pointer"
@@ -553,8 +516,6 @@ export default function HomePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-
-              {/* Grid popover */}
               {showUniversityPicker && (
                 <div
                   className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-80 sm:w-96 rounded-2xl p-3 z-50"
@@ -566,7 +527,6 @@ export default function HomePage() {
                     boxShadow: '0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
                   }}
                 >
-                  {/* All Universities option */}
                   <button
                     onClick={() => { setSelectedUniversity('all'); setShowUniversityPicker(false) }}
                     className="w-full text-left px-3 py-2 rounded-xl text-sm font-bold mb-2 transition-all duration-150 flex items-center gap-2"
@@ -583,10 +543,7 @@ export default function HomePage() {
                       </svg>
                     )}
                   </button>
-
                   <div className="h-px mb-2" style={{ background: 'rgba(255,255,255,0.08)' }} />
-
-                  {/* University grid */}
                   <div className="grid grid-cols-3 gap-2">
                     {UNIVERSITIES.map((u) => (
                       <button
@@ -855,68 +812,6 @@ export default function HomePage() {
         onClose={() => setShowAuthModal(false)}
         redirectPath={selectedListingId ? `/listing/${selectedListingId}` : null}
       />
-
-      {/* Category Picker Sheet - Mobile */}
-      {showCategoryPicker && (
-        <div
-          className="lg:hidden fixed inset-0 z-50 flex items-end"
-          style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
-          onClick={() => setShowCategoryPicker(false)}
-        >
-          <div
-            className="w-full pb-20 px-3 pointer-events-auto"
-            onClick={e => e.stopPropagation()}
-          >
-            <div
-              className="rounded-3xl overflow-hidden"
-              style={{
-                background: 'rgba(255, 255, 255, 0.08)',
-                backdropFilter: 'blur(40px) saturate(200%)',
-                WebkitBackdropFilter: 'blur(40px) saturate(200%)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                boxShadow: '0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)',
-              }}
-            >
-              {/* Handle bar */}
-              <div className="flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 rounded-full bg-white/25" />
-              </div>
-              <div className="px-4 pt-2 pb-4">
-                <p className="text-white/50 text-xs font-bold uppercase tracking-widest mb-3 text-center">Category</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {CATEGORIES.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => {
-                        setSelectedCategory(cat.id)
-                        setShowCategoryPicker(false)
-                      }}
-                      className="flex items-center gap-2.5 px-4 py-3 rounded-2xl font-bold text-sm transition-all duration-150 touch-manipulation"
-                      style={
-                        selectedCategory === cat.id
-                          ? {
-                            background: 'rgba(59, 130, 246, 0.65)',
-                            border: '1px solid rgba(59,130,246,0.5)',
-                            color: 'white',
-                            boxShadow: '0 2px 12px rgba(59,130,246,0.3)',
-                          }
-                          : {
-                            background: 'rgba(255,255,255,0.06)',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            color: 'rgba(255,255,255,0.75)',
-                          }
-                      }
-                    >
-                      {cat.icon && <span className="text-base">{cat.icon}</span>}
-                      <span>{cat.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   )
