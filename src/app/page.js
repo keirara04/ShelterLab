@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/shared/context/AuthContext'
 import { CATEGORIES, UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
 import AuthModal from '@/shared/components/AuthModal'
+import NotificationBell from '@/shared/components/NotificationBell'
 
 export default function HomePage() {
   const { isAuthenticated, profile, user } = useAuth()
@@ -24,15 +25,20 @@ export default function HomePage() {
   const universityPickerRef = useRef(null)
   const [showHeader, setShowHeader] = useState(true)
   const lastScrollYRef = useRef(0)
+  const showHeaderRef = useRef(true)
   const [notification, setNotification] = useState(null)
   const [showNotificationPanel, setShowNotificationPanel] = useState(false)
   const [hasUnreadNotification, setHasUnreadNotification] = useState(false)
 
-  // Hide/show header on scroll — uses ref to avoid recreating listener on every scroll
+  // Hide/show header on scroll — throttled: only calls setShowHeader when direction changes
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
-      setShowHeader(currentScrollY < lastScrollYRef.current || currentScrollY < 10)
+      const next = currentScrollY < lastScrollYRef.current || currentScrollY < 10
+      if (next !== showHeaderRef.current) {
+        showHeaderRef.current = next
+        setShowHeader(next)
+      }
       lastScrollYRef.current = currentScrollY
     }
 
@@ -146,7 +152,7 @@ export default function HomePage() {
   }
 
   // Filter listings on frontend for search (category, seller, title)
-  const filteredListings = listings.filter((listing) => {
+  const filteredListings = useMemo(() => listings.filter((listing) => {
     if (!searchQuery.trim()) return true
 
     const query = searchQuery.toLowerCase()
@@ -155,7 +161,7 @@ export default function HomePage() {
     const category = listing.categories?.[0]?.toLowerCase() || ''
 
     return title.includes(query) || seller.includes(query) || category.includes(query)
-  })
+  }), [listings, searchQuery])
 
   // Pagination
   const ITEMS_PER_PAGE = 12
@@ -235,57 +241,17 @@ export default function HomePage() {
               </div>
 
               {/* Notification Bell - Mobile only */}
-              <div className="lg:hidden relative">
-                <button
-                  data-notification-bell
-                  onClick={() => {
+              <div className="lg:hidden">
+                <NotificationBell
+                  size="sm"
+                  showNotificationPanel={showNotificationPanel}
+                  hasUnreadNotification={hasUnreadNotification}
+                  notification={notification}
+                  onToggle={() => {
                     setShowNotificationPanel(!showNotificationPanel)
-                    if (!showNotificationPanel) {
-                      setHasUnreadNotification(false)
-                    }
+                    if (!showNotificationPanel) setHasUnreadNotification(false)
                   }}
-                  className="relative flex items-center justify-center w-9 h-9 rounded-full transition-all duration-200"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(255,255,255,0.18)',
-                    boxShadow: showNotificationPanel ? '0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)' : 'none',
-                  }}
-                >
-                  <img src="/bell.svg" alt="Notifications" className="w-4 h-4" />
-                  {hasUnreadNotification && (
-                    <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
-                  )}
-                </button>
-
-                {/* Notification Panel - Mobile */}
-                <div className="absolute top-full right-0 mt-2 w-72 z-50" style={{ contain: 'layout style paint' }}>
-                  {showNotificationPanel && notification && (
-                    <div
-                      data-notification-panel
-                      className="rounded-2xl overflow-hidden p-4 opacity-100 pointer-events-auto"
-                      style={{
-                        background: 'rgba(0, 0, 0, 0.95)',
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        boxShadow: '0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)',
-                      }}
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
-                          <img src="/bell.svg" alt="" className="w-6 h-6 flex-shrink-0" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-bold text-white mb-1 truncate">
-                            {notification.title || 'Updates Available'}
-                          </h3>
-                          <p className="text-xs text-gray-300 leading-relaxed break-words">
-                            {notification.message}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                />
               </div>
             </div>
 
@@ -314,58 +280,16 @@ export default function HomePage() {
               <div className="w-px h-6 bg-white/15" />
 
               {/* Notification Bell - Desktop only */}
-              <div className="relative">
-                <button
-                  data-notification-bell
-                  onClick={() => {
-                    setShowNotificationPanel(!showNotificationPanel)
-                    if (!showNotificationPanel) {
-                      setHasUnreadNotification(false)
-                    }
-                  }}
-                  className="relative flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(255,255,255,0.18)',
-                    boxShadow: showNotificationPanel ? '0 2px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.12)' : 'none',
-                  }}
-                >
-                  <img src="/bell.svg" alt="Notifications" className="w-5 h-5" />
-                  {hasUnreadNotification && (
-                    <div className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                  )}
-                </button>
-                  
-                {/* Notification Panel */}
-                <div className="absolute top-full right-0 mt-2 w-72 sm:w-80 z-50" style={{ contain: 'layout style paint' }}>
-                  {showNotificationPanel && notification && (
-                    <div
-                      data-notification-panel
-                      className="rounded-2xl overflow-hidden p-4 opacity-100 pointer-events-auto"
-                      style={{
-                        background: 'rgba(0, 0, 0, 0.95)',
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        boxShadow: '0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12)',
-                      }}
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
-                          <img src="/bell.svg" alt="" className="w-6 h-6 flex-shrink-0" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-bold text-white mb-1 truncate">
-                            {notification.title || 'Updates Available'}
-                          </h3>
-                          <p className="text-xs text-gray-300 leading-relaxed break-words">
-                            {notification.message}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <NotificationBell
+                size="lg"
+                showNotificationPanel={showNotificationPanel}
+                hasUnreadNotification={hasUnreadNotification}
+                notification={notification}
+                onToggle={() => {
+                  setShowNotificationPanel(!showNotificationPanel)
+                  if (!showNotificationPanel) setHasUnreadNotification(false)
+                }}
+              />
 
               {isAuthenticated ? (
                 <Link
@@ -440,24 +364,29 @@ export default function HomePage() {
           <div className="flex justify-center items-center gap-3 mb-6 sm:mb-8">
             {/* Category Filter */}
             <div className="relative" ref={categoryDropdownRef}>
-              <button
-                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-200 cursor-pointer"
-                style={{
-                  background: selectedCategory !== 'all' ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.08)',
-                  border: selectedCategory !== 'all' ? '1px solid rgba(59,130,246,0.4)' : '1px solid rgba(255,255,255,0.15)',
-                  color: 'white',
-                  backdropFilter: 'blur(24px)',
-                }}
-              >
-                {CATEGORIES.find(c => c.id === selectedCategory)?.icon && (
-                  <span>{CATEGORIES.find(c => c.id === selectedCategory)?.icon}</span>
-                )}
-                <span>{CATEGORIES.find(c => c.id === selectedCategory)?.name || 'All'}</span>
-                <svg className={`w-3.5 h-3.5 opacity-60 transition-transform duration-200 ${showCategoryDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
+              {(() => {
+                const selectedCat = CATEGORIES.find(c => c.id === selectedCategory) || CATEGORIES[0]
+                return (
+                  <button
+                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                    aria-expanded={showCategoryDropdown}
+                    aria-haspopup="listbox"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-200 cursor-pointer"
+                    style={{
+                      background: selectedCategory !== 'all' ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.08)',
+                      border: selectedCategory !== 'all' ? '1px solid rgba(59,130,246,0.4)' : '1px solid rgba(255,255,255,0.15)',
+                      color: 'white',
+                      backdropFilter: 'blur(24px)',
+                    }}
+                  >
+                    {selectedCat.icon && <span>{selectedCat.icon}</span>}
+                    <span>{selectedCat.name}</span>
+                    <svg className={`w-3.5 h-3.5 opacity-60 transition-transform duration-200 ${showCategoryDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                )
+              })()}
               {showCategoryDropdown && (
                 <div
                   className="absolute top-full left-0 mt-2 w-48 rounded-2xl overflow-hidden py-1.5 z-50"
@@ -496,6 +425,8 @@ export default function HomePage() {
             <div className="relative" ref={universityPickerRef}>
               <button
                 onClick={() => setShowUniversityPicker(!showUniversityPicker)}
+                aria-expanded={showUniversityPicker}
+                aria-haspopup="listbox"
                 className="flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-200 cursor-pointer"
                 style={{
                   background: selectedUniversity !== 'all' ? 'rgba(20,184,166,0.2)' : 'rgba(255,255,255,0.08)',
@@ -638,7 +569,7 @@ export default function HomePage() {
                   </h3>
                   <div className="flex items-baseline gap-1">
                     <span className="text-2xl sm:text-3xl font-black text-emerald-400">₩</span>
-                    <span className="text-xl sm:text-2xl font-black text-emerald-400">{listing.price.toLocaleString()}</span>
+                    <span className="text-xl sm:text-2xl font-black text-emerald-400">{(listing.price ?? 0).toLocaleString()}</span>
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     <span className="px-2 py-1 rounded bg-blue-500/30 text-blue-300 text-xs font-bold">
