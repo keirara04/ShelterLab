@@ -145,7 +145,7 @@ export async function POST(request) {
           title: `New listing: ${data.title} — ${formattedPrice}`,
           body: `Listed by ${sellerName}${university ? ` (${university})` : ''}`,
           tag: 'new-listing',
-          url: `/buyer/${data.id}`,
+          url: `/listing/${data.id}`,
         })
       })
       .catch((err) => console.error('Push notification failed:', err))

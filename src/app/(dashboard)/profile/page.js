@@ -43,6 +43,7 @@ export default function ProfilePage() {
     full_name: '',
     avatar_url: '',
     kakao_link: '',
+    meetup_place: '',
   })
   
   // Push notification subscription
@@ -94,6 +95,7 @@ export default function ProfilePage() {
         full_name: profile?.full_name || '',
         avatar_url: profile?.avatar_url || '',
         kakao_link: profile?.kakao_link || '',
+        meetup_place: profile?.meetup_place || '',
       })
       fetchMyListings()
       fetchReviews()
@@ -475,7 +477,7 @@ export default function ProfilePage() {
       }
 
       // Update profile — include avatar_url so it doesn't get wiped
-      const updates = { full_name: formData.full_name, kakao_link: formData.kakao_link || null }
+      const updates = { full_name: formData.full_name, kakao_link: formData.kakao_link || null, meetup_place: formData.meetup_place || null }
       if (newAvatarUrl) {
         updates.avatar_url = newAvatarUrl
       } else if (profile?.avatar_url) {
@@ -938,6 +940,22 @@ export default function ProfilePage() {
                   Get Verified
                 </button>
               )}
+              {profile?.meetup_place && (
+                <p className="flex items-center gap-1.5 mt-2 text-xs text-gray-400 justify-center md:justify-start">
+                  <svg className="w-3.5 h-3.5 text-teal-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <a
+                    href={profile.meetup_place}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-teal-400 hover:text-teal-300 underline underline-offset-2 transition-colors"
+                  >
+                    View meetup spot on Naver Maps
+                  </a>
+                </p>
+              )}
             </div>
           </div>
 
@@ -1065,6 +1083,27 @@ export default function ProfilePage() {
                 </details>
               </div>
 
+              {/* Meetup Place */}
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-2">
+                  Preferred Meetup Place
+                  <span className="ml-2 text-xs font-normal text-gray-400">— optional, shown to buyers</span>
+                </label>
+                <input
+                  type="url"
+                  value={formData.meetup_place}
+                  onChange={(e) => setFormData({ ...formData, meetup_place: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl text-white outline-none transition-all duration-200 placeholder-gray-400"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                  }}
+                  placeholder="https://naver.me/..."
+                  disabled={loading}
+                />
+                <p className="text-xs text-gray-500 mt-1.5">Paste your Naver Maps place link — buyers can tap it to see exactly where to meet.</p>
+              </div>
+
               <button
                 type="submit"
                 disabled={loading || avatarUploading}
@@ -1156,7 +1195,7 @@ export default function ProfilePage() {
           >
             Reviews ({reviews.length})
           </button>
-          {user?.email === 'keiratestaccount@yahoo.com' && (
+          {user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL && (
             <button
               onClick={() => setActiveTab('admin')}
               className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
@@ -1300,7 +1339,7 @@ export default function ProfilePage() {
         )}
 
         {/* Admin Tab */}
-        {activeTab === 'admin' && user?.email === 'keiratestaccount@yahoo.com' && (
+        {activeTab === 'admin' && user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL && (
           <div>
             <h2 className="text-lg font-black text-white mb-4">🔐 Admin Controls</h2>
             
