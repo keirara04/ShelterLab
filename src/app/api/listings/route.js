@@ -131,28 +131,24 @@ export async function POST(request) {
       throw insertError
     }
 
-    // Send push notification to all subscribers about the new listing
-    try {
-      const { data: sellerProfile } = await supabaseServer
-        .from('profiles')
-        .select('full_name, university')
-        .eq('id', userId)
-        .single()
-
-      const sellerName = sellerProfile?.full_name || 'Someone'
-      const university = sellerProfile?.university || ''
-      const formattedPrice = `₩${parseFloat(data.price).toLocaleString()}`
-
-      await sendPushToAll({
-        title: `🛒 ${data.title} — ${formattedPrice}`,
-        body: `Listed by ${sellerName}${university ? ` (${university})` : ''}`,
-        tag: 'new-listing',
-        url: `/buyer/${data.id}`,
+    // Return immediately — push runs fully detached so it never blocks the response
+    supabaseServer
+      .from('profiles')
+      .select('full_name, university')
+      .eq('id', userId)
+      .single()
+      .then(({ data: sellerProfile }) => {
+        const sellerName = sellerProfile?.full_name || 'Someone'
+        const university = sellerProfile?.university || ''
+        const formattedPrice = `₩${parseFloat(data.price).toLocaleString()}`
+        return sendPushToAll({
+          title: `New listing: ${data.title} — ${formattedPrice}`,
+          body: `Listed by ${sellerName}${university ? ` (${university})` : ''}`,
+          tag: 'new-listing',
+          url: `/buyer/${data.id}`,
+        })
       })
-    } catch (pushError) {
-      console.error('Failed to send push notification:', pushError)
-      // Don't fail the listing creation if push fails
-    }
+      .catch((err) => console.error('Push notification failed:', err))
 
     return Response.json({
       success: true,
