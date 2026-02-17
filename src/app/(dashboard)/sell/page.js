@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/shared/context/AuthContext'
+import { supabase } from '@/services/supabase'
 import { CATEGORIES, CONDITIONS } from '@/services/utils/constants'
 import { validateImageFile, compressImage } from '@/services/utils/helpers'
 import Link from 'next/link'
@@ -17,6 +18,7 @@ export default function SellPage() {
     const [pricingSuggestion, setPricingSuggestion] = useState(null)
     const [loadingPriceSuggestion, setLoadingPriceSuggestion] = useState(false)
     const fileInputRef = useRef(null)
+    const priceSuggestionTimerRef = useRef(null)
 
     // Store files + their previews together to keep them in sync
     const [imageFiles, setImageFiles] = useState([])
@@ -187,34 +189,44 @@ export default function SellPage() {
         }
     }
 
+    const triggerPriceSuggestion = () => {
+        clearTimeout(priceSuggestionTimerRef.current)
+        priceSuggestionTimerRef.current = setTimeout(fetchPricingSuggestion, 500)
+    }
+
+    const INITIAL_FORM = { title: '', description: '', price: '', categories: [], condition: 'good', kakaoLink: '' }
+
     const handleSubmit = async (e) => {
         e.preventDefault()
         setError(null)
         setLoading(true)
 
         try {
-            if (!formData.title.trim()) {
-                setError('Title is required')
-                setLoading(false)
-                return
-            }
-            if (!formData.price || parseFloat(formData.price) <= 0) {
-                setError('Price must be greater than 0')
-                setLoading(false)
-                return
-            }
-            if (formData.categories.length === 0) {
-                setError('Select at least one category')
-                setLoading(false)
-                return
-            }
-            if (imageFiles.length === 0) {
-                setError('Please add at least one image')
-                setLoading(false)
-                return
-            }
+            // Collect all validation errors at once
+            const errors = []
+            const trimmedTitle = formData.title.trim()
+            if (!trimmedTitle || trimmedTitle.length < 3) errors.push('Title must be at least 3 characters')
+            if (trimmedTitle.length > 100) errors.push('Title must be 100 characters or less')
+            const price = parseFloat(formData.price)
+            if (!formData.price || price <= 0) errors.push('Price must be greater than 0')
+            if (price > 9999999) errors.push('Price cannot exceed ₩9,999,999')
+            if (formData.categories.length === 0) errors.push('Select at least one category')
+            if (imageFiles.length === 0) errors.push('Please add at least one image')
             if (!formData.kakaoLink.trim()) {
-                setError('Kakao Open Chat link is required')
+                errors.push('Kakao Open Chat link is required')
+            } else if (!formData.kakaoLink.startsWith('https://open.kakao.com/o/')) {
+                errors.push('Link must start with https://open.kakao.com/o/')
+            }
+            if (errors.length > 0) {
+                setError(errors)
+                setLoading(false)
+                return
+            }
+
+            // Get session token for auth
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) {
+                setError('Session expired — please sign in again')
                 setLoading(false)
                 return
             }
@@ -226,19 +238,21 @@ export default function SellPage() {
                 return
             }
 
-            // Create listing
+            // Create listing — userId derived server-side from the token
             const response = await fetch('/api/listings', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`,
+                },
                 body: JSON.stringify({
-                    title: formData.title,
+                    title: formData.title.trim(),
                     description: formData.description,
                     price: parseFloat(formData.price),
                     categories: formData.categories,
                     condition: formData.condition,
-                    kakaoLink: formData.kakaoLink,
+                    kakaoLink: formData.kakaoLink.trim(),
                     imageUrls: uploadedUrls,
-                    userId: user?.id,
                 }),
             })
 
@@ -247,7 +261,10 @@ export default function SellPage() {
                 throw new Error(data.error || 'Failed to create listing')
             }
 
-            await response.json()
+            // Reset form state before navigating away
+            setFormData(INITIAL_FORM)
+            setImageFiles([])
+            setPricingSuggestion(null)
             router.push('/')
         } catch (err) {
             setError(err.message || 'Failed to create listing')
@@ -291,8 +308,12 @@ export default function SellPage() {
                     <div className="relative space-y-6">
                         {/* Error Message */}
                         {error && (
-                            <div className="glass rounded-xl p-4 text-red-400 font-medium text-sm" style={{ borderColor: 'rgba(239,68,68,0.2)' }}>
-                                {error}
+                            <div role="alert" className="glass rounded-xl p-4 text-red-400 font-medium text-sm" style={{ borderColor: 'rgba(239,68,68,0.2)' }}>
+                                {Array.isArray(error) ? (
+                                    <ul className="space-y-1 list-disc list-inside">
+                                        {error.map((e, i) => <li key={i}>{e}</li>)}
+                                    </ul>
+                                ) : error}
                             </div>
                         )}
 
@@ -308,6 +329,8 @@ export default function SellPage() {
                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                 className="w-full px-4 py-4 rounded-xl text-white outline-none transition-all duration-200 placeholder-gray-500 focus:ring-2 focus:ring-teal-500/50 text-base"
                                 style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                                minLength={3}
+                                maxLength={100}
                                 required
                             />
                             <p className="text-xs text-gray-400 mt-1">3-100 characters</p>
@@ -367,7 +390,7 @@ export default function SellPage() {
                                                         ...formData,
                                                         categories: [cat.id],
                                                     })
-                                                    setTimeout(fetchPricingSuggestion, 100)
+                                                    triggerPriceSuggestion()
                                                 }
                                             }}
                                             className="w-4 h-4 cursor-pointer accent-teal-500"
@@ -393,7 +416,7 @@ export default function SellPage() {
                                 value={formData.condition}
                                 onChange={(e) => {
                                     setFormData({ ...formData, condition: e.target.value })
-                                    setTimeout(fetchPricingSuggestion, 100)
+                                    triggerPriceSuggestion()
                                 }}
                                 className="w-full px-4 py-4 rounded-xl text-white outline-none transition-all duration-200 focus:ring-2 focus:ring-teal-500/50 text-base"
                                 style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
@@ -438,6 +461,7 @@ export default function SellPage() {
                                             <button
                                                 type="button"
                                                 onClick={() => removeImage(index)}
+                                                aria-label={`Remove image ${index + 1}`}
                                                 className="absolute top-2 right-2 w-10 h-10 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white text-base sm:text-xs font-bold opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer touch-manipulation"
                                                 style={{ background: 'rgba(239,68,68,0.85)' }}
                                             >
@@ -492,6 +516,7 @@ export default function SellPage() {
                                 <input
                                     type="number"
                                     placeholder="0"
+                                    min="0"
                                     max="9999999"
                                     value={formData.price}
                                     onChange={(e) => {
