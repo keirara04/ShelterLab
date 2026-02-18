@@ -609,7 +609,7 @@ export default function HomePage() {
               </>
             )
 
-            return isAuthenticated ? (
+            return (
               <Link
                 key={listing.id}
                 href={`/listing/${listing.id}`}
@@ -617,14 +617,6 @@ export default function HomePage() {
               >
                 {cardInner}
               </Link>
-            ) : (
-              <button
-                key={listing.id}
-                onClick={() => openAuthModal(listing.id)}
-                className={`${cardClass} hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/10 cursor-pointer`}
-              >
-                {cardInner}
-              </button>
             )
           })}
         </div>

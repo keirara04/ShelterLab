@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactCompiler: true,
+  serverExternalPackages: ['web-push'],
+  turbopack: {
+    root: new URL('.', import.meta.url).pathname,
+  },
   images: {
     remotePatterns: [
       {
