@@ -1,9 +1,14 @@
 // src/app/api/listings/route.js
 import { supabaseServer } from '@/services/supabaseServer'
 import { sendPushToAll } from '@/services/utils/sendPush'
+import { applyRateLimit, createListingLimiter, getClientIp, userSearchLimiter } from '@/services/utils/rateLimit'
 
 export async function GET(request) {
   try {
+    // Rate limit: 120 requests per minute per IP
+    const rl = await applyRateLimit(userSearchLimiter, getClientIp(request))
+    if (rl) return rl
+
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
     const searchTerm = searchParams.get('search') 
@@ -26,7 +31,7 @@ export async function GET(request) {
 
     let query = supabaseServer
       .from('listings')
-      .select('*, profiles!listings_seller_id_fkey(full_name, university)', { count: 'exact' })
+      .select('*, profiles!listings_seller_id_fkey(full_name, university, university_email_verified)', { count: 'exact' })
 
     if (sellerIds !== null) {
       query = query.in('seller_id', sellerIds)
@@ -37,9 +42,22 @@ export async function GET(request) {
     }
 
     if (searchTerm) {
-      query = query.or(
-        `title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`
-      )
+      // Also search by seller name
+      const { data: matchingProfiles } = await supabaseServer
+        .from('profiles')
+        .select('id')
+        .ilike('full_name', `%${searchTerm}%`)
+      const matchingIds = (matchingProfiles || []).map(p => p.id)
+
+      if (matchingIds.length > 0) {
+        query = query.or(
+          `title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,seller_id.in.(${matchingIds.join(',')})`
+        )
+      } else {
+        query = query.or(
+          `title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`
+        )
+      }
     }
 
     const from = page * limit
@@ -83,6 +101,10 @@ export async function POST(request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
     const userId = user.id
+
+    // Rate limit: 10 new listings per hour per user
+    const rl = await applyRateLimit(createListingLimiter, userId)
+    if (rl) return rl
 
     // Parse request body
     const body = await request.json()

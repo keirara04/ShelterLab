@@ -7,6 +7,7 @@ import { useAuth } from '@/shared/context/AuthContext'
 import { CATEGORIES, UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
 import AuthModal from '@/shared/components/AuthModal'
 import NotificationBell from '@/shared/components/NotificationBell'
+import FilterDropdown from '@/shared/components/FilterDropdown'
 
 export default function HomePage() {
   const { isAuthenticated, profile, user } = useAuth()
@@ -19,10 +20,13 @@ export default function HomePage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [selectedListingId, setSelectedListingId] = useState(null)
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
-  const categoryDropdownRef = useRef(null)
   const [showUniversityPicker, setShowUniversityPicker] = useState(false)
   const universityPickerRef = useRef(null)
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [sortBy, setSortBy] = useState('newest')
+  const [minPrice, setMinPrice] = useState('')
+  const [maxPrice, setMaxPrice] = useState('')
+  const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [showHeader, setShowHeader] = useState(true)
   const lastScrollYRef = useRef(0)
   const showHeaderRef = useRef(true)
@@ -44,17 +48,6 @@ export default function HomePage() {
 
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  // Close category dropdown on click outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target)) {
-        setShowCategoryDropdown(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   // Close university picker on click outside
@@ -116,15 +109,21 @@ export default function HomePage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [currentPage])
 
+  // Debounce search query (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
   // Reset to page 1 when filters or search changes
   useEffect(() => {
     setCurrentPage(1)
-  }, [selectedCategory, searchQuery, selectedUniversity])
+  }, [selectedCategory, debouncedSearch, selectedUniversity, sortBy, minPrice, maxPrice])
 
   // Fetch listings on mount and when filters change
   useEffect(() => {
     fetchListings()
-  }, [selectedCategory, searchQuery, selectedUniversity])
+  }, [selectedCategory, debouncedSearch, selectedUniversity])
 
   const fetchListings = async () => {
     try {
@@ -134,8 +133,8 @@ export default function HomePage() {
       const params = new URLSearchParams()
       if (selectedCategory !== 'all') params.set('category', selectedCategory)
       if (selectedUniversity !== 'all') params.set('university', selectedUniversity)
-      params.set('limit', 100) // Fetch up to 100 listings for pagination
-      // Don't send search to API, we'll filter on frontend for better UX
+      if (debouncedSearch) params.set('search', debouncedSearch)
+      params.set('limit', '100')
 
       const response = await fetch(`/api/listings?${params}`)
       const result = await response.json()
@@ -151,17 +150,18 @@ export default function HomePage() {
     }
   }
 
-  // Filter listings on frontend for search (category, seller, title)
-  const filteredListings = useMemo(() => listings.filter((listing) => {
-    if (!searchQuery.trim()) return true
-
-    const query = searchQuery.toLowerCase()
-    const title = listing.title?.toLowerCase() || ''
-    const seller = listing.profiles?.full_name?.toLowerCase() || ''
-    const category = listing.categories?.[0]?.toLowerCase() || ''
-
-    return title.includes(query) || seller.includes(query) || category.includes(query)
-  }), [listings, searchQuery])
+  // Price filter + sort (search is now server-side)
+  const filteredListings = useMemo(() => {
+    let result = listings.filter((listing) => {
+      const price = listing.price ?? 0
+      if (minPrice !== '' && !isNaN(parseFloat(minPrice)) && price < parseFloat(minPrice)) return false
+      if (maxPrice !== '' && !isNaN(parseFloat(maxPrice)) && price > parseFloat(maxPrice)) return false
+      return true
+    })
+    if (sortBy === 'price_asc') result = [...result].sort((a, b) => (a.price ?? 0) - (b.price ?? 0))
+    else if (sortBy === 'price_desc') result = [...result].sort((a, b) => (b.price ?? 0) - (a.price ?? 0))
+    return result
+  }, [listings, sortBy, minPrice, maxPrice])
 
   // Pagination
   const ITEMS_PER_PAGE = 12
@@ -174,6 +174,23 @@ export default function HomePage() {
     setSelectedListingId(listingId)
     setShowAuthModal(true)
   }
+
+  const hasActiveFilters = selectedCategory !== 'all' || selectedUniversity !== 'all' || sortBy !== 'newest' || minPrice !== '' || maxPrice !== '' || searchQuery.trim() !== ''
+
+  const clearFilters = () => {
+    setSelectedCategory('all')
+    setSelectedUniversity('all')
+    setSortBy('newest')
+    setMinPrice('')
+    setMaxPrice('')
+    setSearchQuery('')
+  }
+
+  const SORT_OPTIONS = [
+    { id: 'newest', label: 'Newest First' },
+    { id: 'price_asc', label: 'Price: Low → High' },
+    { id: 'price_desc', label: 'Price: High → Low' },
+  ]
 
   return (
     <div
@@ -360,66 +377,14 @@ export default function HomePage() {
             <p className="text-xs text-gray-400 mt-2 text-center">Search items by name, category, or seller</p>
           </div>
 
-          {/* Filters Row — Category + University */}
-          <div className="flex justify-center items-center gap-3 mb-6 sm:mb-8">
-            {/* Category Filter */}
-            <div className="relative" ref={categoryDropdownRef}>
-              {(() => {
-                const selectedCat = CATEGORIES.find(c => c.id === selectedCategory) || CATEGORIES[0]
-                return (
-                  <button
-                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                    aria-expanded={showCategoryDropdown}
-                    aria-haspopup="listbox"
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-200 cursor-pointer"
-                    style={{
-                      background: selectedCategory !== 'all' ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.08)',
-                      border: selectedCategory !== 'all' ? '1px solid rgba(59,130,246,0.4)' : '1px solid rgba(255,255,255,0.15)',
-                      color: 'white',
-                      backdropFilter: 'blur(24px)',
-                    }}
-                  >
-                    {selectedCat.icon && <span>{selectedCat.icon}</span>}
-                    <span>{selectedCat.name}</span>
-                    <svg className={`w-3.5 h-3.5 opacity-60 transition-transform duration-200 ${showCategoryDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                )
-              })()}
-              {showCategoryDropdown && (
-                <div
-                  className="absolute top-full left-0 mt-2 w-48 rounded-2xl overflow-hidden py-1.5 z-50"
-                  style={{
-                    background: 'rgba(15,15,20,0.92)',
-                    backdropFilter: 'blur(40px) saturate(200%)',
-                    WebkitBackdropFilter: 'blur(40px) saturate(200%)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    boxShadow: '0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
-                  }}
-                >
-                  {CATEGORIES.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => { setSelectedCategory(cat.id); setShowCategoryDropdown(false) }}
-                      className="w-full text-left px-4 py-2.5 text-sm font-bold transition-all duration-150 flex items-center gap-2 cursor-pointer"
-                      style={selectedCategory === cat.id
-                        ? { background: 'rgba(59,130,246,0.25)', color: 'rgba(147,197,253,1)' }
-                        : { color: 'rgba(255,255,255,0.75)' }
-                      }
-                    >
-                      {cat.icon && <span>{cat.icon}</span>}
-                      <span>{cat.name}</span>
-                      {selectedCategory === cat.id && (
-                        <svg className="w-4 h-4 ml-auto" style={{ color: 'rgba(147,197,253,1)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+          {/* Filters — Row 1: Category + University + (desktop: Sort) + (mobile: toggle) */}
+          <div className="flex justify-center items-center gap-2 sm:gap-3 mb-3 sm:mb-6">
+            <FilterDropdown
+              options={CATEGORIES}
+              value={selectedCategory}
+              onChange={setSelectedCategory}
+              color="blue"
+            />
 
             {/* University Filter */}
             <div className="relative" ref={universityPickerRef}>
@@ -427,7 +392,7 @@ export default function HomePage() {
                 onClick={() => setShowUniversityPicker(!showUniversityPicker)}
                 aria-expanded={showUniversityPicker}
                 aria-haspopup="listbox"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-200 cursor-pointer"
+                className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-200 cursor-pointer"
                 style={{
                   background: selectedUniversity !== 'all' ? 'rgba(20,184,166,0.2)' : 'rgba(255,255,255,0.08)',
                   border: selectedUniversity !== 'all' ? '1px solid rgba(20,184,166,0.4)' : '1px solid rgba(255,255,255,0.15)',
@@ -437,11 +402,15 @@ export default function HomePage() {
               >
                 {selectedUniversity !== 'all' ? (
                   <>
-                    <img src={UNIVERSITY_LOGOS[selectedUniversity]} alt="" width={18} height={18} className="w-4 h-4 object-contain rounded-full" />
-                    <span>{UNIVERSITIES.find(u => u.id === selectedUniversity)?.name}</span>
+                    <img loading="lazy" src={UNIVERSITY_LOGOS[selectedUniversity]} alt="" width={18} height={18} className="w-4 h-4 object-contain rounded-full" />
+                    <span className="hidden sm:inline">{UNIVERSITIES.find(u => u.id === selectedUniversity)?.name}</span>
+                    <span className="sm:hidden">{UNIVERSITIES.find(u => u.id === selectedUniversity)?.name?.split(' ')[0]}</span>
                   </>
                 ) : (
-                  <span>All Universities</span>
+                  <>
+                    <span className="hidden sm:inline">All Universities</span>
+                    <span className="sm:hidden">Univ</span>
+                  </>
                 )}
                 <svg className={`w-3.5 h-3.5 opacity-60 transition-transform duration-200 ${showUniversityPicker ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
@@ -486,7 +455,7 @@ export default function HomePage() {
                           : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }
                         }
                       >
-                        <img src={UNIVERSITY_LOGOS[u.id]} alt="" width={32} height={32} className="w-8 h-8 object-contain rounded-full" />
+                        <img loading="lazy" src={UNIVERSITY_LOGOS[u.id]} alt="" width={32} height={32} className="w-8 h-8 object-contain rounded-full" />
                         <span className="text-xs font-bold leading-tight text-center" style={{ color: selectedUniversity === u.id ? 'rgba(94,234,212,1)' : 'rgba(255,255,255,0.75)' }}>
                           {u.name}
                         </span>
@@ -501,13 +470,162 @@ export default function HomePage() {
                 </div>
               )}
             </div>
+
+            {/* Sort — desktop only inline */}
+            <div className="hidden sm:block">
+              <FilterDropdown
+                options={SORT_OPTIONS}
+                value={sortBy}
+                onChange={setSortBy}
+                defaultValue="newest"
+                color="purple"
+                dropdownWidth="w-52"
+                dropdownAlign="right-0"
+              />
+            </div>
+
+            {/* Mobile: filter toggle + clear */}
+            <button
+              onClick={() => setShowMobileFilters(!showMobileFilters)}
+              className="sm:hidden flex items-center gap-1.5 px-3 py-2.5 rounded-full font-bold text-xs transition-all duration-200 cursor-pointer"
+              style={{
+                background: (showMobileFilters || sortBy !== 'newest' || minPrice || maxPrice) ? 'rgba(168,85,247,0.2)' : 'rgba(255,255,255,0.08)',
+                border: (showMobileFilters || sortBy !== 'newest' || minPrice || maxPrice) ? '1px solid rgba(168,85,247,0.4)' : '1px solid rgba(255,255,255,0.15)',
+                color: 'white',
+              }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              {(sortBy !== 'newest' || minPrice || maxPrice) && (
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+              )}
+            </button>
+
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-all duration-200 cursor-pointer"
+                style={{
+                  background: 'rgba(239,68,68,0.15)',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                  color: 'rgba(252,165,165,1)',
+                }}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Mobile expanded filters panel */}
+          {showMobileFilters && (
+            <div className="sm:hidden flex flex-col gap-3 mb-4 px-2">
+              <div className="flex items-center gap-2 justify-center">
+                <FilterDropdown
+                  options={SORT_OPTIONS}
+                  value={sortBy}
+                  onChange={setSortBy}
+                  defaultValue="newest"
+                  color="purple"
+                  dropdownWidth="w-52"
+                  dropdownAlign="left-0"
+                />
+              </div>
+              <div className="flex items-center gap-2 justify-center">
+                <input
+                  type="number"
+                  placeholder="Min ₩"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  min="0"
+                  className="w-24 px-3 py-2 rounded-full text-white placeholder-gray-500 outline-none transition duration-200 text-xs text-center"
+                  style={{
+                    background: 'rgba(255,255,255,0.08)',
+                    border: minPrice !== '' ? '1px solid rgba(168,85,247,0.5)' : '1px solid rgba(255,255,255,0.15)',
+                    MozAppearance: 'textfield',
+                  }}
+                />
+                <span className="text-gray-500 text-xs font-bold">—</span>
+                <input
+                  type="number"
+                  placeholder="Max ₩"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  min="0"
+                  className="w-24 px-3 py-2 rounded-full text-white placeholder-gray-500 outline-none transition duration-200 text-xs text-center"
+                  style={{
+                    background: 'rgba(255,255,255,0.08)',
+                    border: maxPrice !== '' ? '1px solid rgba(168,85,247,0.5)' : '1px solid rgba(255,255,255,0.15)',
+                    MozAppearance: 'textfield',
+                  }}
+                />
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="px-3 py-2 rounded-full text-xs font-bold cursor-pointer"
+                    style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: 'rgba(252,165,165,1)' }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Desktop: Price Range + Sort row */}
+          <div className="hidden sm:flex justify-center items-center gap-3 mb-6 sm:mb-8 flex-wrap">
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                placeholder="Min ₩"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+                min="0"
+                className="w-28 px-3 py-2 rounded-full text-white placeholder-gray-500 outline-none transition duration-200 text-sm text-center"
+                style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  border: minPrice !== '' ? '1px solid rgba(168,85,247,0.5)' : '1px solid rgba(255,255,255,0.15)',
+                  MozAppearance: 'textfield',
+                }}
+              />
+              <span className="text-gray-500 text-sm font-bold">—</span>
+              <input
+                type="number"
+                placeholder="Max ₩"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                min="0"
+                className="w-28 px-3 py-2 rounded-full text-white placeholder-gray-500 outline-none transition duration-200 text-sm text-center"
+                style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  border: maxPrice !== '' ? '1px solid rgba(168,85,247,0.5)' : '1px solid rgba(255,255,255,0.15)',
+                  MozAppearance: 'textfield',
+                }}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Loading State */}
+        {/* Loading State — Skeleton Grid */}
         {loading && (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="rounded-xl overflow-hidden animate-pulse" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div className="aspect-square" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                <div className="p-3 sm:p-4 space-y-2.5">
+                  <div className="h-3.5 rounded-full w-4/5" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                  <div className="h-3 rounded-full w-3/5" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                  <div className="h-6 rounded-full w-2/5" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                  <div className="flex gap-2">
+                    <div className="h-5 rounded w-14" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                    <div className="h-5 rounded w-18" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -582,17 +700,20 @@ export default function HomePage() {
                     )}
                     {listing.profiles?.university && (
                       <span className="flex items-center gap-1 px-2 py-1 rounded bg-teal-500/20 text-teal-300 text-xs font-bold">
-                        <img src={UNIVERSITY_LOGOS[listing.profiles.university]} alt="" width={14} height={14} className="w-3.5 h-3.5 object-contain rounded-full" />
+                        <img loading="lazy" src={UNIVERSITY_LOGOS[listing.profiles.university]} alt="" width={14} height={14} className="w-3.5 h-3.5 object-contain rounded-full" />
                         {UNIVERSITIES.find(u => u.id === listing.profiles.university)?.name || listing.profiles.university}
                       </span>
                     )}
                   </div>
                   <div className="pt-2 sm:pt-3 border-t border-white/10 space-y-1 sm:space-y-2">
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-gray-400 flex items-center gap-1">
                       <span>Posted by </span>
                       <span className="text-white font-bold">
                         {listing.profiles?.full_name || 'Unknown'}
                       </span>
+                      {listing.profiles?.university_email_verified && (
+                        <img src="/BadgeIcon.svg" alt="Verified Student" width={14} height={14} className="w-3.5 h-3.5 object-contain" />
+                      )}
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-gray-400">
@@ -679,24 +800,51 @@ export default function HomePage() {
 
         {/* No Search Results State */}
         {!loading && listings.length > 0 && filteredListings.length === 0 && !error && (
-          <div className="text-center py-12">
-            <h3 className="text-2xl font-black text-white mb-4">No results found</h3>
-            <p className="text-gray-400">Try searching by item name, category, or seller</p>
+          <div className="text-center py-16 px-4">
+            <div className="text-6xl mb-4">🔍</div>
+            <h3 className="text-2xl font-black text-white mb-2">No results found</h3>
+            <p className="text-gray-400 mb-6 max-w-sm mx-auto">
+              {searchQuery.trim()
+                ? `Nothing matched "${searchQuery}" — try a different keyword or clear your filters`
+                : 'No listings match your current filters'}
+            </p>
+            <button
+              onClick={clearFilters}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-200 cursor-pointer"
+              style={{ background: 'rgba(59,130,246,0.2)', border: '1px solid rgba(59,130,246,0.4)', color: 'rgba(147,197,253,1)' }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Clear Filters
+            </button>
           </div>
         )}
 
         {/* Empty State */}
         {!loading && listings.length === 0 && !error && (
-          <div className="text-center py-12">
-            <h3 className="text-2xl font-black text-white mb-4">No listings yet</h3>
-            <p className="text-gray-400 mb-6">Create your first listing to get started</p>
-            {isAuthenticated && (
+          <div className="text-center py-16 px-4">
+            <div className="w-24 h-24 mx-auto mb-6 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <svg className="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-black text-white mb-2">The shelter is empty</h3>
+            <p className="text-gray-400 mb-6 max-w-sm mx-auto">Be the first to list something — furniture, clothes, gadgets, anything goes.</p>
+            {isAuthenticated ? (
               <Link
                 href="/sell"
-                className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all duration-200"
+                style={{ background: 'rgba(59,130,246,0.9)', color: 'white' }}
               >
-                Create Listing
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                </svg>
+                Post a Listing
               </Link>
+            ) : (
+              <p className="text-gray-500 text-sm">Sign in to post the first listing.</p>
             )}
           </div>
         )}
@@ -709,7 +857,7 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-8">
             {/* Brand */}
             <div className="flex items-center gap-3">
-              <img src="/logo.svg" alt="ShelterLab" width={40} height={40} className="w-10 h-10 object-contain" />
+              <img loading="lazy" src="/logo.svg" alt="ShelterLab" width={40} height={40} className="w-10 h-10 object-contain" />
               <span className="text-white font-black text-2xl bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">ShelterLab</span>
             </div>
 

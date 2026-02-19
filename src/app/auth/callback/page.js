@@ -25,7 +25,7 @@ export default function AuthCallbackPage() {
 
           // Verify email was confirmed
           if (data.user?.email_confirmed_at) {
-            console.log('Email confirmed successfully')
+            if (process.env.NODE_ENV === 'development') console.log('Email confirmed successfully')
           }
         } else {
           // If no code, check if there's an active session (hash-based flow)

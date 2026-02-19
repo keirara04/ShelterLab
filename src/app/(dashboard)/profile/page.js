@@ -4,11 +4,13 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/shared/context/AuthContext'
+import { useVisibilityRefetch } from '@/shared/hooks/useVisibilityRefetch'
 import PWAInstallButton from '@/shared/components/PWAInstallButton'
 import { supabase } from '@/services/supabase'
 import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
 import { Stats } from '@/shared/components/Stats'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -60,6 +62,8 @@ export default function ProfilePage() {
   const [confirmRating, setConfirmRating] = useState(5)
   const [confirmComment, setConfirmComment] = useState('')
   const [confirmLoading, setConfirmLoading] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isLoadingListings, setIsLoadingListings] = useState(true)
 
   const handleLogout = async () => {
     await logout()
@@ -89,6 +93,10 @@ export default function ProfilePage() {
     checkNotificationStatus()
   }, [])
 
+  // Ref keeps the latest user so fetch functions never have stale closures
+  const userRef = useRef(user)
+  useEffect(() => { userRef.current = user }, [user])
+
   useEffect(() => {
     if (user) {
       setFormData({
@@ -103,33 +111,77 @@ export default function ProfilePage() {
     }
   }, [user?.id])
 
-
   const fetchMyListings = async () => {
-    if (!user) return
-    const { data } = await supabase
-      .from('listings')
-      .select('*')
-      .eq('seller_id', user.id)
-      .order('created_at', { ascending: false })
-    setMyListings(data || [])
+    const u = userRef.current
+    if (!u) return
+    try {
+      const { data, error } = await supabase
+        .from('listings')
+        .select('*')
+        .eq('seller_id', u.id)
+        .order('created_at', { ascending: false })
+      if (!error) setMyListings(data || [])
+      else console.error('fetchMyListings error:', error)
+    } catch (err) {
+      console.error('fetchMyListings failed:', err)
+    } finally {
+      setIsLoadingListings(false)
+    }
   }
 
   const fetchReviews = async () => {
-    if (!user) return
-    const { data } = await supabase
-      .from('reviews')
-      .select('*')
-      .eq('reviewee_id', user.id)
-      .order('created_at', { ascending: false })
-    setReviews(data || [])
+    const u = userRef.current
+    if (!u) return
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('reviewee_id', u.id)
+        .order('created_at', { ascending: false })
+      if (!error) setReviews(data || [])
+      else console.error('fetchReviews error:', error)
+    } catch (err) {
+      console.error('fetchReviews failed:', err)
+    }
   }
 
   const fetchPendingTransactions = async () => {
-    if (!user) return
-    const res = await fetch(`/api/transactions/pending?userId=${user.id}`)
-    const json = await res.json()
-    setPendingTx(json.transactions || [])
+    const u = userRef.current
+    if (!u) return
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8000)
+    try {
+      const res = await fetch(`/api/transactions/pending?userId=${u.id}`, { signal: controller.signal })
+      const json = await res.json()
+      setPendingTx(json.transactions || [])
+    } catch (err) {
+      if (err.name !== 'AbortError') console.error('fetchPendingTransactions failed:', err)
+    } finally {
+      clearTimeout(timeoutId)
+    }
   }
+
+  const isRefetchingRef = useRef(false)
+
+  // Soft refetch — called on tab return (rate-limited) and by the refresh button (always runs)
+  const softRefetch = async ({ force = false } = {}) => {
+    if (!userRef.current) return
+    if (!force && isRefetchingRef.current) return
+    isRefetchingRef.current = true
+    setIsRefreshing(true)
+    try {
+      await Promise.all([fetchMyListings(), fetchReviews(), fetchPendingTransactions(), refreshProfile()])
+    } catch (err) {
+      console.error('[softRefetch] error:', err)
+    } finally {
+      setIsRefreshing(false)
+      isRefetchingRef.current = false
+    }
+  }
+
+  const handleManualRefresh = () => softRefetch({ force: true })
+
+  useVisibilityRefetch(softRefetch, { minIntervalMs: 5_000 })
 
   const handleConfirmTransaction = async () => {
     if (!confirmModal) return
@@ -637,7 +689,7 @@ export default function ProfilePage() {
           >
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
-                <img src="/BadgeIcon.svg" alt="" width={20} height={20} className="w-5 h-5 object-contain" />
+                <img loading="lazy" src="/BadgeIcon.svg" alt="" width={20} height={20} className="w-5 h-5 object-contain" />
                 <h2 className="text-white font-bold text-base">Verify Student Email</h2>
               </div>
               <button
@@ -762,7 +814,7 @@ export default function ProfilePage() {
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-3">
-              <img src="/BadgeIcon.svg" alt="" width={28} height={28} className="w-7 h-7 object-contain" />
+              <img loading="lazy" src="/BadgeIcon.svg" alt="" width={28} height={28} className="w-7 h-7 object-contain" />
               <p className="text-white font-bold text-base">Verified Student</p>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
@@ -798,15 +850,16 @@ export default function ProfilePage() {
             {/* Row: Refresh (desktop only) + Edit + Logout */}
             <div className="flex items-center gap-2">
               <button
-                onClick={() => window.location.reload()}
-                className="hidden sm:flex w-9 h-9 items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-400 hover:text-white"
+                onClick={handleManualRefresh}
+                disabled={isRefreshing}
+                className="hidden sm:flex w-9 h-9 items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-400 hover:text-white disabled:opacity-50"
                 style={{
                   background: 'rgba(255,255,255,0.06)',
                   border: '1px solid rgba(255,255,255,0.1)',
                 }}
                 title="Refresh"
               >
-                <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
                   <path d="M3 3v5h5"/>
                 </svg>
@@ -872,15 +925,16 @@ export default function ProfilePage() {
             </div>
             {/* Refresh — mobile only, below logout */}
             <button
-              onClick={() => window.location.reload()}
-              className="sm:hidden w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-400 hover:text-white"
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              className="sm:hidden w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-400 hover:text-white disabled:opacity-50"
               style={{
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.1)',
               }}
               title="Refresh"
             >
-              <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
                 <path d="M3 3v5h5"/>
               </svg>
@@ -892,7 +946,7 @@ export default function ProfilePage() {
             <div className="relative shrink-0">
               <div className="avatar-glow rounded-full">
                 {profile?.avatar_url ? (
-                  <img
+                  <Image
                     src={profile.avatar_url}
                     alt={profile.full_name}
                     width={112}
@@ -918,13 +972,13 @@ export default function ProfilePage() {
                     onClick={(e) => { e.stopPropagation(); setShowBadgeTooltip(true) }}
                     className="cursor-pointer flex items-center"
                   >
-                    <img src="/BadgeIcon.svg" alt="Verified Student" width={24} height={24} className="w-6 h-6 object-contain" />
+                    <img loading="lazy" src="/BadgeIcon.svg" alt="Verified Student" width={24} height={24} className="w-6 h-6 object-contain" />
                   </button>
                 )}
               </div>
               {profile?.university && (
                 <p className="text-teal-400 text-sm font-bold mt-1 mb-1 flex items-center gap-1.5 justify-center md:justify-start">
-                  <img src={UNIVERSITY_LOGOS[profile.university]} alt="" width={18} height={18} className="w-4.5 h-4.5 object-contain rounded-full" />
+                  <img loading="lazy" src={UNIVERSITY_LOGOS[profile.university]} alt="" width={18} height={18} className="w-4.5 h-4.5 object-contain rounded-full" />
                   {UNIVERSITIES.find(u => u.id === profile.university)?.name || profile.university}
                 </p>
               )}
@@ -983,7 +1037,7 @@ export default function ProfilePage() {
                         className="w-20 h-20 rounded-full object-cover ring-2 ring-teal-500/40"
                       />
                     ) : profile?.avatar_url ? (
-                      <img
+                      <Image
                         src={profile.avatar_url}
                         alt={profile.full_name}
                         width={80}
@@ -1141,7 +1195,7 @@ export default function ProfilePage() {
               {pendingTx.map((tx) => (
                 <div key={tx.id} className="flex items-center gap-3 px-4 py-3">
                   {tx.listing?.image_urls?.[0] && (
-                    <img src={tx.listing.image_urls[0]} alt={tx.listing.title} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                    <Image src={tx.listing.image_urls[0]} alt={tx.listing.title} width={40} height={40} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm font-bold line-clamp-1">{tx.listing?.title}</p>
@@ -1239,7 +1293,22 @@ export default function ProfilePage() {
 
             <h2 className="text-lg font-black text-white mb-4">Recent Items</h2>
 
-            {myListings.length === 0 ? (
+            {isLoadingListings ? (
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="glass rounded-2xl p-4 animate-pulse">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-xl flex-shrink-0" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 rounded-full w-3/5" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                        <div className="h-3.5 rounded-full w-2/5" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                        <div className="h-3 rounded-full w-1/4" style={{ background: 'rgba(255,255,255,0.05)' }} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : myListings.length === 0 ? (
               <div className="glass rounded-2xl p-10 text-center">
                 <div className="text-4xl mb-3 opacity-30">
                   &#x1f4e6;
@@ -1257,7 +1326,7 @@ export default function ProfilePage() {
                   >
                     <div className="flex items-center gap-4">
                       {listing.image_urls?.[0] ? (
-                        <img
+                        <Image
                           src={listing.image_urls[0]}
                           alt={listing.title}
                           width={56}
@@ -1529,7 +1598,7 @@ export default function ProfilePage() {
             <p className="text-gray-400 text-sm mb-5">Leave a review for the seller to complete the sale and update LabCred.</p>
             <div className="flex items-center gap-3 mb-5 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)' }}>
               {confirmModal.listing?.image_urls?.[0] && (
-                <img src={confirmModal.listing.image_urls[0]} alt={confirmModal.listing.title} className="w-12 h-12 rounded-lg object-cover" />
+                <Image src={confirmModal.listing.image_urls[0]} alt={confirmModal.listing.title} width={48} height={48} className="w-12 h-12 rounded-lg object-cover" />
               )}
               <div>
                 <p className="text-white font-bold text-sm line-clamp-1">{confirmModal.listing?.title}</p>
@@ -1837,7 +1906,7 @@ function AdminApprovedUsers() {
                   }`}
                   title={user.university_email_verified ? 'Revoke badge' : 'Grant badge'}
                 >
-                  <img src="/BadgeIcon.svg" alt="" className="w-3 h-3" />
+                  <img loading="lazy" src="/BadgeIcon.svg" alt="" className="w-3 h-3" />
                   {user.university_email_verified ? 'Revoke' : 'Badge'}
                 </button>
                 <button
@@ -1960,7 +2029,7 @@ function AdminListings() {
           {listings.map((listing) => (
             <div key={listing.id} className="flex items-center gap-3 bg-white/5 rounded-xl p-3 border border-white/8">
               {listing.image_urls?.[0] ? (
-                <img src={listing.image_urls[0]} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                <Image src={listing.image_urls[0]} alt="" width={40} height={40} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
               ) : (
                 <div className="w-10 h-10 rounded-lg bg-white/10 flex-shrink-0" />
               )}

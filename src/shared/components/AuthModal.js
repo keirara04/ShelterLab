@@ -172,7 +172,7 @@ export default function AuthModal({ isOpen, onClose, redirectPath = null }) {
           {/* Logo & Title */}
           <div className="text-center mb-6">
             <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
-              <img src="/logo.svg" alt="ShelterLab" className="w-12 h-12 object-contain" />
+              <img loading="lazy" src="/logo.svg" alt="ShelterLab" className="w-12 h-12 object-contain" />
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-white mb-2">
               {mode === 'login' ? 'Welcome Back!' : 'Join ShelterLab'}
@@ -228,7 +228,7 @@ export default function AuthModal({ isOpen, onClose, redirectPath = null }) {
                             : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/30'
                         }`}
                       >
-                        <img src={UNIVERSITY_LOGOS[u.id]} alt="" className="w-7 h-7 object-contain rounded-full" />
+                        <img loading="lazy" src={UNIVERSITY_LOGOS[u.id]} alt="" className="w-7 h-7 object-contain rounded-full" />
                         <span className="leading-tight text-center">{u.name}</span>
                       </button>
                     ))}
@@ -324,7 +324,7 @@ export default function AuthModal({ isOpen, onClose, redirectPath = null }) {
               <h3 className="text-xl font-black text-white mb-2">Confirm Your University</h3>
               <p className="text-gray-300 text-sm">You selected:</p>
               <div className="flex items-center justify-center gap-2 mt-2">
-                <img src={UNIVERSITY_LOGOS[formData.university]} alt="" className="w-8 h-8 object-contain rounded-full" />
+                <img loading="lazy" src={UNIVERSITY_LOGOS[formData.university]} alt="" className="w-8 h-8 object-contain rounded-full" />
                 <p className="text-amber-400 font-black text-lg">
                   {UNIVERSITIES.find(u => u.id === formData.university)?.name}
                 </p>

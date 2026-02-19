@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { applyRateLimit, profileUpdateLimiter } from '@/services/utils/rateLimit'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -28,6 +29,10 @@ export async function PUT(request) {
         { status: 401 }
       )
     }
+
+    // Rate limit: 30 profile updates per hour per user
+    const rl = await applyRateLimit(profileUpdateLimiter, user.id)
+    if (rl) return rl
 
     // Only include fields that were actually provided
     const updates = {}

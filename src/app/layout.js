@@ -6,12 +6,28 @@ import { Geist, Geist_Mono } from "next/font/google";
 import './globals.css'
 
 export const metadata = {
-  title: 'ShelterLab - Your Campus Marketplace',
-  description: 'Buy and sell items with your campus community',
+  title: {
+    default: 'ShelterLab - Your Campus Marketplace',
+    template: '%s | ShelterLab',
+  },
+  description: 'Buy and sell items with your campus community on ShelterLab — the trusted marketplace for university students.',
   manifest: '/manifest.json',
   icons: {
     icon: '/logo.svg',
     apple: '/logo.svg',
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'ShelterLab',
+    title: 'ShelterLab - Your Campus Marketplace',
+    description: 'Buy and sell items with your campus community on ShelterLab.',
+    images: [{ url: '/logo.svg', width: 512, height: 512, alt: 'ShelterLab Logo' }],
+  },
+  twitter: {
+    card: 'summary',
+    title: 'ShelterLab - Your Campus Marketplace',
+    description: 'Buy and sell items with your campus community on ShelterLab.',
+    images: ['/logo.svg'],
   },
 }
 

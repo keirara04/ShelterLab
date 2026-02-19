@@ -1,6 +1,11 @@
 import { supabaseServer } from '@/services/supabaseServer'
+import { applyRateLimit, userSearchLimiter, getClientIp } from '@/services/utils/rateLimit'
 
 export async function GET(request) {
+  // Rate limit: 60 searches per minute per IP
+  const rl = await applyRateLimit(userSearchLimiter, getClientIp(request))
+  if (rl) return rl
+
   const { searchParams } = new URL(request.url)
   const name = searchParams.get('name')?.trim()
 

@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { supabase } from '@/services/supabase'
 import { useAuth } from '@/shared/context/AuthContext'
 import { compressImage } from '@/services/utils/helpers'
@@ -325,9 +326,11 @@ export default function SellerProfilePage() {
                 aria-hidden="true"
               />
               {seller.avatar_url ? (
-                <img
+                <Image
                   src={seller.avatar_url}
                   alt={seller.full_name}
+                  width={96}
+                  height={96}
                   className="relative w-24 h-24 rounded-2xl object-cover"
                   style={{ border: '1.5px solid rgba(255,255,255,0.15)', boxShadow: `0 0 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)` }}
                 />
@@ -347,7 +350,7 @@ export default function SellerProfilePage() {
                 <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight">{seller.full_name}</h1>
                 {seller.university_email_verified && (
                   <button onClick={() => setShowBadgeTooltip(true)} className="shrink-0 cursor-pointer" aria-label="Verified Student">
-                    <img src="/BadgeIcon.svg" alt="Verified Student" width={22} height={22} className="object-contain" />
+                    <img loading="lazy" src="/BadgeIcon.svg" alt="Verified Student" width={22} height={22} className="object-contain" />
                   </button>
                 )}
               </div>
@@ -481,10 +484,12 @@ export default function SellerProfilePage() {
                   {/* Thumbnail */}
                   <div className="relative h-36 sm:h-44 bg-gray-900 overflow-hidden">
                     {listing.image_urls?.[0] ? (
-                      <img
+                      <Image
                         src={listing.image_urls[0]}
                         alt={listing.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        fill
+                        sizes="(max-width: 640px) 50vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
@@ -686,7 +691,7 @@ export default function SellerProfilePage() {
                     </label>
                   ) : (
                     <div className="relative rounded-xl overflow-hidden group" style={{ border: '1px solid rgba(255,255,255,0.09)' }}>
-                      <img src={proofImagePreview} alt="Proof preview" className="w-full max-h-48 object-cover" />
+                      <img loading="lazy" src={proofImagePreview} alt="Proof preview" className="w-full max-h-48 object-cover" />
                       <div
                         className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
                         style={{ background: 'rgba(0,0,0,0.5)' }}
@@ -791,9 +796,11 @@ export default function SellerProfilePage() {
 
                   {review.proof_image_url && (
                     <a href={review.proof_image_url} target="_blank" rel="noopener noreferrer" className="mt-3 block">
-                      <img
+                      <Image
                         src={review.proof_image_url}
                         alt="Proof of purchase"
+                        width={400}
+                        height={144}
                         className="w-full max-h-36 object-cover rounded-xl opacity-75 hover:opacity-100 transition"
                         style={{ border: '1px solid rgba(255,255,255,0.07)' }}
                       />
@@ -820,7 +827,7 @@ export default function SellerProfilePage() {
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-3">
-              <img src="/BadgeIcon.svg" alt="" width={28} height={28} className="w-7 h-7 object-contain" />
+              <img loading="lazy" src="/BadgeIcon.svg" alt="" width={28} height={28} className="w-7 h-7 object-contain" />
               <p className="text-white font-bold">Verified Student</p>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">

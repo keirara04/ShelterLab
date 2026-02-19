@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   serverExternalPackages: ['web-push'],
-  turbopack: {
-    root: new URL('.', import.meta.url).pathname,
-  },
   images: {
     remotePatterns: [
       {

@@ -188,7 +188,7 @@ export default function ListingDetailPage() {
                         : 'ring-1 ring-white/10 hover:ring-white/30'
                     }`}
                   >
-                    <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
+                    <img loading="lazy" src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>

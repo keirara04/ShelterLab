@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/shared/context/AuthContext'
 import { supabase } from '@/services/supabase'
@@ -33,11 +34,14 @@ export default function MyListingsPage() {
     }
   }, [isAuthenticated, authLoading, filter, user?.id])
 
-  // Refetch when user returns to this tab after being away
+  // Refetch when user returns to this tab after being away (throttled to 30s)
   useEffect(() => {
     if (!user?.id) return
+    let lastFetch = 0
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      const now = Date.now()
+      if (document.visibilityState === 'visible' && now - lastFetch >= 30_000) {
+        lastFetch = now
         fetchMyListings()
       }
     }
@@ -206,11 +210,23 @@ export default function MyListingsPage() {
             ))}
           </div>
         ) : listings.length === 0 ? (
-          <div className="text-center py-16">
+          <div className="text-center py-16 px-4">
+            <div className="w-24 h-24 mx-auto mb-6 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <svg className="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
             <h2 className="text-2xl font-black text-white mb-2">No listings yet</h2>
-            <p className="text-gray-400 mb-6">Create your first listing to get started</p>
-            <Link href="/sell" className="inline-block px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition touch-manipulation min-h-[48px] text-base">
-              Create Listing
+            <p className="text-gray-400 mb-6 max-w-xs mx-auto">Post your first item and start selling to your campus community.</p>
+            <Link
+              href="/sell"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all duration-200 touch-manipulation"
+              style={{ background: 'rgba(59,130,246,0.9)', color: 'white' }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+              </svg>
+              Create Your First Listing
             </Link>
           </div>
         ) : (
@@ -224,7 +240,7 @@ export default function MyListingsPage() {
                 <div className="relative aspect-square bg-gray-800 overflow-hidden">
                   {listing.image_urls && listing.image_urls.length > 0 ? (
                     <>
-                      <img src={listing.image_urls[0]} alt={listing.title} className="w-full h-full object-cover" />
+                      <Image src={listing.image_urls[0]} alt={listing.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
                       {listing.image_urls.length > 1 && (
                         <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-xs text-white font-bold">
                           +{listing.image_urls.length - 1}
@@ -312,7 +328,7 @@ export default function MyListingsPage() {
             {/* Item preview */}
             <div className="flex items-center gap-3 mb-5 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.05)' }}>
               {soldModal.image_urls?.[0] && (
-                <img src={soldModal.image_urls[0]} alt={soldModal.title} className="w-12 h-12 rounded-lg object-cover" />
+                <Image src={soldModal.image_urls[0]} alt={soldModal.title} width={48} height={48} className="w-12 h-12 rounded-lg object-cover" />
               )}
               <div>
                 <p className="text-white font-bold text-sm line-clamp-1">{soldModal.title}</p>
@@ -340,7 +356,7 @@ export default function MyListingsPage() {
                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 transition text-left border-b border-white/5 last:border-0"
                   >
                     {u.avatar_url ? (
-                      <img src={u.avatar_url} alt={u.full_name} className="w-8 h-8 rounded-full object-cover" />
+                      <Image src={u.avatar_url} alt={u.full_name} width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-black">
                         {u.full_name?.charAt(0).toUpperCase() || '?'}
@@ -359,7 +375,7 @@ export default function MyListingsPage() {
             {selectedBuyer && (
               <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-4" style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)' }}>
                 {selectedBuyer.avatar_url ? (
-                  <img src={selectedBuyer.avatar_url} alt={selectedBuyer.full_name} className="w-8 h-8 rounded-full object-cover" />
+                  <Image src={selectedBuyer.avatar_url} alt={selectedBuyer.full_name} width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-black">
                     {selectedBuyer.full_name?.charAt(0).toUpperCase() || '?'}

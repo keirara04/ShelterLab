@@ -400,7 +400,7 @@ export default function ListingDetailPage() {
                       </p>
                       {seller.university && (
                         <div className="flex items-center gap-1.5 mt-1">
-                          <img src={UNIVERSITY_LOGOS[seller.university]} alt="" width={14} height={14} className="w-3.5 h-3.5 object-contain rounded-full" />
+                          <img loading="lazy" src={UNIVERSITY_LOGOS[seller.university]} alt="" width={14} height={14} className="w-3.5 h-3.5 object-contain rounded-full" />
                           <span className="text-xs text-teal-400 font-bold">
                             {UNIVERSITIES.find(u => u.id === seller.university)?.name || seller.university}
                           </span>

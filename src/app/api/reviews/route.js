@@ -1,6 +1,7 @@
 // src/app/api/reviews/route.js
 import { supabaseServer } from '@/services/supabaseServer'
 import { requireAuth } from '@/auth'
+import { applyRateLimit, createReviewLimiter } from '@/services/utils/rateLimit'
 
 export async function GET(request) {
   try {
@@ -57,6 +58,10 @@ export async function POST(request) {
     // ✅ SERVER-SIDE AUTH CHECK - Cannot be bypassed
     const auth = await requireAuth(request)
     if (auth instanceof Response) return auth // Return 401 if not authenticated
+
+    // Rate limit: 10 reviews per hour per user
+    const rl = await applyRateLimit(createReviewLimiter, auth.user.id)
+    if (rl) return rl
 
     const body = await request.json()
     const { reviewee_id, reviewer_id, comment, rating, listing_id, is_seller_review, proof_image_url } = body

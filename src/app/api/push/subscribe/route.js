@@ -1,4 +1,5 @@
 import { supabaseServer } from '@/services/supabaseServer'
+import { applyRateLimit, pushSubscribeLimiter } from '@/services/utils/rateLimit'
 
 async function getUserFromRequest(request) {
   const authHeader = request.headers.get('Authorization')
@@ -14,6 +15,10 @@ export async function POST(request) {
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Rate limit: 10 subscribe calls per hour per user
+    const rl = await applyRateLimit(pushSubscribeLimiter, user.id)
+    if (rl) return rl
 
     const { endpoint, keys } = await request.json()
 

@@ -287,7 +287,7 @@ export default function BuyerProfilePage() {
               <h1 className="text-2xl sm:text-4xl font-black text-white mb-2">{buyer.full_name}</h1>
               {buyer.university ? (
                 <div className="flex items-center gap-2 justify-center sm:justify-start mb-2">
-                  <img src={UNIVERSITY_LOGOS[buyer.university]} alt="" className="w-6 h-6 object-contain rounded-full" />
+                  <img loading="lazy" src={UNIVERSITY_LOGOS[buyer.university]} alt="" className="w-6 h-6 object-contain rounded-full" />
                   <span className="text-teal-400 font-bold text-sm">
                     {UNIVERSITIES.find(u => u.id === buyer.university)?.name || buyer.university}
                   </span>

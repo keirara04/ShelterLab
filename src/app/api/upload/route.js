@@ -1,6 +1,7 @@
 // src/app/api/upload/route.js
 import { createClient } from '@supabase/supabase-js'
 import { getSessionUser } from '@/services/utils/getSessionUser'
+import { applyRateLimit, uploadLimiter } from '@/services/utils/rateLimit'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -15,6 +16,10 @@ export async function POST(request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
     const userId = sessionUser.id
+
+    // Rate limit: 30 uploads per hour per user
+    const rl = await applyRateLimit(uploadLimiter, userId)
+    if (rl) return rl
 
     // Parse form data
     const formData = await request.formData()
