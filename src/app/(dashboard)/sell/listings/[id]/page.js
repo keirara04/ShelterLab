@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/shared/context/AuthContext'
+import LogoHome from '@/shared/components/LogoHome'
 
 export default function ListingDetailPage() {
   const params = useParams()
@@ -129,10 +130,9 @@ export default function ListingDetailPage() {
   return (
     <div className="min-h-screen py-12" style={bgStyle}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back Button */}
-        <Link href="/" className="text-teal-400 hover:text-teal-300 font-bold mb-6 inline-block">
-          {'\u2190'} Back to Listings
-        </Link>
+        <div className="mb-6">
+          <LogoHome />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left: Image Carousel */}

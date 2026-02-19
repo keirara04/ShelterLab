@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/shared/context/AuthContext'
+import LogoHome from '@/shared/components/LogoHome'
 import { createClient } from '@supabase/supabase-js'
 
 export default function AdminNotificationsPage() {
@@ -131,8 +132,8 @@ export default function AdminNotificationsPage() {
       <div className="bg-white/5 border-b border-white/10 sticky top-0 z-50 backdrop-blur-2xl">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
+            <LogoHome />
             <h1 className="text-2xl font-bold text-white">Push Notification</h1>
-            <Link href="/" className="text-gray-400 hover:text-white transition">← Back</Link>
           </div>
         </div>
       </div>

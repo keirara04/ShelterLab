@@ -8,6 +8,7 @@ import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
 import { compressImage } from '@/services/utils/helpers'
 import { SchemaScript } from '@/shared/components/SchemaScript'
 import { generateProfileSchema } from '@/schema'
+import LogoHome from '@/shared/components/LogoHome'
 
 const RATING_LABELS = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent']
 const MAX_COMMENT_LENGTH = 500
@@ -263,10 +264,9 @@ export default function BuyerProfilePage() {
     <div className="min-h-screen bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 py-12">
       <SchemaScript data={profileSchema} />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back Button */}
-        <Link href="/" className="text-blue-400 hover:text-blue-300 font-bold mb-6 inline-block">
-          ← Back to Marketplace
-        </Link>
+        <div className="mb-6">
+          <LogoHome />
+        </div>
 
         {/* Profile Header */}
         <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-8 mb-8">

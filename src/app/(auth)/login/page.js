@@ -79,7 +79,7 @@ function LoginContent() {
 
         {/* Content */}
         <div className="relative z-10 text-center">
-          <div className="mb-12">
+          <Link href="/" className="inline-block mb-12 hover:opacity-90 transition-opacity">
             <div className="inline-flex items-center justify-center p-6 rounded-3xl bg-white/10 border border-white/20 backdrop-blur-xl shadow-2xl">
               <Image
                 src="/logo.svg"
@@ -90,7 +90,7 @@ function LoginContent() {
                 className="drop-shadow-2xl"
               />
             </div>
-          </div>
+          </Link>
           <h1 className="text-5xl font-black text-white mb-4">ShelterLab</h1>
           <p className="text-xl text-gray-300 mb-8">Student Marketplace</p>
           <p className="text-gray-400 text-lg max-w-sm">Find what you need. Leave what you don't. Buy and sell with your campus community.</p>
@@ -102,7 +102,7 @@ function LoginContent() {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="md:hidden text-center mb-8">
-            <div className="flex justify-center mb-6">
+            <Link href="/" className="inline-flex justify-center mb-6 hover:opacity-90 transition-opacity">
               <Image
                 src="/logo.svg"
                 alt="ShelterLab Logo"
@@ -110,7 +110,7 @@ function LoginContent() {
                 height={80}
                 priority
               />
-            </div>
+            </Link>
             <h1 className="text-4xl font-black text-white mb-2">ShelterLab</h1>
             <p className="text-gray-400">Student Marketplace</p>
           </div>

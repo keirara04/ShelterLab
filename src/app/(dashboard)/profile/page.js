@@ -11,6 +11,7 @@ import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
 import { Stats } from '@/shared/components/Stats'
 import Link from 'next/link'
 import Image from 'next/image'
+import LogoHome from '@/shared/components/LogoHome'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -839,6 +840,10 @@ export default function ProfilePage() {
             {success}
           </div>
         )}
+
+        <div className="mb-6">
+          <LogoHome />
+        </div>
 
         {/* Profile Header Card */}
         <div className="glass-strong rounded-3xl p-8 mb-6 relative overflow-hidden">

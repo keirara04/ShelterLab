@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import LogoHome from '@/shared/components/LogoHome'
 
 export default function HelpCenterPage() {
   return (
@@ -11,16 +12,9 @@ export default function HelpCenterPage() {
       }}
     >
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24">
-        {/* Back button */}
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-gray-400 hover:text-white text-sm font-bold mb-8 transition"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Home
-        </Link>
+        <div className="mb-8">
+          <LogoHome />
+        </div>
 
         {/* Header */}
         <div className="mb-10">
