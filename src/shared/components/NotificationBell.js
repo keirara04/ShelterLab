@@ -29,7 +29,7 @@ export default function NotificationBell({
             : 'none',
         }}
       >
-        <img src="/bell.svg" alt="" aria-hidden="true" className={imgSize} />
+        <img loading="lazy" src="/bell.svg" alt="" aria-hidden="true" className={imgSize} />
         {hasUnreadNotification && (
           <div className={`absolute ${dotPos} bg-blue-500 rounded-full animate-pulse`} />
         )}
@@ -48,7 +48,7 @@ export default function NotificationBell({
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-start gap-3">
-              <img src="/bell.svg" alt="" aria-hidden="true" className="w-6 h-6 flex-shrink-0" />
+              <img loading="lazy" src="/bell.svg" alt="" aria-hidden="true" className="w-6 h-6 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-bold text-white mb-1 truncate">
                   {notification.title || 'Updates Available'}

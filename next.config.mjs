@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactCompiler: true,
+  serverExternalPackages: ['web-push'],
   images: {
     remotePatterns: [
       {

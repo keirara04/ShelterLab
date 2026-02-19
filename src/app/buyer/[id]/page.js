@@ -286,14 +286,30 @@ export default function BuyerProfilePage() {
             <div className="flex-1 text-center sm:text-left w-full">
               <h1 className="text-2xl sm:text-4xl font-black text-white mb-2">{buyer.full_name}</h1>
               {buyer.university ? (
-                <div className="flex items-center gap-2 justify-center sm:justify-start mb-3">
-                  <img src={UNIVERSITY_LOGOS[buyer.university]} alt="" className="w-6 h-6 object-contain rounded-full" />
+                <div className="flex items-center gap-2 justify-center sm:justify-start mb-2">
+                  <img loading="lazy" src={UNIVERSITY_LOGOS[buyer.university]} alt="" className="w-6 h-6 object-contain rounded-full" />
                   <span className="text-teal-400 font-bold text-sm">
                     {UNIVERSITIES.find(u => u.id === buyer.university)?.name || buyer.university}
                   </span>
                 </div>
               ) : (
-                <p className="text-gray-400 text-sm mb-4">Buyer Profile</p>
+                <p className="text-gray-400 text-sm mb-2">Buyer Profile</p>
+              )}
+              {buyer.meetup_place && (
+                <div className="flex items-center gap-1.5 justify-center sm:justify-start mb-3">
+                  <svg className="w-3.5 h-3.5 text-teal-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <a
+                    href={buyer.meetup_place}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-teal-400 hover:text-teal-300 underline underline-offset-2 transition-colors"
+                  >
+                    View meetup spot on Naver Maps
+                  </a>
+                </div>
               )}
               <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-4">
                 <div className="bg-white/5 rounded-lg p-3 sm:p-4">

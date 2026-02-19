@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { applyRateLimit, profileUpdateLimiter } from '@/services/utils/rateLimit'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -8,7 +9,7 @@ const supabaseAdmin = createClient(
 export async function PUT(request) {
   try {
     const body = await request.json()
-    const { full_name, avatar_url, kakao_link } = body
+    const { full_name, avatar_url, kakao_link, meetup_place } = body
 
     // Get the user from the Authorization header
     const authHeader = request.headers.get('authorization')
@@ -29,11 +30,16 @@ export async function PUT(request) {
       )
     }
 
+    // Rate limit: 30 profile updates per hour per user
+    const rl = await applyRateLimit(profileUpdateLimiter, user.id)
+    if (rl) return rl
+
     // Only include fields that were actually provided
     const updates = {}
     if (full_name !== undefined) updates.full_name = full_name
     if (avatar_url !== undefined) updates.avatar_url = avatar_url
     if (kakao_link !== undefined) updates.kakao_link = kakao_link || null
+    if (meetup_place !== undefined) updates.meetup_place = meetup_place || null
 
     // Update profile using admin client (bypasses RLS)
     const { error: updateError, data } = await supabaseAdmin

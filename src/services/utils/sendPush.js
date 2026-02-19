@@ -45,6 +45,8 @@ export async function sendPushToAll(payload) {
                 .from('push_subscriptions')
                 .delete()
                 .eq('endpoint', sub.endpoint)
+                .then(() => {})
+                .catch((delErr) => console.error('Failed to remove expired subscription:', delErr))
             }
           })
       )

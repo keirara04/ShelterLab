@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { applyRateLimit, signupLimiter, getClientIp } from '@/services/utils/rateLimit'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -7,6 +8,10 @@ const supabaseAdmin = createClient(
 
 export async function POST(request) {
   try {
+    // Rate limit: 5 signups per hour per IP
+    const rl = await applyRateLimit(signupLimiter, getClientIp(request))
+    if (rl) return rl
+
     const { user_id, email, full_name, university } = await request.json()
 
     if (!user_id || !email || !full_name || !university) {

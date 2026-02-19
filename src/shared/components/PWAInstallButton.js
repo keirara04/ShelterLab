@@ -21,36 +21,36 @@ export default function PWAInstallButton() {
 
     // Listen directly for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e) => {
-      console.log('[PWAInstallButton] beforeinstallprompt event fired!')
+      if (process.env.NODE_ENV === 'development') console.log('[PWAInstallButton] beforeinstallprompt event fired!')
       e.preventDefault()
       setDeferredPrompt(e)
       setShowButton(true)
-      console.log('beforeinstallprompt captured, showing install button')
+      if (process.env.NODE_ENV === 'development') console.log('beforeinstallprompt captured, showing install button')
     }
 
     // Hide button when app is installed
     const handleAppInstalled = () => {
-      console.log('App installed, hiding button')
+      if (process.env.NODE_ENV === 'development') console.log('App installed, hiding button')
       setShowButton(false)
       setDeferredPrompt(null)
     }
 
-    console.log('[PWAInstallButton] Adding event listeners')
-    console.log('[PWAInstallButton] Current hostname:', window.location.hostname)
+    if (process.env.NODE_ENV === 'development') console.log('[PWAInstallButton] Adding event listeners')
+    if (process.env.NODE_ENV === 'development') console.log('[PWAInstallButton] Current hostname:', window.location.hostname)
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
     window.addEventListener('appinstalled', handleAppInstalled)
 
     // Always show button on mobile (use event will set it when prompt is available)
     if (!isLocalhost) {
-      console.log('[PWAInstallButton] Mobile/production detected - showing button')
+      if (process.env.NODE_ENV === 'development') console.log('[PWAInstallButton] Mobile/production detected - showing button')
       setShowButton(true)
     } else {
-      console.log('[PWAInstallButton] Dev mode detected - showing button for testing')
+      if (process.env.NODE_ENV === 'development') console.log('[PWAInstallButton] Dev mode detected - showing button for testing')
       setShowButton(true)
     }
 
     // Check if browser supports PWA
-    console.log('[PWAInstallButton] Browser PWA support:', {
+    if (process.env.NODE_ENV === 'development') console.log('[PWAInstallButton] Browser PWA support:', {
       serviceWorker: 'serviceWorker' in navigator,
       manifest: document.querySelector('link[rel="manifest"]') ? 'yes' : 'no'
     })
@@ -98,9 +98,9 @@ export default function PWAInstallButton() {
   }
 
   const handleInstall = async () => {
-    console.log('Install button clicked')
-    console.log('deferredPrompt:', deferredPrompt)
-    console.log('User agent:', navigator.userAgent)
+    if (process.env.NODE_ENV === 'development') console.log('Install button clicked')
+    if (process.env.NODE_ENV === 'development') console.log('deferredPrompt:', deferredPrompt)
+    if (process.env.NODE_ENV === 'development') console.log('User agent:', navigator.userAgent)
     
     // Check if it's iOS
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
@@ -110,16 +110,16 @@ export default function PWAInstallButton() {
     if (deferredPrompt) {
       setInstalling(true)
       try {
-        console.log('Showing native install prompt...')
+        if (process.env.NODE_ENV === 'development') console.log('Showing native install prompt...')
         deferredPrompt.prompt()
         const { outcome } = await deferredPrompt.userChoice
 
-        console.log('User choice outcome:', outcome)
+        if (process.env.NODE_ENV === 'development') console.log('User choice outcome:', outcome)
         if (outcome === 'accepted') {
-          console.log('PWA installed successfully')
+          if (process.env.NODE_ENV === 'development') console.log('PWA installed successfully')
           alert('✅ App installed successfully!')
         } else {
-          console.log('User cancelled installation')
+          if (process.env.NODE_ENV === 'development') console.log('User cancelled installation')
         }
 
         setDeferredPrompt(null)

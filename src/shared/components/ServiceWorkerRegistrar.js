@@ -42,7 +42,7 @@ export default function ServiceWorkerRegistrar() {
     const { outcome } = await deferredPrompt.userChoice
 
     if (outcome === 'accepted') {
-      console.log('PWA installed successfully')
+      if (process.env.NODE_ENV === 'development') console.log('PWA installed successfully')
     }
 
     setDeferredPrompt(null)
@@ -56,7 +56,7 @@ export default function ServiceWorkerRegistrar() {
       prompt: deferredPrompt,
       install: handleInstallClick,
     }
-    console.log('PWA Install Ready state updated:', { show: showInstallButton, hasPrompt: !!deferredPrompt })
+    if (process.env.NODE_ENV === 'development') console.log('PWA Install Ready state updated:', { show: showInstallButton, hasPrompt: !!deferredPrompt })
   }, [showInstallButton, deferredPrompt])
 
   return null

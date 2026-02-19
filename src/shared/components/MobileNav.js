@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuth } from '@/shared/context/AuthContext'
 
 export default function MobileNav() {
@@ -16,7 +17,7 @@ export default function MobileNav() {
         className="fixed top-4 right-4 z-50 w-10 h-10 rounded-full overflow-hidden border border-white/20"
       >
         {isAuthenticated && profile?.avatar_url ? (
-          <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+          <Image src={profile.avatar_url} alt="Profile" width={40} height={40} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
             {isAuthenticated ? profile?.full_name?.charAt(0) : '☰'}

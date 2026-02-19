@@ -28,12 +28,12 @@ export default function MySoldItemsPage() {
       setLoading(true)
       setError(null)
 
-      console.log('Fetching sold items for user:', user.id)
+      if (process.env.NODE_ENV === 'development') console.log('Fetching sold items for user:', user.id)
 
       const response = await fetch(`/api/sold-listings?userId=${user.id}`)
       const data = await response.json()
 
-      console.log('API Response:', data)
+      if (process.env.NODE_ENV === 'development') console.log('API Response:', data)
 
       if (!response.ok) throw new Error(data.error)
       
