@@ -210,7 +210,7 @@ export default function HomePage() {
               <path d="M12 17h.01"/>
             </svg>
             <div className="flex-1 min-w-0 flex flex-col gap-1">
-              <p className="text-xs font-bold text-yellow-200">Version 0.1.1-beta</p>
+              <p className="text-xs font-bold text-yellow-200">Version 0.1.2-beta</p>
               <p className="text-xs text-yellow-200/70">Lag & bugs possible. <a href="mailto:admin@shelterlab.shop?subject=ShelterLab%20Bug%20Report" className="underline hover:text-yellow-100">Report</a></p>
               <p className="text-xs text-gray-400">Best experience on desktop</p>
             </div>
@@ -244,7 +244,7 @@ export default function HomePage() {
                       <path d="M12 17h.01"/>
                     </svg>
                     <div className="flex items-center gap-2">
-                      <span className="text-yellow-200 font-semibold">Version 0.1.1-beta:</span>
+                      <span className="text-yellow-200 font-semibold">Version 0.1.2-beta:</span>
                       <span className="text-yellow-200/80">Site in development. May experience lag, bugs, or data loss.</span>
                       <a
                         href="mailto:admin@shelterlab.shop?subject=ShelterLab%20Bug%20Report"
