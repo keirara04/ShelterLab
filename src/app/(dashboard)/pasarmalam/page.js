@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/shared/context/AuthContext'
 import AuthModal from '@/shared/components/AuthModal'
+import LogoHome from '@/shared/components/LogoHome'
 
 export default function PasarMalamPage() {
   const { isAuthenticated } = useAuth()
@@ -41,16 +42,9 @@ export default function PasarMalamPage() {
         className="fixed inset-0 z-40 flex flex-col items-center justify-center text-center px-6"
         style={{ backdropFilter: 'blur(16px)', background: 'rgba(0,0,0,0.65)' }}
       >
-        {/* Back button */}
-        <Link
-          href="/"
-          className="absolute top-6 left-5 flex items-center gap-1.5 text-sm font-bold text-gray-400 hover:text-white transition-colors"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 5l-7 7 7 7" />
-          </svg>
-          Back
-        </Link>
+        <div className="absolute top-6 left-5">
+          <LogoHome />
+        </div>
 
         {/* ShelterLab tagline */}
         <p className="text-xs font-bold uppercase tracking-[0.25em] text-gray-400 mb-8">

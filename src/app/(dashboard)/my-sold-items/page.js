@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/shared/context/AuthContext'
 import { supabase } from '@/services/supabase'
+import LogoHome from '@/shared/components/LogoHome'
 
 export default function MySoldItemsPage() {
   const router = useRouter()
@@ -57,9 +58,9 @@ export default function MySoldItemsPage() {
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <Link href="/profile" className="text-blue-400 hover:text-blue-300 active:text-blue-200 font-bold mb-4 inline-block py-2 touch-manipulation text-base">
-            ← Back to Profile
-          </Link>
+          <div className="mb-4">
+            <LogoHome />
+          </div>
           <h1 className="text-4xl font-black text-white mb-2">My Sold Items</h1>
           <p className="text-gray-400">Items you've sold ({listings.length})</p>
         </div>

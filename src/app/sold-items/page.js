@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/services/supabase'
+import LogoHome from '@/shared/components/LogoHome'
 
 export default function SoldItemsPage() {
   const [listings, setListings] = useState([])
@@ -66,9 +67,9 @@ export default function SoldItemsPage() {
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
-            <Link href="/" className="text-blue-400 hover:text-blue-300 active:text-blue-200 font-bold mb-4 inline-block py-2 touch-manipulation text-base">
-              ← Back Home
-            </Link>
+            <div className="mb-4">
+              <LogoHome />
+            </div>
             <h1 className="text-4xl font-black text-white mb-2">Sold Items</h1>
             <p className="text-gray-400">Browse items that have been sold</p>
           </div>
@@ -111,9 +112,9 @@ export default function SoldItemsPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/" className="text-blue-400 hover:text-blue-300 active:text-blue-200 font-bold mb-4 inline-block py-2 touch-manipulation text-base">
-            ← Back Home
-          </Link>
+          <div className="mb-4">
+            <LogoHome />
+          </div>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-black text-white mb-2">Sold Items</h1>

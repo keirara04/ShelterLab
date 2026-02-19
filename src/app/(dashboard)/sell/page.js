@@ -7,6 +7,7 @@ import { supabase } from '@/services/supabase'
 import { CATEGORIES, CONDITIONS } from '@/services/utils/constants'
 import { validateImageFile, compressImage } from '@/services/utils/helpers'
 import Link from 'next/link'
+import LogoHome from '@/shared/components/LogoHome'
 
 const INITIAL_FORM = {
     title: '',
@@ -236,13 +237,9 @@ export default function SellPage() {
         <div className="min-h-screen p-4 md:p-8 lg:p-12 pb-32" style={{ backgroundColor: '#000000' }}>
             <div className="max-w-6xl mx-auto">
 
-                {/* Back */}
-                <button
-                    onClick={() => router.back()}
-                    className="flex items-center gap-1 text-teal-400 hover:text-teal-300 font-semibold mb-7 cursor-pointer py-2 touch-manipulation text-sm min-h-[44px] transition-colors"
-                >
-                    ← Back
-                </button>
+                <div className="mb-7">
+                    <LogoHome />
+                </div>
 
                 {/* Header */}
                 <div className="mb-8">

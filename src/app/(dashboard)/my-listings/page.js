@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/shared/context/AuthContext'
 import { supabase } from '@/services/supabase'
+import LogoHome from '@/shared/components/LogoHome'
 
 export default function MyListingsPage() {
   const router = useRouter()
@@ -167,9 +168,9 @@ export default function MyListingsPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/profile" className="text-blue-400 hover:text-blue-300 font-bold mb-4 inline-block py-2 touch-manipulation text-base">
-            ← Back to Profile
-          </Link>
+          <div className="mb-4">
+            <LogoHome />
+          </div>
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-4xl font-black text-white">My Listings</h1>
             <button

@@ -1,16 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/shared/context/AuthContext'
 import { supabase } from '@/services/supabase'
 import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
+import LogoHome from '@/shared/components/LogoHome'
 
 export default function ListingDetailPage() {
   const params = useParams()
-  const router = useRouter()
   const id = params.id
   const { user, isAuthenticated } = useAuth()
 
@@ -183,13 +183,9 @@ export default function ListingDetailPage() {
     <div className="min-h-screen py-12" style={{ backgroundColor: '#000000' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        {/* Back Button */}
-        <button
-          onClick={() => router.back()}
-          className="text-teal-400 hover:text-teal-300 active:text-teal-200 font-bold mb-6 inline-flex items-center gap-1.5 cursor-pointer py-2 touch-manipulation text-sm min-h-11 transition-colors"
-        >
-          ← Back
-        </button>
+        <div className="mb-6">
+          <LogoHome />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
 
