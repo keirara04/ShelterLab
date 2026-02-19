@@ -1,8 +1,8 @@
-"# ShelterLab 🏫
+ShelterLab 
 
 **Your Campus Marketplace** — A verified, safe peer-to-peer marketplace for university students to buy and sell items within their campus community.
 
-![Version](https://img.shields.io/badge/version-0.1.1--beta-yellow)
+![Version](https://img.shields.io/badge/version-0.1.2--beta-yellow)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Status](https://img.shields.io/badge/status-In%20Development-orange)
 
