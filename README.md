@@ -118,7 +118,7 @@ ShelterLab is a **full-stack web application** that enables university students 
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/shelterlab.git
+   git clone https://github.com/keirara04/ShelterLab.git
    cd shelterlab
    ```
 
