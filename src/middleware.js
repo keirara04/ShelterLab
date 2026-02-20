@@ -22,6 +22,8 @@ export async function middleware(request) {
   const authPaths = [
     '/login',
     '/signup',
+    '/terms',
+    '/privacy',
     '/api/auth',
     '/auth/callback',
     '/auth/email-confirmation',

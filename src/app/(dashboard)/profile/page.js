@@ -1779,6 +1779,7 @@ function AdminApprovedUsers() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
 
   const fetchAllUsers = async () => {
     try {
@@ -1851,81 +1852,175 @@ function AdminApprovedUsers() {
     fetchAllUsers()
   }, [])
 
+  const filteredUsers = allUsers.filter(user => 
+    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const verifiedCount = allUsers.filter(u => u.university_email_verified).length
+  const totalCount = allUsers.length
+
   return (
     <div className="space-y-6">
-      {/* All Users Management */}
       <div className="glass rounded-2xl p-6 mb-6">
-      <h3 className="text-xl font-black text-white mb-4">👥 Manage User Access</h3>
-      <p className="text-sm text-gray-400 mb-6">Manage user accounts and access</p>
-
-      {error && (
-        <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-400 text-sm mb-4">
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 text-green-400 text-sm mb-4">
-          {success}
-        </div>
-      )}
-
-      {/* All Users List */}
-      {loading ? (
-        <div className="text-gray-400 text-sm">Loading...</div>
-      ) : allUsers.length === 0 ? (
-        <div className="text-gray-400 text-sm">No users yet</div>
-      ) : (
-        <div className="space-y-2 max-h-64 overflow-y-auto">
-          {allUsers.map((user) => (
-            <div
-              key={user.id}
-              className={`flex flex-col md:flex-row md:items-center md:justify-between gap-2 p-3 rounded-lg border ${
-                user.status === 'approved'
-                  ? 'bg-green-500/10 border-green-500/30'
-                  : 'bg-yellow-500/10 border-yellow-500/30'
-              }`}
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2 gap-1">
-                  <p className="text-white font-medium text-sm truncate">{user.email}</p>
-                  <span className={`text-xs px-2 py-1 rounded w-fit ${
-                    user.status === 'approved'
-                      ? 'bg-green-500/30 text-green-400'
-                      : 'bg-yellow-500/30 text-yellow-400'
-                  }`}>
-                    {user.status === 'approved' ? '✓ Approved' : '⏳ Pending'}
-                  </span>
-                </div>
-                {user.full_name && (
-                  <p className="text-gray-400 text-xs mt-1">{user.full_name}</p>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleGrantBadge(user.id, !user.university_email_verified)}
-                  className={`flex-1 md:flex-none px-3 py-2 rounded-lg font-bold transition-all duration-200 text-xs whitespace-nowrap flex items-center gap-1 ${
-                    user.university_email_verified
-                      ? 'bg-teal-600/20 hover:bg-red-600/20 text-teal-400 hover:text-red-400'
-                      : 'bg-white/5 hover:bg-teal-600/20 text-gray-400 hover:text-teal-400'
-                  }`}
-                  title={user.university_email_verified ? 'Revoke badge' : 'Grant badge'}
-                >
-                  <img loading="lazy" src="/BadgeIcon.svg" alt="" className="w-3 h-3" />
-                  {user.university_email_verified ? 'Revoke' : 'Badge'}
-                </button>
-                <button
-                  onClick={() => handleDeleteUser(user.id, user.email)}
-                  className="flex-1 md:flex-none px-3 py-2 rounded-lg bg-red-900/30 hover:bg-red-700/50 text-red-500 hover:text-red-300 font-bold transition-all duration-200 text-xs whitespace-nowrap"
-                  title="Permanently delete this user"
-                >
-                  Delete
-                </button>
-              </div>
+        {/* Header with Stats */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 pb-6 border-b border-white/10">
+          <div>
+            <h3 className="text-2xl font-black text-white mb-1">👥 Community Members</h3>
+            <p className="text-sm text-gray-400">Monitor & manage all verified users</p>
+          </div>
+          <div className="flex gap-4">
+            <div className="text-center px-4 py-2 rounded-lg" style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)' }}>
+              <p className="text-2xl font-black text-emerald-400">{verifiedCount}</p>
+              <p className="text-xs text-gray-400">Verified</p>
             </div>
-          ))}
+            <div className="text-center px-4 py-2 rounded-lg" style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)' }}>
+              <p className="text-2xl font-black text-blue-400">{totalCount}</p>
+              <p className="text-xs text-gray-400">Total</p>
+            </div>
+          </div>
         </div>
-      )}
+
+        {error && (
+          <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 text-red-400 text-sm mb-4 flex items-start gap-2">
+            <span className="text-base">⚠️</span>
+            <span>{error}</span>
+          </div>
+        )}
+
+        {success && (
+          <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 text-green-400 text-sm mb-4 flex items-start gap-2">
+            <span className="text-base">✓</span>
+            <span>{success}</span>
+          </div>
+        )}
+
+        {/* Search Bar */}
+        <div className="mb-5">
+          <input
+            type="text"
+            placeholder="Search by email or name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-blue-500 focus:bg-white/8 text-white placeholder-gray-500 text-sm transition"
+          />
+        </div>
+
+        {/* User List */}
+        {loading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="p-4 rounded-xl animate-pulse" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full flex-shrink-0" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 rounded-full w-1/3" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                    <div className="h-3 rounded-full w-1/4" style={{ background: 'rgba(255,255,255,0.06)' }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-4xl mb-3 opacity-40">👤</div>
+            <p className="text-gray-400 font-medium">{searchTerm ? 'No users found' : 'No users yet'}</p>
+            <p className="text-gray-500 text-xs mt-1">{searchTerm && 'Try adjusting your search'}</p>
+          </div>
+        ) : (
+          <div className="space-y-3 max-h-[600px] overflow-y-auto">
+            {filteredUsers.map((user) => (
+              <div
+                key={user.id}
+                className="p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] transition-all duration-200 group"
+              >
+                <div className="flex flex-col gap-3">
+                  {/* Top Row - Name & Badge Status */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-white font-bold text-base truncate">{user.full_name || 'User'}</h4>
+                        {user.university_email_verified && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)', color: '#10b981' }}>
+                            <img loading="lazy" src="/BadgeIcon.svg" alt="" className="w-3 h-3" />
+                            Verified
+                          </span>
+                        )}
+                        {user.trust_score && user.trust_score > 0 && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.3)', color: '#a855f7' }}>
+                            ⭐ {user.trust_score} pts
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-gray-400 text-sm mt-2 truncate">{user.email}</p>
+                      {user.university && (
+                        <p className="text-teal-400 text-xs mt-1 font-medium">🎓 {UNIVERSITIES.find(u => u.id === user.university)?.name || user.university}</p>
+                      )}
+                    </div>
+                    {user.trust_score && (
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-2xl font-black text-amber-400">{user.trust_score}</p>
+                        <p className="text-xs text-gray-400">LabCred</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Middle Row - Activity Info */}
+                  <div className="flex gap-3 text-xs text-gray-500 flex-wrap">
+                    {user.created_at && (
+                      <span>📅 Joined {new Date(user.created_at).toLocaleDateString()}</span>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 flex-wrap pt-2 border-t border-white/5">
+                    <button
+                      onClick={() => handleGrantBadge(user.id, !user.university_email_verified)}
+                      className={`px-3 py-2 rounded-lg font-bold text-xs transition-all duration-200 flex items-center gap-1.5 ${
+                        user.university_email_verified
+                          ? 'bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/40'
+                          : 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-600/40'
+                      }`}
+                      title={user.university_email_verified ? 'Revoke verification badge' : 'Grant verification badge'}
+                    >
+                      <img loading="lazy" src="/BadgeIcon.svg" alt="" className="w-3.5 h-3.5" />
+                      {user.university_email_verified ? 'Revoke Badge' : 'Grant Badge'}
+                    </button>
+
+                    <button
+                      onClick={() => window.location.href = `/profile/${user.id}`}
+                      className="px-3 py-2 rounded-lg font-bold text-xs transition-all duration-200 flex items-center gap-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-600/40"
+                      title="View user profile"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      View Profile
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteUser(user.id, user.email)}
+                      className="px-3 py-2 rounded-lg font-bold text-xs transition-all duration-200 flex items-center gap-1.5 bg-red-900/20 hover:bg-red-900/30 text-red-400 border border-red-900/40 ml-auto"
+                      title="Permanently delete this user"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Footer Info */}
+        {!loading && filteredUsers.length > 0 && (
+          <div className="mt-6 pt-4 border-t border-white/10 text-xs text-gray-500 text-center">
+            Showing {filteredUsers.length} of {totalCount} users
+          </div>
+        )}
       </div>
     </div>
   )
