@@ -2,10 +2,11 @@ import supabaseServer from '@/services/supabaseServer'
 
 export async function generateMetadata({ params }) {
   try {
+    const { id } = await params
     const { data } = await supabaseServer
       .from('listings')
       .select('title, description, price, image_urls, categories')
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (!data) return { title: 'Listing | ShelterLab' }

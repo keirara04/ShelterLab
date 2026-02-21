@@ -121,7 +121,8 @@ export default function ProfilePage() {
         .select('*')
         .eq('seller_id', u.id)
         .order('created_at', { ascending: false })
-      if (!error) setMyListings(data || [])
+      // Only update if query succeeded, don't clear on error
+      if (!error) setMyListings(Array.isArray(data) ? data : [])
       else console.error('fetchMyListings error:', error)
     } catch (err) {
       console.error('fetchMyListings failed:', err)
@@ -139,7 +140,8 @@ export default function ProfilePage() {
         .select('*')
         .eq('reviewee_id', u.id)
         .order('created_at', { ascending: false })
-      if (!error) setReviews(data || [])
+      // Only update if query succeeded, don't clear on error
+      if (!error) setReviews(Array.isArray(data) ? data : [])
       else console.error('fetchReviews error:', error)
     } catch (err) {
       console.error('fetchReviews failed:', err)
@@ -171,7 +173,11 @@ export default function ProfilePage() {
     isRefetchingRef.current = true
     setIsRefreshing(true)
     try {
-      await Promise.all([fetchMyListings(), fetchReviews(), fetchPendingTransactions(), refreshProfile()])
+      // Run fetches sequentially to avoid race conditions and ensure proper state updates
+      await fetchMyListings()
+      await fetchReviews()
+      await fetchPendingTransactions()
+      await refreshProfile()
     } catch (err) {
       console.error('[softRefetch] error:', err)
     } finally {

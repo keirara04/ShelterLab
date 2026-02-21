@@ -6,6 +6,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import './globals.css'
 
 export const metadata = {
+  metadataBase: new URL('https://shelterlab.shop'),
   title: {
     default: 'ShelterLab - Your Campus Marketplace',
     template: '%s | ShelterLab',
