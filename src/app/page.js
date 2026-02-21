@@ -85,13 +85,6 @@ export default function HomePage() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Default filter to user's university once profile loads
-  useEffect(() => {
-    if (profile?.university) {
-      setSelectedUniversity(profile.university)
-    }
-  }, [profile?.university])
-
   // Close notification panel on click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -501,7 +494,6 @@ export default function HomePage() {
                       : { color: 'rgba(255,255,255,0.7)' }
                     }
                   >
-                    <span className="text-base">🏫</span>
                     All Universities
                     {selectedUniversity === 'all' && (
                       <svg className="w-4 h-4 ml-auto" style={{ color: 'rgba(147,197,253,1)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
