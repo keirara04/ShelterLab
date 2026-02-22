@@ -1,16 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/shared/context/AuthContext'
 import { supabase } from '@/services/supabase'
 import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
-import LogoHome from '@/shared/components/LogoHome'
 
 export default function ListingDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const id = params.id
   const { user, isAuthenticated } = useAuth()
 
@@ -183,9 +183,13 @@ export default function ListingDetailPage() {
     <div className="min-h-screen py-12" style={{ backgroundColor: '#000000' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        <div className="mb-6">
-          <LogoHome />
-        </div>
+        {/* Back Button */}
+        <button
+          onClick={() => router.back()}
+          className="text-teal-400 hover:text-teal-300 active:text-teal-200 font-bold mb-6 inline-flex items-center gap-1.5 cursor-pointer py-2 touch-manipulation text-sm min-h-11 transition-colors"
+        >
+          ← Back
+        </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
 
@@ -342,12 +346,12 @@ export default function ListingDetailPage() {
                   Description
                 </h2>
                 {isAuthenticated ? (
-                  <p className="text-white text-sm leading-relaxed whitespace-pre-line">
+                  <p className="text-white text-sm leading-relaxed">
                     {listing.description || 'No description provided'}
                   </p>
                 ) : (
                   <div className="relative">
-                    <p className="text-white text-sm leading-relaxed blur-sm select-none pointer-events-none whitespace-pre-line">
+                    <p className="text-white text-sm leading-relaxed blur-sm select-none pointer-events-none">
                       {listing.description?.substring(0, 100) || 'Sign in to see the full description of this listing and contact the seller directly.'}
                     </p>
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
@@ -396,7 +400,7 @@ export default function ListingDetailPage() {
                       </p>
                       {seller.university && (
                         <div className="flex items-center gap-1.5 mt-1">
-                          <img loading="lazy" src={UNIVERSITY_LOGOS[seller.university]} alt="" width={14} height={14} className="w-3.5 h-3.5 object-contain rounded-full" />
+                          <img src={UNIVERSITY_LOGOS[seller.university]} alt="" width={14} height={14} className="w-3.5 h-3.5 object-contain rounded-full" />
                           <span className="text-xs text-teal-400 font-bold">
                             {UNIVERSITIES.find(u => u.id === seller.university)?.name || seller.university}
                           </span>

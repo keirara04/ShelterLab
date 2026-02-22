@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { useAuth } from '@/shared/context/AuthContext'
 import { supabase } from '@/services/supabase'
 import { CATEGORIES, CONDITIONS } from '@/services/utils/constants'
-import LogoHome from '@/shared/components/LogoHome'
 
 export default function EditListingPage() {
   const params = useParams()
@@ -172,9 +171,12 @@ export default function EditListingPage() {
     >
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-6">
-          <LogoHome />
-        </div>
+        <button
+          onClick={() => router.back()}
+          className="text-blue-400 hover:text-blue-300 active:text-blue-200 font-bold mb-6 inline-block cursor-pointer py-2 touch-manipulation text-base min-h-[44px]"
+        >
+          ← Back
+        </button>
 
         <h1 className="text-4xl font-black text-white mb-2">Edit Listing</h1>
         <p className="text-gray-400 mb-8">Update your item details</p>

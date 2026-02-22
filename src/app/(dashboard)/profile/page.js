@@ -1188,6 +1188,7 @@ export default function ProfilePage() {
             trustScore={profile?.trust_score || 0}
             reviewsCount={reviews.length}
             rating={averageRating}
+            loading={isLoadingListings}
             onLabCredClick={() => setShowLabCredInfo(true)}
           />
         </div>

@@ -1,10 +1,10 @@
 //Stats component to display user stats like listings count, LabCred, reviews count, and rating
 
-export function Stats({ listingsCount = 0, trustScore = 0, reviewsCount = 0, rating = null, onLabCredClick }) {
+export function Stats({ listingsCount = 0, trustScore = 0, reviewsCount = 0, rating = null, loading = false, onLabCredClick }) {
   const stats = [
     {
       label: 'Listings',
-      value: listingsCount,
+      value: loading ? '—' : listingsCount,
       color: 'text-blue-400',
       bg: 'rgba(96,165,250,0.1)',
       border: 'rgba(96,165,250,0.15)',
@@ -16,7 +16,7 @@ export function Stats({ listingsCount = 0, trustScore = 0, reviewsCount = 0, rat
     },
     {
       label: 'LabCred',
-      value: trustScore,
+      value: loading ? '—' : trustScore,
       color: 'text-purple-400',
       bg: 'rgba(192,132,252,0.1)',
       border: 'rgba(192,132,252,0.15)',
@@ -29,7 +29,7 @@ export function Stats({ listingsCount = 0, trustScore = 0, reviewsCount = 0, rat
     },
     {
       label: 'Reviews',
-      value: reviewsCount,
+      value: loading ? '—' : reviewsCount,
       color: 'text-pink-400',
       bg: 'rgba(244,114,182,0.1)',
       border: 'rgba(244,114,182,0.15)',
@@ -41,7 +41,7 @@ export function Stats({ listingsCount = 0, trustScore = 0, reviewsCount = 0, rat
     },
     {
       label: 'Rating',
-      value: rating ?? '—',
+      value: loading ? '—' : (rating ?? '—'),
       color: 'text-yellow-400',
       bg: 'rgba(250,204,21,0.1)',
       border: 'rgba(250,204,21,0.15)',
