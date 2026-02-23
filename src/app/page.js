@@ -872,7 +872,7 @@ export default function HomePage() {
                       {isAuthenticated ? (
                         <span className="text-xs text-gray-400">View Details →</span>
                       ) : (
-                        <span className="text-xs text-amber-400 font-bold">🔒 Sign in</span>
+                        <span className="text-xs text-amber-400 font-bold">Sign in</span>
                       )}
                     </div>
                   </div>

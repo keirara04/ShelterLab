@@ -184,13 +184,13 @@ function getEmailTemplate(otp) {
       <div class="code-container">
         <span class="code-label">Your Verification Code</span>
         <div class="code">${otp}</div>
-        <div class="expiry-notice">⏱️ This code expires in 15 minutes</div>
+        <div class="expiry-notice">This code expires in 15 minutes</div>
       </div>
 
       <p class="action-text">Enter this code in your browser to verify your university email address and unlock all Shelter Lab features.</p>
 
       <div class="security-note">
-        <strong>🔒 Security Notice</strong>
+        <strong>Security Notice</strong>
         Never share this code with anyone. Shelter Lab support will never ask for your verification code.
       </div>
 

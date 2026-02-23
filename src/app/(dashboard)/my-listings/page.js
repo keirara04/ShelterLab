@@ -10,12 +10,10 @@ import LogoHome from '@/shared/components/LogoHome'
 
 export default function MyListingsPage() {
   const router = useRouter()
-  const { user, isAuthenticated, loading: authLoading } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [filter, setFilter] = useState('all')
-
   // Mark as sold modal state
   const [soldModal, setSoldModal] = useState(null) // listing object
   const [buyerSearch, setBuyerSearch] = useState('')
@@ -25,7 +23,6 @@ export default function MyListingsPage() {
   const searchTimeout = useRef(null)
 
   useEffect(() => {
-    if (authLoading) return
     if (!isAuthenticated) {
       router.push('/login')
       return
@@ -33,7 +30,7 @@ export default function MyListingsPage() {
     if (user?.id) {
       fetchMyListings()
     }
-  }, [isAuthenticated, authLoading, filter, user?.id])
+  }, [isAuthenticated, user?.id])
 
   // Refetch when user returns to this tab after being away (throttled to 30s)
   useEffect(() => {
@@ -68,7 +65,6 @@ export default function MyListingsPage() {
 
   const fetchMyListings = async () => {
     try {
-      setLoading(true)
       setError(null)
 
       if (!user?.id) {

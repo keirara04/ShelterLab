@@ -11,23 +11,23 @@ export const CATEGORIES = [
 ]
 
 export const CONDITIONS = [
-  { id: 'new', name: 'New', icon: '✨', color: 'bg-green-500' },
-  { id: 'like-new', name: 'Like New', icon: '🆕', color: 'bg-blue-500' },
-  { id: 'good', name: 'Good', icon: '👍', color: 'bg-yellow-500' },
-  { id: 'fair', name: 'Fair', icon: '⚠️', color: 'bg-orange-500' },
-  { id: 'poor', name: 'Poor', icon: '🔧', color: 'bg-red-500' },
+  { id: 'new', name: 'New', icon: '', color: 'bg-green-500' },
+  { id: 'like-new', name: 'Like New', icon: '', color: 'bg-blue-500' },
+  { id: 'good', name: 'Good', icon: '', color: 'bg-yellow-500' },
+  { id: 'fair', name: 'Fair', icon: '', color: 'bg-orange-500' },
+  { id: 'poor', name: 'Poor', icon: '', color: 'bg-red-500' },
 ]
 
 export const UNIVERSITIES = [
-  { id: 'Korea University', name: 'Korea University', icon: '🎓' },
-  { id: 'Yonsei University', name: 'Yonsei University', icon: '🎓' },
-  { id: 'Hanyang University', name: 'Hanyang University', icon: '🎓' },
-  { id: 'Sungkyunkwan University', name: 'Sungkyunkwan University', icon: '🎓' },
-  { id: 'Kyung Hee University', name: 'Kyung Hee University', icon: '🎓' },
-  { id: 'Ewha Womans University', name: 'Ewha Womans University', icon: '🎓' },
-  { id: 'Sejong University', name: 'Sejong University', icon: '🎓' },
-  { id: 'Konkuk University', name: 'Konkuk University', icon: '🎓' },
-  { id: 'Seoultech', name: 'Seoultech', icon: '🎓' },
+  { id: 'Korea University', name: 'Korea University', icon: '' },
+  { id: 'Yonsei University', name: 'Yonsei University', icon: '' },
+  { id: 'Hanyang University', name: 'Hanyang University', icon: '' },
+  { id: 'Sungkyunkwan University', name: 'Sungkyunkwan University', icon: '' },
+  { id: 'Kyung Hee University', name: 'Kyung Hee University', icon: '' },
+  { id: 'Ewha Womans University', name: 'Ewha Womans University', icon: '' },
+  { id: 'Sejong University', name: 'Sejong University', icon: '' },
+  { id: 'Konkuk University', name: 'Konkuk University', icon: '' },
+  { id: 'Seoultech', name: 'Seoultech', icon: '' },
 ]
 
 export const UNIVERSITY_LOGOS = {

@@ -318,7 +318,7 @@ export default function ProfilePage() {
       // Check if browser supports service workers
       if (!('serviceWorker' in navigator)) {
         if (isIOS) {
-          throw new Error('To enable notifications on iPhone, first add this app to your Home Screen: tap the Share button ⬆️ then "Add to Home Screen", then open the app from there.')
+          throw new Error('To enable notifications on iPhone, first add this app to your Home Screen: tap the Share button then "Add to Home Screen", then open the app from there.')
         }
         throw new Error('Your browser does not support push notifications. Try using Chrome or Edge.')
       }
@@ -326,7 +326,7 @@ export default function ProfilePage() {
       // Check if browser supports notifications
       if (!('Notification' in window)) {
         if (isIOS && !isStandalone) {
-          throw new Error('To enable notifications on iPhone, first add this app to your Home Screen: tap the Share button ⬆️ then "Add to Home Screen", then open the app from there.')
+          throw new Error('To enable notifications on iPhone, first add this app to your Home Screen: tap the Share button then "Add to Home Screen", then open the app from there.')
         }
         throw new Error('Notifications are not supported in this browser. Try using Chrome or Edge.')
       }
@@ -414,7 +414,7 @@ export default function ProfilePage() {
       }
 
       setNotificationsEnabled(true)
-      setEnableNotifSuccess('✅ Push notifications enabled! You will now receive notifications for new listings.')
+      setEnableNotifSuccess('Push notifications enabled! You will now receive notifications for new listings.')
       console.log('Push notifications enabled successfully')
       
       // Close modal after 2 seconds
@@ -465,7 +465,7 @@ export default function ProfilePage() {
       }
 
       setNotificationsEnabled(false)
-      setEnableNotifSuccess('✅ Push notifications disabled.')
+      setEnableNotifSuccess('Push notifications disabled.')
       console.log('Push notifications disabled successfully')
     } catch (err) {
       console.error('Error disabling notifications:', err)
@@ -1271,7 +1271,7 @@ export default function ProfilePage() {
               }`}
               style={activeTab === 'admin' ? { background: 'rgba(59, 130, 246, 0.3)' } : {}}
             >
-              🔐 Admin
+              Admin
             </button>
           )}
         </div>
@@ -1422,7 +1422,7 @@ export default function ProfilePage() {
         {/* Admin Tab */}
         {activeTab === 'admin' && user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL && (
           <div>
-            <h2 className="text-lg font-black text-white mb-4">🔐 Admin Controls</h2>
+            <h2 className="text-lg font-black text-white mb-4">Admin Controls</h2>
             
             {/* Analytics */}
             <AdminStats />
@@ -1437,7 +1437,7 @@ export default function ProfilePage() {
             <div className="glass rounded-2xl p-6 mb-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="text-xl font-black text-white mb-1">🔔 Push Notifications</h3>
+                  <h3 className="text-xl font-black text-white mb-1">Push Notifications</h3>
                   <p className="text-sm text-gray-400">Send notifications to all users</p>
                 </div>
               </div>
@@ -1489,7 +1489,7 @@ export default function ProfilePage() {
               </form>
 
               <p className="text-xs text-gray-400 mt-4 pt-4 border-t border-white/10">
-                💡 Only one notification can be active at a time. Pushing a new notification will replace the previous one.
+                Only one notification can be active at a time. Pushing a new notification will replace the previous one.
               </p>
             </div>
           </div>
@@ -1498,7 +1498,7 @@ export default function ProfilePage() {
         {/* PWA Install Section */}
         <div className="mt-10 mb-10 flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-black text-white mb-1">📱Install App</h3>
+            <h3 className="text-lg font-black text-white mb-1">Install App</h3>
             <p className="text-sm text-gray-400">Quick access & offline support with notifications functionality !</p>
           </div>
           <PWAInstallButton />
@@ -1622,7 +1622,7 @@ export default function ProfilePage() {
             <div className="flex gap-2 mb-4">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button key={star} onClick={() => setConfirmRating(star)} className="text-2xl transition-transform hover:scale-110">
-                  {star <= confirmRating ? '⭐' : '☆'}
+                  {star <= confirmRating ? '★' : '☆'}
                 </button>
               ))}
             </div>
@@ -1677,12 +1677,12 @@ export default function ProfilePage() {
             </p>
             {enableNotifError && (
               <div style={{ background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.5)', borderRadius: '8px', padding: '12px', color: '#f87171', fontSize: '14px', marginBottom: '16px' }}>
-                ⚠️ {enableNotifError}
+                {enableNotifError}
               </div>
             )}
             {enableNotifSuccess && (
               <div style={{ background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.5)', borderRadius: '8px', padding: '12px', color: '#4ade80', fontSize: '14px', marginBottom: '16px' }}>
-                ✅ {enableNotifSuccess}
+                {enableNotifSuccess}
               </div>
             )}
             {(() => {
@@ -1698,7 +1698,7 @@ export default function ProfilePage() {
                       disabled={enableNotifLoading}
                       style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'linear-gradient(to right, #dc2626, #b91c1c)', color: 'white', fontWeight: 700, fontSize: '14px', border: 'none', cursor: enableNotifLoading ? 'not-allowed' : 'pointer', opacity: enableNotifLoading ? 0.5 : 1 }}
                     >
-                      {enableNotifLoading ? '⏳ Disabling...' : '🔴 Disable Notifications'}
+                      {enableNotifLoading ? 'Disabling...' : 'Disable Notifications'}
                     </button>
                     <p style={{ color: '#6b7280', fontSize: '12px', textAlign: 'center', marginTop: '12px' }}>You will stop receiving push notifications</p>
                   </div>
@@ -1708,10 +1708,10 @@ export default function ProfilePage() {
               if (isIOS && !isStandalone) {
                 return (
                   <div style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: '8px', padding: '16px' }}>
-                    <p style={{ color: '#fbbf24', fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>📱 iPhone Setup Required</p>
+                    <p style={{ color: '#fbbf24', fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>iPhone Setup Required</p>
                     <p style={{ color: '#d1d5db', fontSize: '13px', lineHeight: '1.6' }}>
                       To get notifications on iPhone:<br />
-                      1. Tap the <strong style={{ color: '#60a5fa' }}>Share button</strong> ⬆️ at the bottom<br />
+                      1. Tap the <strong style={{ color: '#60a5fa' }}>Share button</strong> at the bottom<br />
                       2. Tap <strong style={{ color: '#60a5fa' }}>"Add to Home Screen"</strong><br />
                       3. Open the app from your Home Screen<br />
                       4. Come back here and enable notifications
@@ -1726,7 +1726,7 @@ export default function ProfilePage() {
                   <div style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: '8px', padding: '16px' }}>
                     {isLocalhost ? (
                       <>
-                        <p style={{ color: '#fbbf24', fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>🔒 HTTPS Required</p>
+                        <p style={{ color: '#fbbf24', fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>HTTPS Required</p>
                         <p style={{ color: '#d1d5db', fontSize: '13px', lineHeight: '1.6' }}>
                           Push notifications require a secure (HTTPS) connection. You&apos;re currently on a local development server.
                         </p>
@@ -1741,16 +1741,16 @@ export default function ProfilePage() {
                       </>
                     ) : isIOS ? (
                       <>
-                        <p style={{ color: '#f87171', fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>📱 iOS Setup Required</p>
+                        <p style={{ color: '#f87171', fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>iOS Setup Required</p>
                         <p style={{ color: '#d1d5db', fontSize: '13px', lineHeight: '1.6' }}>
                           {isStandalone
                             ? 'Push notifications are not available yet. Please make sure you\'re on iOS 16.4 or later (Settings → General → Software Update).'
-                            : 'To get notifications on iPhone, first add this app to your Home Screen: tap Share ⬆️ → "Add to Home Screen", then open the app from there.'}
+                            : 'To get notifications on iPhone, first add this app to your Home Screen: tap Share then "Add to Home Screen", then open the app from there.'}
                         </p>
                       </>
                     ) : (
                       <>
-                        <p style={{ color: '#f87171', fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>❌ Not Supported</p>
+                        <p style={{ color: '#f87171', fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>Not Supported</p>
                         <p style={{ color: '#d1d5db', fontSize: '13px' }}>
                           Push notifications are not supported in this browser. Try using <strong style={{ color: '#60a5fa' }}>Chrome</strong> or <strong style={{ color: '#60a5fa' }}>Edge</strong> on desktop.
                         </p>
@@ -1767,7 +1767,7 @@ export default function ProfilePage() {
                     disabled={enableNotifLoading}
                     style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'linear-gradient(to right, #2563eb, #0891b2)', color: 'white', fontWeight: 700, fontSize: '14px', border: 'none', cursor: enableNotifLoading ? 'not-allowed' : 'pointer', opacity: enableNotifLoading ? 0.5 : 1 }}
                   >
-                    {enableNotifLoading ? '⏳ Enabling...' : '✓ Enable Notifications'}
+                    {enableNotifLoading ? 'Enabling...' : 'Enable Notifications'}
                   </button>
                   <p style={{ color: '#6b7280', fontSize: '12px', textAlign: 'center', marginTop: '12px' }}>Your browser will ask for permission to send notifications</p>
                 </div>
@@ -1873,7 +1873,7 @@ function AdminApprovedUsers() {
         {/* Header with Stats */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 pb-6 border-b border-white/10">
           <div>
-            <h3 className="text-2xl font-black text-white mb-1">👥 Community Members</h3>
+            <h3 className="text-2xl font-black text-white mb-1">Community Members</h3>
             <p className="text-sm text-gray-400">Monitor & manage all verified users</p>
           </div>
           <div className="flex gap-4">
@@ -1890,7 +1890,9 @@ function AdminApprovedUsers() {
 
         {error && (
           <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 text-red-400 text-sm mb-4 flex items-start gap-2">
-            <span className="text-base">⚠️</span>
+            <svg className="w-4 h-4 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
             <span>{error}</span>
           </div>
         )}
@@ -1930,7 +1932,11 @@ function AdminApprovedUsers() {
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-4xl mb-3 opacity-40">👤</div>
+            <div className="flex justify-center mb-3 opacity-40">
+              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
             <p className="text-gray-400 font-medium">{searchTerm ? 'No users found' : 'No users yet'}</p>
             <p className="text-gray-500 text-xs mt-1">{searchTerm && 'Try adjusting your search'}</p>
           </div>
@@ -1955,13 +1961,13 @@ function AdminApprovedUsers() {
                         )}
                         {user.trust_score && user.trust_score > 0 && (
                           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.3)', color: '#a855f7' }}>
-                            ⭐ {user.trust_score} pts
+                            {user.trust_score} pts
                           </span>
                         )}
                       </div>
                       <p className="text-gray-400 text-sm mt-2 truncate">{user.email}</p>
                       {user.university && (
-                        <p className="text-teal-400 text-xs mt-1 font-medium">🎓 {UNIVERSITIES.find(u => u.id === user.university)?.name || user.university}</p>
+                        <p className="text-teal-400 text-xs mt-1 font-medium">{UNIVERSITIES.find(u => u.id === user.university)?.name || user.university}</p>
                       )}
                     </div>
                     {user.trust_score && (
@@ -1975,7 +1981,7 @@ function AdminApprovedUsers() {
                   {/* Middle Row - Activity Info */}
                   <div className="flex gap-3 text-xs text-gray-500 flex-wrap">
                     {user.created_at && (
-                      <span>📅 Joined {new Date(user.created_at).toLocaleDateString()}</span>
+                      <span>Joined {new Date(user.created_at).toLocaleDateString()}</span>
                     )}
                   </div>
 
@@ -2046,7 +2052,7 @@ function AdminStats() {
 
   return (
     <div className="glass rounded-2xl p-6 mb-6">
-      <h3 className="text-xl font-black text-white mb-4">📊 Analytics</h3>
+      <h3 className="text-xl font-black text-white mb-4">Analytics</h3>
       {loading ? (
         <p className="text-gray-400 text-sm">Loading stats...</p>
       ) : !stats ? (
@@ -2118,7 +2124,7 @@ function AdminListings() {
   return (
     <div className="glass rounded-2xl p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-black text-white">🗂 Listing Management</h3>
+        <h3 className="text-xl font-black text-white">Listing Management</h3>
         <button
           onClick={fetchListings}
           className="text-xs text-gray-400 hover:text-white transition font-bold px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10"

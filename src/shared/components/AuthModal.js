@@ -131,14 +131,20 @@ export default function AuthModal({ isOpen, onClose, redirectPath = null }) {
           className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white transition touch-manipulation"
           aria-label="Close modal"
         >
-          ✕
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
 
         <div className="p-8">
           {/* Pending Approval */}
           {showConfirmEmail ? (
             <div className="text-center py-6">
-              <div className="text-6xl mb-4">📧</div>
+              <div className="flex justify-center mb-4">
+                <svg className="w-16 h-16 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
               <h2 className="text-2xl font-black text-white mb-2">Check Your Email</h2>
               <p className="text-gray-400 mb-2 text-sm">Confirmation link sent to:</p>
               <p className="text-blue-400 font-bold text-sm mb-6 break-all">{formData.email}</p>
@@ -309,7 +315,11 @@ export default function AuthModal({ isOpen, onClose, redirectPath = null }) {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white/5 border border-white/10 rounded-xl p-6 max-w-sm w-full shadow-lg">
             <div className="text-center mb-3">
-              <div className="text-3xl mb-2">⚠️</div>
+              <div className="flex justify-center mb-2">
+                <svg className="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
               <h3 className="text-lg font-black text-white mb-1">Confirm Your University</h3>
               <p className="text-gray-400 text-xs">You selected:</p>
               <p className="text-blue-400 font-bold text-sm mt-1">{UNIVERSITIES.find(u => u.id === formData.university)?.name}</p>

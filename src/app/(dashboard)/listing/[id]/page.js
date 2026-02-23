@@ -528,7 +528,7 @@ export default function ListingDetailPage() {
                       {reviews.length} review{reviews.length !== 1 ? 's' : ''}
                       {averageRating > 0 && (
                         <span className="ml-2 text-yellow-400 font-bold">
-                          ⭐ {averageRating}
+                          {averageRating}
                         </span>
                       )}
                     </p>
@@ -544,7 +544,7 @@ export default function ListingDetailPage() {
                           <div>
                             <p className="font-bold text-white text-sm">{review.reviewer_name}</p>
                             <p className="text-yellow-400 text-xs">
-                              {'⭐'.repeat(review.rating)}
+                              {'★'.repeat(review.rating)}
                             </p>
                           </div>
                           <span className="text-xs text-gray-500">

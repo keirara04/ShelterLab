@@ -117,7 +117,7 @@ export default function PWAInstallButton() {
         if (process.env.NODE_ENV === 'development') console.log('User choice outcome:', outcome)
         if (outcome === 'accepted') {
           if (process.env.NODE_ENV === 'development') console.log('PWA installed successfully')
-          alert('✅ App installed successfully!')
+          alert('App installed successfully!')
         } else {
           if (process.env.NODE_ENV === 'development') console.log('User cancelled installation')
         }
@@ -136,7 +136,7 @@ export default function PWAInstallButton() {
     // For iOS - show manual installation instructions
     if (isIOS) {
       alert(
-        '📱 Install ShelterLab on iOS:\n\n' +
+        'Install ShelterLab on iOS:\n\n' +
         '1. Tap the Share button (bottom menu)\n' +
         '2. Scroll down and tap "Add to Home Screen"\n' +
         '3. Tap "Add" to install\n\n' +
@@ -148,10 +148,10 @@ export default function PWAInstallButton() {
     // For Android without native prompt
     if (isAndroid) {
       alert(
-        '📱 Install ShelterLab on Android:\n\n' +
+        'Install ShelterLab on Android:\n\n' +
         'Try these options:\n\n' +
         '1. Look for "Install" banner at bottom of screen\n' +
-        '2. Or tap menu ⋮ → "Install app"\n' +
+        '2. Or tap menu and select "Install app"\n' +
         '3. Or use "Add to Home Screen" option\n\n' +
         'If you don\'t see these options, your browser may not support PWA installation.'
       )
@@ -160,7 +160,7 @@ export default function PWAInstallButton() {
     
     // Generic fallback
     alert(
-      '💡 Install ShelterLab:\n\n' +
+      'Install ShelterLab:\n\n' +
       'Your browser doesn\'t support app installation.\n\n' +
       'Try:\n' +
       '• Chrome or Edge on Android\n' +

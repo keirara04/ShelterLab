@@ -55,7 +55,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    // ✅ SERVER-SIDE AUTH CHECK - Cannot be bypassed
+    // SERVER-SIDE AUTH CHECK - Cannot be bypassed
     const auth = await requireAuth(request)
     if (auth instanceof Response) return auth // Return 401 if not authenticated
 
@@ -137,7 +137,7 @@ export async function POST(request) {
 
 export async function DELETE(request) {
   try {
-    // ✅ SERVER-SIDE AUTH CHECK - Cannot be bypassed
+    // SERVER-SIDE AUTH CHECK - Cannot be bypassed
     const auth = await requireAuth(request)
     if (auth instanceof Response) return auth // Return 401 if not authenticated
 

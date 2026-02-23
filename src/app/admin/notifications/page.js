@@ -203,7 +203,7 @@ export default function AdminNotificationsPage() {
 
         {/* Info Box */}
         <div className="mt-12 bg-white/5 border border-white/10 rounded-lg p-6">
-          <h3 className="font-bold text-white mb-3">ℹ️ How It Works</h3>
+          <h3 className="font-bold text-white mb-3">How It Works</h3>
           <ul className="space-y-2 text-sm text-gray-400">
             <li>• This notification will be displayed to all users on their next page load</li>
             <li>• Only one notification can be active at a time</li>
