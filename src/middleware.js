@@ -24,6 +24,7 @@ export async function middleware(request) {
     '/signup',
     '/terms',
     '/privacy',
+    '/about-us',
     '/api/auth',
     '/auth/callback',
     '/auth/email-confirmation',
