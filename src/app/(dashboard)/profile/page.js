@@ -60,8 +60,8 @@ export default function ProfilePage() {
   const [confirmRating, setConfirmRating] = useState(5)
   const [confirmComment, setConfirmComment] = useState('')
   const [confirmLoading, setConfirmLoading] = useState(false)
-  const [isRefreshing, setIsRefreshing] = useState(false)
   const [isLoadingListings, setIsLoadingListings] = useState(true)
+  const [linkCopied, setLinkCopied] = useState(false)
 
   const handleLogout = async () => {
     await logout()
@@ -164,14 +164,12 @@ export default function ProfilePage() {
 
   const isRefetchingRef = useRef(false)
 
-  // Soft refetch — called on tab return (rate-limited) and by the refresh button (always runs)
-  const softRefetch = async ({ force = false } = {}) => {
+  // Soft refetch — called on tab return (rate-limited)
+  const softRefetch = async () => {
     if (!userRef.current) return
-    if (!force && isRefetchingRef.current) return
+    if (isRefetchingRef.current) return
     isRefetchingRef.current = true
-    setIsRefreshing(true)
     try {
-      // Run fetches sequentially to avoid race conditions and ensure proper state updates
       await fetchMyListings()
       await fetchReviews()
       await fetchPendingTransactions()
@@ -179,12 +177,9 @@ export default function ProfilePage() {
     } catch (err) {
       console.error('[softRefetch] error:', err)
     } finally {
-      setIsRefreshing(false)
       isRefetchingRef.current = false
     }
   }
-
-  const handleManualRefresh = () => softRefetch({ force: true })
 
   useVisibilityRefetch(softRefetch, { minIntervalMs: 5_000 })
 
@@ -789,27 +784,41 @@ export default function ProfilePage() {
           <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-teal-500/5 rounded-3xl pointer-events-none" />
 
           {/* Card action buttons */}
-          <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-1">
-            {/* Row: Refresh (desktop only) + Edit + Logout */}
-            <div className="flex items-center gap-2">
+          <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5">
               <button
-                onClick={handleManualRefresh}
-                disabled={isRefreshing}
-                className="hidden sm:flex w-9 h-9 items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-400 hover:text-white disabled:opacity-50"
-                style={{
+                onClick={async () => {
+                  if (user?.id) {
+                    const url = `${window.location.origin}/profile/${user.id}`
+                    await navigator.clipboard.writeText(url)
+                    setLinkCopied(true)
+                    setTimeout(() => setLinkCopied(false), 2000)
+                  }
+                }}
+                className="hidden sm:flex w-9 h-9 items-center justify-center rounded-xl cursor-pointer transition-all duration-200"
+                style={linkCopied ? {
+                  background: 'rgba(34,197,94,0.15)',
+                  border: '1px solid rgba(34,197,94,0.3)',
+                  color: '#22c55e',
+                } : {
                   background: 'rgba(255,255,255,0.06)',
                   border: '1px solid rgba(255,255,255,0.1)',
+                  color: '#9ca3af',
                 }}
-                title="Refresh"
+                title={linkCopied ? 'Link copied!' : 'Share Profile'}
               >
-                <svg className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                  <path d="M3 3v5h5"/>
-                </svg>
+                {linkCopied ? (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                )}
               </button>
               <button
                 onClick={() => setIsEditing(!isEditing)}
-                className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200"
+                className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200"
                 style={{
                   background: isEditing ? 'rgba(45, 212, 191, 0.15)' : 'rgba(255,255,255,0.06)',
                   border: isEditing ? '1px solid rgba(45, 212, 191, 0.3)' : '1px solid rgba(255,255,255,0.1)',
@@ -818,21 +827,21 @@ export default function ProfilePage() {
                 title={isEditing ? 'Cancel' : 'Edit Profile'}
               >
                 {isEditing ? (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 ) : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
                 )}
               </button>
 
-              {/* Admin Panel Icon */}
+              {/* Admin Panel Icon — desktop only */}
               {user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL && (
                 <Link
                   href="/admin"
-                  className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200"
+                  className="hidden sm:flex w-9 h-9 items-center justify-center rounded-xl cursor-pointer transition-all duration-200"
                   style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: '#818cf8' }}
                   title="Admin Panel"
                 >
@@ -846,7 +855,7 @@ export default function ProfilePage() {
               {mounted && (
                 <button
                   onClick={() => setShowNotifModal(true)}
-                  className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 relative group"
+                  className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 relative group"
                   style={notificationsEnabled ? {
                     background: 'rgba(34, 197, 94, 0.15)',
                     border: '1px solid rgba(34, 197, 94, 0.3)',
@@ -859,43 +868,26 @@ export default function ProfilePage() {
                   title={notificationsEnabled ? 'Notifications enabled - Click to manage' : 'Enable notifications'}
                   type="button"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
-                  <span className={`absolute top-0 right-0 w-2 h-2 rounded-full ${notificationsEnabled ? 'bg-green-500' : 'bg-blue-500'}`}></span>
+                  <span className={`absolute top-0 right-0 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${notificationsEnabled ? 'bg-green-500' : 'bg-blue-500'}`}></span>
                 </button>
               )}
 
               <button
                 onClick={handleLogout}
-                className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-400 hover:text-red-400"
+                className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-400 hover:text-red-400"
                 style={{
                   background: 'rgba(255,255,255,0.06)',
                   border: '1px solid rgba(255,255,255,0.1)',
                 }}
                 title="Log Out"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
               </button>
-            </div>
-            {/* Refresh — mobile only, below logout */}
-            <button
-              onClick={handleManualRefresh}
-              disabled={isRefreshing}
-              className="sm:hidden w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200 text-gray-400 hover:text-white disabled:opacity-50"
-              style={{
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.1)',
-              }}
-              title="Refresh"
-            >
-              <svg className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                <path d="M3 3v5h5"/>
-              </svg>
-            </button>
           </div>
 
           <div className="relative flex flex-col md:flex-row items-center gap-6 pt-10 md:pt-8">
@@ -979,6 +971,43 @@ export default function ProfilePage() {
                   + Add bio
                 </button>
               )}
+              {/* Mobile-only action row */}
+              <div className="flex sm:hidden items-center gap-2 mt-3 justify-center">
+                <button
+                  onClick={async () => {
+                    if (user?.id) {
+                      const url = `${window.location.origin}/profile/${user.id}`
+                      await navigator.clipboard.writeText(url)
+                      setLinkCopied(true)
+                      setTimeout(() => setLinkCopied(false), 2000)
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                  style={linkCopied ? {
+                    background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', color: '#22c55e',
+                  } : {
+                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#9ca3af',
+                  }}
+                >
+                  {linkCopied ? (
+                    <><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>Copied!</>
+                  ) : (
+                    <><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>Share</>
+                  )}
+                </button>
+                {user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL && (
+                  <Link
+                    href="/admin"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+                    style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)', color: '#818cf8' }}
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    Admin
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
 
@@ -1165,6 +1194,49 @@ export default function ProfilePage() {
             </form>
           )}
         </div>
+
+        {/* Profile Completion */}
+        {(() => {
+          const steps = [
+            { label: 'Avatar', done: !!profile?.avatar_url },
+            { label: 'Bio', done: !!profile?.bio },
+            { label: 'Kakao Link', done: !!profile?.kakao_link },
+            { label: 'Meetup Spot', done: !!profile?.meetup_place },
+            { label: 'Verified', done: !!profile?.university_email_verified },
+          ]
+          const done = steps.filter(s => s.done).length
+          if (done >= steps.length) return null
+          const pct = Math.round((done / steps.length) * 100)
+          return (
+            <div className="glass rounded-2xl p-4 mb-4">
+              <div className="flex items-center justify-between mb-2.5">
+                <p className="text-sm font-bold text-gray-300">Profile Completion</p>
+                <span className="text-xs font-bold text-teal-400">{pct}%</span>
+              </div>
+              <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #14b8a6, #06b6d4)' }}
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {steps.filter(s => !s.done).map(s => (
+                  <button
+                    key={s.label}
+                    onClick={() => {
+                      if (s.label === 'Verified') { setUnivError(null); setUnivSuccess(null); setShowVerifyModal(true) }
+                      else setIsEditing(true)
+                    }}
+                    className="text-xs font-bold px-2.5 py-1 rounded-lg transition-colors cursor-pointer text-gray-400 hover:text-teal-400"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+                  >
+                    + {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Stats Bar */}
         <div className="mb-4">

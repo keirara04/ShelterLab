@@ -368,7 +368,13 @@ export default function HomePage() {
         {/* Hero Section */}
         <div className="text-center mb-8 sm:mb-12">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-3 sm:mb-4">ShelterLab</h2>
-          <p className="text-gray-400 text-base sm:text-lg mb-6 sm:mb-8 px-4">Find what you need, leave what you don't.</p>
+          <p className="text-gray-400 text-base sm:text-lg mb-3 sm:mb-4 px-4">Find what you need, leave what you don&apos;t.</p>
+          <Link href="/about-us" className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-teal-400 transition-colors mb-5 sm:mb-7">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            First time here?
+          </Link>
 
           {/* Search Bar */}
           <div className="max-w-2xl mx-auto mb-6 sm:mb-8 px-4">
@@ -990,6 +996,7 @@ export default function HomePage() {
               <Link href="/contact" className="text-gray-400 text-sm hover:text-teal-400 transition">Contact Us</Link>
               <Link href="/terms" className="text-gray-400 text-sm hover:text-teal-400 transition">Terms of Use</Link>
               <Link href="/privacy" className="text-gray-400 text-sm hover:text-teal-400 transition">Privacy Policy</Link>
+              <Link href="/about-us" className="text-gray-400 text-sm hover:text-teal-400 transition">About Us</Link>
             </div>
           </div>
 

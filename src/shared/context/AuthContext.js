@@ -230,11 +230,16 @@ export function AuthProvider({ children }) {
 
   const refreshProfile = async () => {
     if (!user) return
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-    if (data && data.length > 0) setProfile(data[0])
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+      if (error) throw error
+      if (data && data.length > 0) setProfile(data[0])
+    } catch (err) {
+      console.error('refreshProfile error:', err)
+    }
   }
 
   const value = {

@@ -420,6 +420,37 @@ export default function SellerProfilePage() {
       {/* ── Page body ──────────────────────────────────────────────────────── */}
       <div className="max-w-3xl mx-auto px-4 mt-8 space-y-10">
 
+        {/* ── Contact / Kakao Chat ────────────────────────────────────────── */}
+        {seller.kakao_link && (!isAuthenticated || user?.id !== sellerId) && (
+          <a
+            href={seller.kakao_link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-2xl p-4 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] group"
+            style={{
+              background: 'rgba(250,225,0,0.06)',
+              border: '1px solid rgba(250,225,0,0.15)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
+            }}
+          >
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: 'rgba(250,225,0,0.12)', border: '1px solid rgba(250,225,0,0.2)' }}
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#fae100">
+                <path d="M12 3C6.48 3 2 6.58 2 10.94c0 2.8 1.86 5.27 4.66 6.67-.15.53-.96 3.4-.99 3.62 0 0-.02.17.09.24.11.06.24.01.24.01.32-.04 3.7-2.44 4.28-2.86.55.08 1.13.12 1.72.12 5.52 0 10-3.58 10-7.94S17.52 3 12 3z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-yellow-200 group-hover:text-yellow-100 transition-colors">Chat on KakaoTalk</p>
+              <p className="text-xs text-gray-500 mt-0.5">Open seller's Kakao chat to discuss this item</p>
+            </div>
+            <svg className="w-4 h-4 text-gray-600 group-hover:text-yellow-300 transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+        )}
+
         {/* ── Listings ──────────────────────────────────────────────────────── */}
         <section>
           <div className="flex items-center justify-between mb-4">
