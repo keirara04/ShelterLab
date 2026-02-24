@@ -8,7 +8,7 @@ const supabaseAdmin = createClient(
 export async function PUT(request) {
   try {
     const body = await request.json()
-    const { full_name, avatar_url, kakao_link, meetup_place } = body
+    const { full_name, avatar_url, kakao_link, meetup_place, bio } = body
 
     // Get the user from the Authorization header
     const authHeader = request.headers.get('authorization')
@@ -35,6 +35,7 @@ export async function PUT(request) {
     if (avatar_url !== undefined) updates.avatar_url = avatar_url
     if (kakao_link !== undefined) updates.kakao_link = kakao_link || null
     if (meetup_place !== undefined) updates.meetup_place = meetup_place || null
+    if (bio !== undefined) updates.bio = bio || null
 
     // Update profile using admin client (bypasses RLS)
     const { error: updateError, data } = await supabaseAdmin

@@ -1,6 +1,59 @@
 //Stats component to display user stats like listings count, LabCred, reviews count, and rating
 
+const RING_RADIUS = 18
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS // ≈ 113.1
+
+function getRingColor(score) {
+  if (score >= 50) return '#a78bfa' // purple — Power User
+  if (score >= 25) return '#34d399' // green — Very Trusted
+  if (score >= 10) return '#60a5fa' // blue — Trusted
+  return '#6b7280'                  // gray — New User
+}
+
+function LabCredRing({ score }) {
+  const progress = Math.min(score / 100, 1)
+  const offset = RING_CIRCUMFERENCE * (1 - progress)
+  const color = getRingColor(score)
+  const isMax = score >= 100
+
+  return (
+    <div className={`relative mb-3 rounded-full ${isMax ? 'avatar-glow' : ''}`} style={{ width: 52, height: 52 }}>
+      {/* Background ring */}
+      <svg width="52" height="52" className="absolute inset-0 -rotate-90" viewBox="0 0 52 52">
+        <circle
+          cx="26" cy="26" r={RING_RADIUS}
+          fill="none"
+          stroke="rgba(255,255,255,0.06)"
+          strokeWidth="3.5"
+        />
+        <circle
+          cx="26" cy="26" r={RING_RADIUS}
+          fill="none"
+          stroke={color}
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          strokeDasharray={RING_CIRCUMFERENCE}
+          strokeDashoffset={offset}
+          style={{ transition: 'stroke-dashoffset 0.6s ease, stroke 0.4s ease' }}
+        />
+      </svg>
+      {/* Icon inside ring */}
+      <div
+        className="absolute inset-0 flex items-center justify-center rounded-full"
+        style={{ background: 'transparent' }}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><polyline points="9 12 11 14 15 10" />
+        </svg>
+      </div>
+    </div>
+  )
+}
+
 export function Stats({ listingsCount = 0, trustScore = 0, reviewsCount = 0, rating = null, loading = false, onLabCredClick }) {
+  const numericRating = rating ? parseFloat(rating) : null
+  const hasHighRating = reviewsCount >= 3 && numericRating !== null && numericRating >= 4.0
+
   const stats = [
     {
       label: 'Listings',
@@ -21,11 +74,7 @@ export function Stats({ listingsCount = 0, trustScore = 0, reviewsCount = 0, rat
       bg: 'rgba(192,132,252,0.1)',
       border: 'rgba(192,132,252,0.15)',
       clickable: true,
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><polyline points="9 12 11 14 15 10" />
-        </svg>
-      ),
+      isLabCred: true,
     },
     {
       label: 'Reviews',
@@ -62,20 +111,27 @@ export function Stats({ listingsCount = 0, trustScore = 0, reviewsCount = 0, rat
           <Wrapper
             key={stat.label}
             onClick={isClickable ? onLabCredClick : undefined}
-            className={`flex flex-col items-center justify-center rounded-2xl p-4 text-center transition-all duration-200 hover:scale-[1.02] ${isClickable ? 'cursor-pointer hover:border-purple-500/40 w-full' : ''}`}
+            className={`flex flex-col items-center justify-center rounded-2xl p-3 text-center transition-all duration-200 hover:scale-[1.02] ${isClickable ? 'cursor-pointer hover:border-purple-500/40 w-full' : ''}`}
             style={{
               background: 'rgba(255,255,255,0.03)',
               border: '1px solid rgba(255,255,255,0.08)',
             }}
           >
-            <div
-              className={`mb-3 rounded-full p-2.5 ${stat.color}`}
-              style={{ background: stat.bg, border: `1px solid ${stat.border}` }}
-            >
-              {stat.icon}
-            </div>
-            <span className="text-2xl font-black text-white leading-none">{stat.value}</span>
-            <span className="mt-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+            {/* Icon / Ring */}
+            {stat.isLabCred ? (
+              <LabCredRing score={loading ? 0 : trustScore} />
+            ) : (
+              <div
+                className={`mb-2.5 rounded-full p-2 ${stat.color}`}
+                style={{ background: stat.bg, border: `1px solid ${stat.border}` }}
+              >
+                {stat.icon}
+              </div>
+            )}
+
+            <span className="text-xl font-black text-white leading-none">{stat.value}</span>
+
+            <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1">
               {stat.label}
               {isClickable && (
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 text-purple-400/60">
@@ -83,6 +139,16 @@ export function Stats({ listingsCount = 0, trustScore = 0, reviewsCount = 0, rat
                 </svg>
               )}
             </span>
+
+            {/* High Rating badge — only on Rating card */}
+            {stat.label === 'Rating' && hasHighRating && (
+              <span
+                className="mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                style={{ background: 'rgba(34,197,94,0.12)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.2)' }}
+              >
+                High Rating
+              </span>
+            )}
           </Wrapper>
         )
       })}

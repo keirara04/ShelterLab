@@ -1,11 +1,15 @@
 import { supabaseServer } from '@/services/supabaseServer'
 import { getSessionUser } from '@/services/utils/getSessionUser'
 
+const SELLER_BASE = 3     // base points per completed sale
+const BUYER_BONUS = 2     // points per confirmed purchase
+const MAX_TRUST_SCORE = 100
+
 function getRatingBonus(rating) {
-  if (rating === 5) return 5
-  if (rating === 4) return 3
-  if (rating === 3) return 1
-  if (rating <= 2) return -5
+  if (rating === 5) return 2   // seller total: +5
+  if (rating === 4) return 1   // seller total: +4
+  if (rating === 3) return 0   // seller total: +3
+  if (rating <= 2) return -1   // seller total: +2
   return 0
 }
 
@@ -70,29 +74,31 @@ export async function POST(request, { params }) {
 
     if (reviewError) throw reviewError
 
-    // 3. Update seller trust score
+    // 3. Update seller trust score (capped at MAX_TRUST_SCORE)
     const { data: seller } = await supabaseServer
       .from('profiles')
       .select('trust_score')
       .eq('id', transaction.seller_id)
       .single()
 
-    const sellerBonus = 10 + getRatingBonus(rating)
+    const sellerBonus = SELLER_BASE + getRatingBonus(rating)
+    const newSellerScore = Math.min((seller?.trust_score || 0) + sellerBonus, MAX_TRUST_SCORE)
     await supabaseServer
       .from('profiles')
-      .update({ trust_score: (seller?.trust_score || 0) + sellerBonus })
+      .update({ trust_score: newSellerScore })
       .eq('id', transaction.seller_id)
 
-    // 4. Update buyer trust score
+    // 4. Update buyer trust score (capped at MAX_TRUST_SCORE)
     const { data: buyer } = await supabaseServer
       .from('profiles')
       .select('trust_score')
       .eq('id', userId)
       .single()
 
+    const newBuyerScore = Math.min((buyer?.trust_score || 0) + BUYER_BONUS, MAX_TRUST_SCORE)
     await supabaseServer
       .from('profiles')
-      .update({ trust_score: (buyer?.trust_score || 0) + 5 })
+      .update({ trust_score: newBuyerScore })
       .eq('id', userId)
 
     return Response.json({ success: true, message: 'Transaction confirmed and review submitted' })

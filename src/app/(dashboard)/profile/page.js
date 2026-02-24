@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/shared/context/AuthContext'
@@ -9,6 +9,7 @@ import PWAInstallButton from '@/shared/components/PWAInstallButton'
 import { supabase } from '@/services/supabase'
 import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
 import { Stats } from '@/shared/components/Stats'
+import { formatTimeAgo } from '@/services/utils/helpers'
 import Link from 'next/link'
 import Image from 'next/image'
 import LogoHome from '@/shared/components/LogoHome'
@@ -30,11 +31,6 @@ export default function ProfilePage() {
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [avatarFile, setAvatarFile] = useState(null)
   const fileInputRef = useRef(null)
-  const [notificationTitle, setNotificationTitle] = useState('')
-  const [notificationMessage, setNotificationMessage] = useState('')
-  const [notificationLoading, setNotificationLoading] = useState(false)
-  const [notificationError, setNotificationError] = useState(null)
-  const [notificationSuccess, setNotificationSuccess] = useState(null)
   const [univEmail, setUnivEmail] = useState('')
   const [univOtpSent, setUnivOtpSent] = useState(false)
   const [univOtp, setUnivOtp] = useState('')
@@ -47,6 +43,7 @@ export default function ProfilePage() {
     avatar_url: '',
     kakao_link: '',
     meetup_place: '',
+    bio: '',
   })
   
   // Push notification subscription
@@ -105,6 +102,7 @@ export default function ProfilePage() {
         avatar_url: profile?.avatar_url || '',
         kakao_link: profile?.kakao_link || '',
         meetup_place: profile?.meetup_place || '',
+        bio: profile?.bio || '',
       })
       fetchMyListings()
       fetchReviews()
@@ -226,82 +224,6 @@ export default function ProfilePage() {
       setPendingTx((prev) => prev.filter((t) => t.id !== txId))
     } catch (err) {
       alert('Failed to reject: ' + err.message)
-    }
-  }
-
-  const handlePushNotification = async (e) => {
-    e.preventDefault()
-
-    if (!notificationTitle.trim() || !notificationMessage.trim()) {
-      setNotificationError('Title and message are required')
-      return
-    }
-
-    setNotificationLoading(true)
-    setNotificationError(null)
-    setNotificationSuccess(null)
-
-    try {
-      // Get current session from the imported supabase client
-      let { data: { session } } = await supabase.auth.getSession()
-
-      // If no session, try to refresh it
-      if (!session) {
-        const { data: refreshData } = await supabase.auth.refreshSession()
-        session = refreshData?.session
-      }
-
-      // Fallback to localStorage
-      if (!session) {
-        try {
-          const storedSession = localStorage.getItem('sb-xehylbvuqnwrgocgqelm-auth-token')
-          if (storedSession) {
-            const parsed = JSON.parse(storedSession)
-            session = parsed.session || parsed
-            
-            // Try to restore the session
-            if (session?.access_token && session?.refresh_token) {
-              const { data: restored } = await supabase.auth.setSession({
-                access_token: session.access_token,
-                refresh_token: session.refresh_token,
-              })
-              if (restored?.session) {
-                session = restored.session
-              }
-            }
-          }
-        } catch (e) {
-          console.error('Error parsing stored session:', e)
-        }
-      }
-
-      if (!session || !session.access_token) {
-        throw new Error('Session expired. Please log out and log back in.')
-      }
-
-      const response = await fetch('/api/notifications', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ title: notificationTitle, message: notificationMessage }),
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to push notification')
-      }
-
-      setNotificationSuccess('Notification pushed to all users!')
-      setNotificationTitle('')
-      setNotificationMessage('')
-    } catch (err) {
-      console.error('Error:', err)
-      setNotificationError(err.message || 'Failed to push notification')
-    } finally {
-      setNotificationLoading(false)
     }
   }
 
@@ -536,7 +458,7 @@ export default function ProfilePage() {
       }
 
       // Update profile — include avatar_url so it doesn't get wiped
-      const updates = { full_name: formData.full_name, kakao_link: formData.kakao_link || null, meetup_place: formData.meetup_place || null }
+      const updates = { full_name: formData.full_name, kakao_link: formData.kakao_link || null, meetup_place: formData.meetup_place || null, bio: formData.bio || null }
       if (newAvatarUrl) {
         updates.avatar_url = newAvatarUrl
       } else if (profile?.avatar_url) {
@@ -564,6 +486,11 @@ export default function ProfilePage() {
   const averageRating = reviews.length > 0
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : null
+
+  const tabs = useMemo(() => [
+    { id: 'listings', label: `My Listings (${myListings.length})` },
+    { id: 'reviews', label: `Reviews (${reviews.length})` },
+  ], [myListings.length, reviews.length])
 
   const handleSendUnivOtp = async (e) => {
     e.preventDefault()
@@ -675,9 +602,13 @@ export default function ProfilePage() {
     <div
       className="min-h-screen pt-20 pb-16 relative"
       style={{
-        backgroundColor: '#000000',
+       backgroundColor: '#000000',
       }}
     >
+      {/* Ambient background glow */}
+      <div className="fixed inset-0 pointer-events-none" style={{
+        background: 'radial-gradient(ellipse at 20% 0%, rgba(20,184,166,0.06) 0%, transparent 50%), radial-gradient(ellipse at 80% 100%, rgba(6,182,212,0.04) 0%, transparent 50%)',
+      }} />
       {/* Verify University Email Modal */}
       {showVerifyModal && (
         <div
@@ -852,7 +783,8 @@ export default function ProfilePage() {
         </div>
 
         {/* Profile Header Card */}
-        <div className="glass-strong rounded-3xl p-8 mb-6 relative overflow-hidden">
+        <div className="glass-strong rounded-3xl p-8 mb-4 relative overflow-hidden">
+   
           {/* Inner gradient shimmer */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-teal-500/5 rounded-3xl pointer-events-none" />
 
@@ -895,6 +827,20 @@ export default function ProfilePage() {
                   </svg>
                 )}
               </button>
+
+              {/* Admin Panel Icon */}
+              {user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL && (
+                <Link
+                  href="/admin"
+                  className="w-9 h-9 flex items-center justify-center rounded-xl cursor-pointer transition-all duration-200"
+                  style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: '#818cf8' }}
+                  title="Admin Panel"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </Link>
+              )}
 
               {/* Notification Bell Icon */}
               {mounted && (
@@ -952,7 +898,7 @@ export default function ProfilePage() {
             </button>
           </div>
 
-          <div className="relative flex flex-col md:flex-row items-center gap-6">
+          <div className="relative flex flex-col md:flex-row items-center gap-6 pt-10 md:pt-8">
             {/* Avatar */}
             <div className="relative shrink-0">
               <div className="avatar-glow rounded-full">
@@ -962,10 +908,10 @@ export default function ProfilePage() {
                     alt={profile.full_name}
                     width={112}
                     height={112}
-                    className="w-28 h-28 rounded-full object-cover ring-4 ring-teal-500/30"
+                    className="w-28 h-28 rounded-full object-cover ring-4 ring-teal-500/30 ring-offset-4 ring-offset-black"
                   />
                 ) : (
-                  <div className="w-28 h-28 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center text-4xl font-black text-white ring-4 ring-teal-500/30">
+                  <div className="w-28 h-28 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center text-4xl font-black text-white ring-4 ring-teal-500/30 ring-offset-4 ring-offset-black">
                     {profile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -1020,6 +966,18 @@ export default function ProfilePage() {
                     View meetup spot on Naver Maps
                   </a>
                 </p>
+              )}
+              {profile?.bio ? (
+                <p className="text-gray-400 text-sm mt-2.5 max-w-xs leading-snug text-center md:text-left">
+                  {profile.bio}
+                </p>
+              ) : !isEditing && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="text-xs text-gray-500 hover:text-teal-400 transition-colors mt-2 cursor-pointer"
+                >
+                  + Add bio
+                </button>
               )}
             </div>
           </div>
@@ -1118,6 +1076,33 @@ export default function ProfilePage() {
                 />
               </div>
 
+              {/* Bio */}
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-2">
+                  Bio
+                  <span className="ml-2 text-xs font-normal text-gray-400">— shown on your profile</span>
+                </label>
+                <div className="relative">
+                  <textarea
+                    value={formData.bio}
+                    onChange={(e) => {
+                      if (e.target.value.length <= 120) setFormData({ ...formData, bio: e.target.value })
+                    }}
+                    rows={2}
+                    className="w-full px-4 py-3 rounded-xl text-white outline-none transition-all duration-200 placeholder-gray-400 resize-none"
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                    }}
+                    placeholder="Computer Science '25 | Tech & Gaming Enthusiast"
+                    disabled={loading}
+                  />
+                  <span className={`absolute bottom-2 right-3 text-xs ${formData.bio.length >= 110 ? 'text-amber-400' : 'text-gray-500'}`}>
+                    {formData.bio.length}/120
+                  </span>
+                </div>
+              </div>
+
               {/* Kakao Open Chat Link */}
               <div>
                 <label className="block text-sm font-bold text-gray-300 mb-2">
@@ -1182,7 +1167,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Stats Bar */}
-        <div className="mb-6">
+        <div className="mb-4">
           <Stats
             listingsCount={myListings.length}
             trustScore={profile?.trust_score || 0}
@@ -1195,7 +1180,7 @@ export default function ProfilePage() {
 
         {/* Pending Confirmations */}
         {pendingTx.length > 0 && (
-          <div className="mb-6 rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(251,191,36,0.25)', background: 'rgba(251,191,36,0.05)' }}>
+          <div className="mb-4 rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(251,191,36,0.25)', background: 'rgba(251,191,36,0.05)' }}>
             <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: 'rgba(251,191,36,0.15)' }}>
               <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
               <p className="text-yellow-400 font-black text-sm">
@@ -1237,74 +1222,42 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Tab Switcher */}
-        <div className="glass rounded-2xl p-1.5 flex gap-1 mb-6">
-          <button
-            onClick={() => setActiveTab('listings')}
-            className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
-              activeTab === 'listings'
-                ? 'text-white shadow-sm'
-                : 'text-gray-400 hover:text-gray-300'
-            }`}
-            style={activeTab === 'listings' ? { background: 'rgba(255,255,255,0.1)' } : {}}
+        {/* Tab Switcher + CTA */}
+        <div className="flex items-center gap-2 mb-4">
+          <div className="glass rounded-2xl p-1.5 flex gap-1 flex-1" role="tablist">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer ${
+                  activeTab === tab.id
+                    ? 'text-white shadow-sm'
+                    : 'text-gray-400 hover:text-gray-300'
+                }`}
+                style={
+                  activeTab === tab.id
+                    ? { background: tab.accent ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.1)' }
+                    : {}
+                }
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <Link
+            href="/sell"
+            className="btn-cta-glow px-4 py-2.5 rounded-xl font-bold text-sm text-white flex-shrink-0 transition-all duration-200 hover:scale-105"
+            style={{ background: 'linear-gradient(135deg, #14b8a6, #06b6d4)' }}
           >
-            My Listings ({myListings.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('reviews')}
-            className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
-              activeTab === 'reviews'
-                ? 'text-white shadow-sm'
-                : 'text-gray-400 hover:text-gray-300'
-            }`}
-            style={activeTab === 'reviews' ? { background: 'rgba(255,255,255,0.1)' } : {}}
-          >
-            Reviews ({reviews.length})
-          </button>
-          {user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL && (
-            <button
-              onClick={() => setActiveTab('admin')}
-              className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
-                activeTab === 'admin'
-                  ? 'text-white shadow-sm'
-                  : 'text-gray-400 hover:text-gray-300'
-              }`}
-              style={activeTab === 'admin' ? { background: 'rgba(59, 130, 246, 0.3)' } : {}}
-            >
-              Admin
-            </button>
-          )}
+            + New
+          </Link>
         </div>
 
         {/* Listings Tab */}
         {activeTab === 'listings' && (
           <div>
-            <div className="mb-6">
-              <div className="flex flex-col md:flex-row gap-2">
-                <Link
-                  href="/my-listings"
-                  className="px-4 py-2 rounded-xl font-bold text-sm text-white bg-white/10 hover:bg-white/20 transition-all duration-200 text-center"
-                >
-                  View All
-                </Link>
-                <Link
-                  href="/my-sold-items"
-                  className="px-4 py-2 rounded-xl font-bold text-sm text-white bg-white/10 hover:bg-white/20 transition-all duration-200 text-center"
-                >
-                  Sold Items
-                </Link>
-                <Link
-                  href="/sell"
-                  className="px-4 py-2 rounded-xl font-bold text-sm text-white transition-all duration-200 text-center"
-                  style={{ background: 'linear-gradient(135deg, #14b8a6, #06b6d4)' }}
-                >
-                  + New Listing
-                </Link>
-              </div>
-            </div>
-
-            <h2 className="text-lg font-black text-white mb-4">Recent Items</h2>
-
             {isLoadingListings ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
@@ -1334,19 +1287,21 @@ export default function ProfilePage() {
                   <Link
                     key={listing.id}
                     href={`/listing/${listing.id}`}
-                    className="glass glass-card block rounded-2xl p-4"
+                    className="group glass glass-card block rounded-2xl p-4 hover:-translate-y-1 transition-all duration-200"
                   >
                     <div className="flex items-center gap-4">
                       {listing.image_urls?.[0] ? (
-                        <Image
-                          src={listing.image_urls[0]}
-                          alt={listing.title}
-                          width={56}
-                          height={56}
-                          className="w-14 h-14 rounded-xl object-cover ring-1 ring-white/10"
-                        />
+                        <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 ring-1 ring-white/10">
+                          <Image
+                            src={listing.image_urls[0]}
+                            alt={listing.title}
+                            width={64}
+                            height={64}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          />
+                        </div>
                       ) : (
-                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-800/40 to-cyan-800/40 flex items-center justify-center">
+                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-teal-800/40 to-cyan-800/40 flex items-center justify-center flex-shrink-0">
                           <span className="text-gray-400 text-xs">No img</span>
                         </div>
                       )}
@@ -1354,16 +1309,29 @@ export default function ProfilePage() {
                         <h3 className="font-bold text-white truncate">{listing.title}</h3>
                         <p className="text-emerald-400 font-bold text-sm">{'\u20A9'}{Number(listing.price).toLocaleString()}</p>
                       </div>
-                      <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${
-                        listing.is_sold
-                          ? 'bg-gray-700/50 text-gray-400'
-                          : 'bg-emerald-500/15 text-emerald-400'
-                      }`}>
-                        {listing.is_sold ? 'Sold' : 'Active'}
-                      </span>
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${
+                          listing.is_sold
+                            ? 'bg-gray-700/50 text-gray-400'
+                            : 'bg-emerald-500/15 text-emerald-400'
+                        }`}>
+                          {listing.is_sold ? 'Sold' : 'Active'}
+                        </span>
+                        <span className="text-[11px] text-gray-500">{formatTimeAgo(listing.created_at)}</span>
+                      </div>
                     </div>
                   </Link>
                 ))}
+                {myListings.length > 0 && (
+                  <div className="flex gap-2 pt-1">
+                    <Link href="/my-listings" className="flex-1 py-2 rounded-xl font-bold text-xs text-center text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 transition-all duration-200">
+                      View All ({myListings.length})
+                    </Link>
+                    <Link href="/my-sold-items" className="flex-1 py-2 rounded-xl font-bold text-xs text-center text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 transition-all duration-200">
+                      Sold Items
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1419,87 +1387,18 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Admin Tab */}
-        {activeTab === 'admin' && user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL && (
-          <div>
-            <h2 className="text-lg font-black text-white mb-4">Admin Controls</h2>
-            
-            {/* Analytics */}
-            <AdminStats />
-
-            {/* Manage Approved Users Card */}
-            <AdminApprovedUsers />
-
-            {/* Listing Management */}
-            <AdminListings />
-
-            {/* Push Notifications Card */}
-            <div className="glass rounded-2xl p-6 mb-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-xl font-black text-white mb-1">Push Notifications</h3>
-                  <p className="text-sm text-gray-400">Send notifications to all users</p>
-                </div>
-              </div>
-
-              {notificationError && (
-                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 text-red-400 text-sm mb-4">
-                  {notificationError}
-                </div>
-              )}
-
-              {notificationSuccess && (
-                <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 text-green-400 text-sm mb-4">
-                  ✓ {notificationSuccess}
-                </div>
-              )}
-
-              <form onSubmit={handlePushNotification} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-bold text-gray-300 mb-2">Title</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., New Features Available"
-                    value={notificationTitle}
-                    onChange={(e) => setNotificationTitle(e.target.value)}
-                    disabled={notificationLoading}
-                    className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-500 outline-none focus:border-blue-500 focus:bg-white/15 transition disabled:opacity-50"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-gray-300 mb-2">Message</label>
-                  <textarea
-                    placeholder="e.g., Check out our latest features and bug fixes..."
-                    rows={4}
-                    value={notificationMessage}
-                    onChange={(e) => setNotificationMessage(e.target.value)}
-                    disabled={notificationLoading}
-                    className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-500 outline-none focus:border-blue-500 focus:bg-white/15 transition resize-none disabled:opacity-50"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={notificationLoading}
-                  className="w-full px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold transition-all duration-200"
-                >
-                  {notificationLoading ? 'Pushing...' : 'Push Notification to All Users'}
-                </button>
-              </form>
-
-              <p className="text-xs text-gray-400 mt-4 pt-4 border-t border-white/10">
-                Only one notification can be active at a time. Pushing a new notification will replace the previous one.
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* PWA Install Section */}
-        <div className="mt-10 mb-10 flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-black text-white mb-1">Install App</h3>
-            <p className="text-sm text-gray-400">Quick access & offline support with notifications functionality !</p>
+        <div className="mt-8 mb-6 glass-strong rounded-3xl p-5 flex items-center gap-4">
+          <div
+            className="w-11 h-11 rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center flex-shrink-0"
+          >
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-black text-white">Install ShelterLab</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Add to home screen for quick access &amp; notifications</p>
           </div>
           <PWAInstallButton />
         </div>
@@ -1781,400 +1680,4 @@ export default function ProfilePage() {
   )
 }
 
-function AdminApprovedUsers() {
-  const [allUsers, setAllUsers] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(null)
-  const [searchTerm, setSearchTerm] = useState('')
 
-  const fetchAllUsers = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch('/api/approved-users?includeAll=true')
-      const result = await response.json()
-      if (response.ok && result.success) {
-        setAllUsers(result.data || [])
-      } else {
-        setError(result.error || 'Failed to fetch users')
-      }
-    } catch (err) {
-      setError('Error fetching users')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleGrantBadge = async (userId, grant) => {
-    try {
-      setError(null)
-      setSuccess(null)
-
-      const response = await fetch('/api/admin/grant-badge', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, grant }),
-      })
-
-      const data = await response.json()
-
-      if (response.ok && data.success) {
-        setSuccess(`✓ Badge ${grant ? 'granted' : 'revoked'} successfully`)
-        await fetchAllUsers()
-      } else {
-        setError(data.error || 'Failed to update badge')
-      }
-    } catch (err) {
-      setError('Error updating badge')
-    }
-  }
-
-  const handleDeleteUser = async (userId, userEmail) => {
-    if (!window.confirm(`Delete ${userEmail}? This is permanent and cannot be undone.`)) return
-
-    try {
-      setError(null)
-      setSuccess(null)
-
-      const response = await fetch('/api/admin/delete-user', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId }),
-      })
-
-      const data = await response.json()
-
-      if (response.ok && data.success) {
-        setSuccess(`✓ ${userEmail} deleted successfully`)
-        await fetchAllUsers()
-      } else {
-        setError(data.error || 'Failed to delete user')
-      }
-    } catch (err) {
-      setError('Error deleting user')
-    }
-  }
-
-  useEffect(() => {
-    fetchAllUsers()
-  }, [])
-
-  const filteredUsers = allUsers.filter(user => 
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
-  const verifiedCount = allUsers.filter(u => u.university_email_verified).length
-  const totalCount = allUsers.length
-
-  return (
-    <div className="space-y-6">
-      <div className="glass rounded-2xl p-6 mb-6">
-        {/* Header with Stats */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 pb-6 border-b border-white/10">
-          <div>
-            <h3 className="text-2xl font-black text-white mb-1">Community Members</h3>
-            <p className="text-sm text-gray-400">Monitor & manage all verified users</p>
-          </div>
-          <div className="flex gap-4">
-            <div className="text-center px-4 py-2 rounded-lg" style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)' }}>
-              <p className="text-2xl font-black text-emerald-400">{verifiedCount}</p>
-              <p className="text-xs text-gray-400">Verified</p>
-            </div>
-            <div className="text-center px-4 py-2 rounded-lg" style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)' }}>
-              <p className="text-2xl font-black text-blue-400">{totalCount}</p>
-              <p className="text-xs text-gray-400">Total</p>
-            </div>
-          </div>
-        </div>
-
-        {error && (
-          <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 text-red-400 text-sm mb-4 flex items-start gap-2">
-            <svg className="w-4 h-4 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <span>{error}</span>
-          </div>
-        )}
-
-        {success && (
-          <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-4 text-green-400 text-sm mb-4 flex items-start gap-2">
-            <span className="text-base">✓</span>
-            <span>{success}</span>
-          </div>
-        )}
-
-        {/* Search Bar */}
-        <div className="mb-5">
-          <input
-            type="text"
-            placeholder="Search by email or name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 outline-none focus:border-blue-500 focus:bg-white/8 text-white placeholder-gray-500 text-sm transition"
-          />
-        </div>
-
-        {/* User List */}
-        {loading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="p-4 rounded-xl animate-pulse" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full flex-shrink-0" style={{ background: 'rgba(255,255,255,0.08)' }} />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 rounded-full w-1/3" style={{ background: 'rgba(255,255,255,0.08)' }} />
-                    <div className="h-3 rounded-full w-1/4" style={{ background: 'rgba(255,255,255,0.06)' }} />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : filteredUsers.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="flex justify-center mb-3 opacity-40">
-              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
-            <p className="text-gray-400 font-medium">{searchTerm ? 'No users found' : 'No users yet'}</p>
-            <p className="text-gray-500 text-xs mt-1">{searchTerm && 'Try adjusting your search'}</p>
-          </div>
-        ) : (
-          <div className="space-y-3 max-h-[600px] overflow-y-auto">
-            {filteredUsers.map((user) => (
-              <div
-                key={user.id}
-                className="p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] transition-all duration-200 group"
-              >
-                <div className="flex flex-col gap-3">
-                  {/* Top Row - Name & Badge Status */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-white font-bold text-base truncate">{user.full_name || 'User'}</h4>
-                        {user.university_email_verified && (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)', color: '#10b981' }}>
-                            <img loading="lazy" src="/BadgeIcon.svg" alt="" className="w-3 h-3" />
-                            Verified
-                          </span>
-                        )}
-                        {user.trust_score && user.trust_score > 0 && (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.3)', color: '#a855f7' }}>
-                            {user.trust_score} pts
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-gray-400 text-sm mt-2 truncate">{user.email}</p>
-                      {user.university && (
-                        <p className="text-teal-400 text-xs mt-1 font-medium">{UNIVERSITIES.find(u => u.id === user.university)?.name || user.university}</p>
-                      )}
-                    </div>
-                    {user.trust_score && (
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-2xl font-black text-amber-400">{user.trust_score}</p>
-                        <p className="text-xs text-gray-400">LabCred</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Middle Row - Activity Info */}
-                  <div className="flex gap-3 text-xs text-gray-500 flex-wrap">
-                    {user.created_at && (
-                      <span>Joined {new Date(user.created_at).toLocaleDateString()}</span>
-                    )}
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-2 flex-wrap pt-2 border-t border-white/5">
-                    <button
-                      onClick={() => handleGrantBadge(user.id, !user.university_email_verified)}
-                      className={`px-3 py-2 rounded-lg font-bold text-xs transition-all duration-200 flex items-center gap-1.5 ${
-                        user.university_email_verified
-                          ? 'bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/40'
-                          : 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-600/40'
-                      }`}
-                      title={user.university_email_verified ? 'Revoke verification badge' : 'Grant verification badge'}
-                    >
-                      <img loading="lazy" src="/BadgeIcon.svg" alt="" className="w-3.5 h-3.5" />
-                      {user.university_email_verified ? 'Revoke Badge' : 'Grant Badge'}
-                    </button>
-
-                    <button
-                      onClick={() => window.location.href = `/profile/${user.id}`}
-                      className="px-3 py-2 rounded-lg font-bold text-xs transition-all duration-200 flex items-center gap-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-600/40"
-                      title="View user profile"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                      View Profile
-                    </button>
-
-                    <button
-                      onClick={() => handleDeleteUser(user.id, user.email)}
-                      className="px-3 py-2 rounded-lg font-bold text-xs transition-all duration-200 flex items-center gap-1.5 bg-red-900/20 hover:bg-red-900/30 text-red-400 border border-red-900/40 ml-auto"
-                      title="Permanently delete this user"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Footer Info */}
-        {!loading && filteredUsers.length > 0 && (
-          <div className="mt-6 pt-4 border-t border-white/10 text-xs text-gray-500 text-center">
-            Showing {filteredUsers.length} of {totalCount} users
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function AdminStats() {
-  const [stats, setStats] = useState(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetch('/api/admin/stats')
-      .then((r) => r.json())
-      .then((d) => { if (d.success) setStats(d.data) })
-      .finally(() => setLoading(false))
-  }, [])
-
-  return (
-    <div className="glass rounded-2xl p-6 mb-6">
-      <h3 className="text-xl font-black text-white mb-4">Analytics</h3>
-      {loading ? (
-        <p className="text-gray-400 text-sm">Loading stats...</p>
-      ) : !stats ? (
-        <p className="text-red-400 text-sm">Failed to load stats</p>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {[
-            { label: 'Total Listings', value: stats.totalListings ?? 0, color: 'text-blue-400' },
-            { label: 'Active Listings', value: stats.activeListings ?? 0, color: 'text-emerald-400' },
-            { label: 'Sold Listings', value: stats.soldListings ?? 0, color: 'text-gray-400' },
-            { label: 'Total Users', value: stats.totalUsers ?? 0, color: 'text-purple-400' },
-            { label: 'New Signups (7d)', value: stats.newSignupsThisWeek ?? 0, color: 'text-teal-400' },
-            {
-              label: 'Top University',
-              value: stats.topUniversity ? `${stats.topUniversity.name.split(' ')[0]} (${stats.topUniversity.count})` : '—',
-              color: 'text-yellow-400',
-            },
-          ].map(({ label, value, color }) => (
-            <div key={label} className="bg-white/5 rounded-xl p-4 border border-white/8">
-              <p className={`text-xl font-black ${color}`}>{value}</p>
-              <p className="text-xs text-gray-400 mt-1">{label}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-    </div>
-  )
-}
-
-function AdminListings() {
-  const [listings, setListings] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [actionLoading, setActionLoading] = useState(null)
-
-  const fetchListings = () => {
-    setLoading(true)
-    fetch('/api/admin/listings')
-      .then((r) => r.json())
-      .then((d) => { if (d.success) setListings(d.data || []) })
-      .finally(() => setLoading(false))
-  }
-
-  useEffect(() => { fetchListings() }, [])
-
-  const toggleSold = async (listing) => {
-    setActionLoading(listing.id + '-sold')
-    await fetch('/api/admin/listings', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ listingId: listing.id, isSold: !listing.is_sold }),
-    })
-    setListings((prev) => prev.map((l) => l.id === listing.id ? { ...l, is_sold: !l.is_sold } : l))
-    setActionLoading(null)
-  }
-
-  const deleteListing = async (listingId) => {
-    if (!confirm('Permanently delete this listing?')) return
-    setActionLoading(listingId + '-delete')
-    await fetch('/api/admin/listings', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ listingId }),
-    })
-    setListings((prev) => prev.filter((l) => l.id !== listingId))
-    setActionLoading(null)
-  }
-
-  return (
-    <div className="glass rounded-2xl p-6 mb-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-black text-white">Listing Management</h3>
-        <button
-          onClick={fetchListings}
-          className="text-xs text-gray-400 hover:text-white transition font-bold px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10"
-        >
-          Refresh
-        </button>
-      </div>
-
-      {loading ? (
-        <p className="text-gray-400 text-sm">Loading listings...</p>
-      ) : listings.length === 0 ? (
-        <p className="text-gray-400 text-sm">No listings found.</p>
-      ) : (
-        <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-          {listings.map((listing) => (
-            <div key={listing.id} className="flex items-center gap-3 bg-white/5 rounded-xl p-3 border border-white/8">
-              {listing.image_urls?.[0] ? (
-                <Image src={listing.image_urls[0]} alt="" width={40} height={40} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-              ) : (
-                <div className="w-10 h-10 rounded-lg bg-white/10 flex-shrink-0" />
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-bold truncate">{listing.title}</p>
-                <p className="text-gray-400 text-xs truncate">
-                  {listing.profiles?.full_name || 'Unknown'} · ₩{Number(listing.price).toLocaleString()}
-                </p>
-              </div>
-              <span className={`text-xs font-bold px-2 py-1 rounded-full flex-shrink-0 ${
-                listing.is_sold ? 'bg-gray-700/50 text-gray-400' : 'bg-emerald-500/15 text-emerald-400'
-              }`}>
-                {listing.is_sold ? 'Sold' : 'Active'}
-              </span>
-              <button
-                onClick={() => toggleSold(listing)}
-                disabled={!!actionLoading}
-                className="text-xs font-bold px-2.5 py-1.5 rounded-lg bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 transition disabled:opacity-40 flex-shrink-0"
-              >
-                {actionLoading === listing.id + '-sold' ? '...' : listing.is_sold ? 'Unmark' : 'Mark Sold'}
-              </button>
-              <button
-                onClick={() => deleteListing(listing.id)}
-                disabled={!!actionLoading}
-                className="text-xs font-bold px-2.5 py-1.5 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25 transition disabled:opacity-40 flex-shrink-0"
-              >
-                {actionLoading === listing.id + '-delete' ? '...' : 'Delete'}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}

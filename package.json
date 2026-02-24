@@ -25,6 +25,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hot-toast": "^2.4.1",
+    "recharts": "^3.7.0",
     "uuid": "^9.0.1",
     "web-push": "^3.6.7",
     "zod": "^3.22.4"
