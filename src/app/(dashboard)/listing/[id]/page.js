@@ -455,12 +455,12 @@ export default function ListingDetailPage() {
                   Description
                 </h2>
                 {isAuthenticated ? (
-                  <p className="text-white text-sm leading-relaxed">
+                  <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">
                     {listing.description || 'No description provided'}
                   </p>
                 ) : (
                   <div className="relative">
-                    <p className="text-white text-sm leading-relaxed blur-sm select-none pointer-events-none">
+                    <p className="text-white text-sm leading-relaxed whitespace-pre-wrap blur-sm select-none pointer-events-none">
                       {listing.description?.substring(0, 100) || 'Sign in to see the full description of this listing and contact the seller directly.'}
                     </p>
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
