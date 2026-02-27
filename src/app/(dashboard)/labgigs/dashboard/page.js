@@ -82,7 +82,7 @@ function GigRow({ gig, onToggle, onDelete, deletingId, togglingId, router }) {
       </span>
 
       {/* Actions */}
-      <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="shrink-0 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
         {/* Toggle fulfilled */}
         <button
           onClick={() => onToggle(gig)}
@@ -315,9 +315,9 @@ export default function LabGigsDashboardPage() {
               ].filter(d => d.value > 0)
 
               return (
-                <div className="flex items-stretch gap-3 mb-5">
-                  {/* Stat cards */}
-                  <div className="flex gap-3 flex-1 flex-wrap">
+                <div className="flex flex-col sm:flex-row items-stretch gap-3 mb-5">
+                  {/* Stat cards — 3-column grid on mobile, flex on desktop */}
+                  <div className="grid grid-cols-3 sm:flex gap-2 sm:gap-3 flex-1">
                     {[
                       { label: 'Total', value: totalCount, color: '#e5e7eb' },
                       { label: 'Active', value: activeCount, color: '#14b8a6' },
@@ -325,18 +325,18 @@ export default function LabGigsDashboardPage() {
                     ].map(s => (
                       <div
                         key={s.label}
-                        className="flex-1 min-w-[80px] rounded-2xl px-4 py-3 flex flex-col gap-1"
+                        className="rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 flex flex-col gap-1 sm:flex-1"
                         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
                       >
-                        <span className="font-black text-2xl leading-none" style={{ color: s.color }}>{s.value}</span>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{s.label}</span>
+                        <span className="font-black text-xl sm:text-2xl leading-none" style={{ color: s.color }}>{s.value}</span>
+                        <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-gray-500">{s.label}</span>
                       </div>
                     ))}
                   </div>
 
-                  {/* Donut chart */}
+                  {/* Donut chart — hidden on mobile, visible on sm+ */}
                   <div
-                    className="shrink-0 rounded-2xl px-3 py-2 flex flex-col items-center justify-center gap-1"
+                    className="hidden sm:flex shrink-0 rounded-2xl px-3 py-2 flex-col items-center justify-center gap-1"
                     style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', width: 130 }}
                   >
                     <div className="relative" style={{ width: 90, height: 90 }}>

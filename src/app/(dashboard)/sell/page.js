@@ -655,6 +655,13 @@ export default function SellPage() {
                                         <span className="text-teal-400 font-bold">Note:</span> Listings expire after 90 days. Remember to mark yours as sold once the item is gone!
                                     </p>
                                 </div>
+
+                                {/* Upload delay note */}
+                                <div className="glass rounded-2xl p-4" style={{ borderColor: 'rgba(251,191,36,0.12)', background: 'rgba(251,191,36,0.03)' }}>
+                                    <p className="text-xs text-gray-500 leading-relaxed">
+                                        <span className="text-amber-400 font-bold">Heads up:</span> We run on free cloud services, so uploads can occasionally take a moment. If you&apos;re not redirected to the homepage within 30 seconds, a quick refresh should fix it — your form data may need to be re-entered.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>

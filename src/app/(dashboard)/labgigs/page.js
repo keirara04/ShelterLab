@@ -21,7 +21,7 @@ function timeAgo(dateString) {
 }
 
 export default function LabGigsPage() {
-  const { isAuthenticated, profile } = useAuth()
+  const { isAuthenticated, profile, loading: authLoading } = useAuth()
   const router = useRouter()
   const [gigs, setGigs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -79,8 +79,10 @@ export default function LabGigsPage() {
   }
 
   useEffect(() => {
+    if (authLoading) return
+    if (!isAuthenticated) return
     fetchGigs(currentPage, searchQuery, gigTypeFilter)
-  }, [currentPage, gigTypeFilter, profile?.university])
+  }, [authLoading, isAuthenticated, currentPage, gigTypeFilter, profile?.university])
 
   const handleSearch = (value) => {
     setSearchQuery(value)
@@ -220,7 +222,76 @@ export default function LabGigsPage() {
 
       {/* Post Feed */}
       <div className="max-w-2xl mx-auto px-4 sm:px-6">
-        {loading ? (
+        {/* Login wall for unauthenticated users */}
+        {!authLoading && !isAuthenticated ? (
+          <div className="relative">
+            {/* Fake blurred gig cards as background preview */}
+            <div className="space-y-2 pointer-events-none select-none" style={{ filter: 'blur(3px)', opacity: 0.35 }}>
+              {[
+                { type: 'OFF', title: 'Python & Data Science Tutoring', meta: 'Korea University · 2m ago', price: '₩25,000/hr', w1: 'w-2/3', w2: 'w-full', w3: 'w-4/5' },
+                { type: 'LF', title: 'Looking for someone to help move furniture', meta: 'Yonsei · 14m ago', price: 'Open Budget', w1: 'w-1/2', w2: 'w-full', w3: 'w-3/5' },
+                { type: 'OFF', title: 'English / Korean Language Exchange', meta: 'Seoul Nat\'l · 1h ago', price: 'Negotiable', w1: 'w-3/4', w2: 'w-5/6', w3: 'w-2/3' },
+              ].map((c, i) => (
+                <div key={i} className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-5 h-5 rounded-full" style={{ background: 'linear-gradient(135deg,#14b8a6,#5eead4)' }} />
+                    <div className={`h-2.5 ${c.w1} rounded-full bg-white/20`} />
+                    <div className="h-2 w-12 rounded-full bg-white/10 ml-auto" />
+                  </div>
+                  <div className={`h-4 ${c.w2} rounded-full bg-white/15 mb-2`} />
+                  <div className={`h-3 ${c.w3} rounded-full bg-white/10 mb-3`} />
+                  <div className="flex items-center gap-2">
+                    <div className="h-5 w-16 rounded-full bg-teal-400/20" />
+                    <div className="h-5 w-20 rounded-full bg-white/10" />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Gradient fade */}
+            <div className="absolute inset-x-0 bottom-0 h-48 pointer-events-none" style={{ background: 'linear-gradient(to top, #000000 40%, transparent)' }} />
+
+            {/* CTA card */}
+            <div className="absolute inset-x-0 bottom-0 flex flex-col items-center pb-6 px-4">
+              <div
+                className="w-full max-w-sm rounded-2xl px-6 py-6 flex flex-col items-center text-center"
+                style={{ background: 'rgba(10,10,10,0.85)', border: '1px solid rgba(20,184,166,0.25)', backdropFilter: 'blur(16px)' }}
+              >
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: 'rgba(20,184,166,0.12)', border: '1px solid rgba(20,184,166,0.25)' }}
+                >
+                  <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 21h6M12 3a6 6 0 0 1 6 6c0 2.5-1.5 4.5-3 5.5V17H9v-2.5C7.5 13.5 6 11.5 6 9a6 6 0 0 1 6-6z" />
+                  </svg>
+                </div>
+                <h2 className="text-base font-black text-white mb-1">Join to explore LabGigs</h2>
+                <p className="text-xs text-gray-500 leading-relaxed mb-5">
+                  Discover services posted by students at your campus — tutoring, moving help, language exchange, and more.
+                </p>
+                <div className="flex items-center gap-2.5 w-full">
+                  <button
+                    onClick={() => setShowAuthModal(true)}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-black text-black transition-opacity hover:opacity-90"
+                    style={{ background: 'linear-gradient(135deg, #14b8a6, #5eead4)' }}
+                  >
+                    Sign In
+                  </button>
+                  <a
+                    href="/signup"
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-gray-300 text-center transition-colors hover:text-white hover:border-white/25"
+                    style={{ border: '1px solid rgba(255,255,255,0.12)' }}
+                  >
+                    Sign Up
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Spacer so CTA card has room */}
+            <div className="h-52" />
+          </div>
+        ) : loading ? (
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="rounded-2xl p-4 animate-pulse" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
