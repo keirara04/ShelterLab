@@ -36,17 +36,17 @@ export default function BottomNav() {
       requiresAuth: true,
     },
     {
-      name: 'My Items',
-      href: '/my-listings',
+      name: 'LabGigs',
+      href: '/labgigs',
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M10 3H3V10H10V3Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M21 3H14V10H21V3Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M21 14H14V21H21V14Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M10 14H3V21H10V14Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          {/* Lightbulb with wrench — service + idea */}
+          <path d="M9 21h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path d="M12 3a6 6 0 0 1 6 6c0 2.5-1.5 4.5-3 5.5V17H9v-2.5C7.5 13.5 6 11.5 6 9a6 6 0 0 1 6-6z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M9 17h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       ),
-      requiresAuth: true,
+      requiresAuth: false,
     },
     {
       name: 'Home',

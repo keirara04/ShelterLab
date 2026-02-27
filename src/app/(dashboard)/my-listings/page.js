@@ -77,6 +77,7 @@ export default function MyListingsPage() {
         .from('listings')
         .select('id, title, description, price, image_urls, categories, condition, is_sold, created_at, seller_id, kakao_link, whatsapp_link')
         .eq('seller_id', user.id)
+        .not('categories', 'cs', '{"services"}')
         .order('created_at', { ascending: false })
 
       if (fetchError) throw fetchError
@@ -180,7 +181,7 @@ export default function MyListingsPage() {
               </svg>
             </button>
           </div>
-          <p className="text-gray-400">Manage your items for sale</p>
+          <p className="text-gray-400">Manage your physical item listings</p>
         </div>
 
         {/* Error State */}

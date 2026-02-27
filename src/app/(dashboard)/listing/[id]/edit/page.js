@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/shared/context/AuthContext'
 import { supabase } from '@/services/supabase'
-import { CATEGORIES, CONDITIONS } from '@/services/utils/constants'
+import { CATEGORIES, CONDITIONS, SERVICE_PRICING_TYPES, GIG_TYPES, isServiceListing } from '@/services/utils/constants'
 import LogoHome from '@/shared/components/LogoHome'
 
 export default function EditListingPage() {
@@ -25,6 +25,9 @@ export default function EditListingPage() {
     categories: [],
     condition: 'good',
     kakaoLink: '',
+    pricingType: 'flat',
+    visibleToAll: false,
+    gigType: 'offering',
   })
 
   useEffect(() => {
@@ -53,6 +56,9 @@ export default function EditListingPage() {
         categories: data.categories || [],
         condition: data.condition || 'good',
         kakaoLink: data.kakao_link || '',
+        pricingType: data.pricing_type || 'flat',
+        visibleToAll: data.visible_to_all || false,
+        gigType: data.gig_type || 'offering',
       })
     } catch (err) {
       setError('Failed to load listing')
@@ -67,10 +73,14 @@ export default function EditListingPage() {
     setError(null)
     setSaved(false)
 
+    const isServiceEdit = formData.categories.includes('services')
+    const priceVal = parseFloat(formData.price) || 0
+    const allowZeroPrice = isServiceEdit && (formData.pricingType === 'negotiable' || formData.gigType === 'looking_for')
+
     const errors = []
     if (!formData.title.trim() || formData.title.trim().length < 3) errors.push('Title must be at least 3 characters')
-    if (!formData.price || parseFloat(formData.price) <= 0) errors.push('Price must be greater than 0')
-    if (parseFloat(formData.price) > 9_999_999) errors.push('Price cannot exceed ₩9,999,999')
+    if (!allowZeroPrice && (!formData.price || priceVal <= 0)) errors.push('Price must be greater than 0')
+    if (priceVal > 9_999_999) errors.push('Price cannot exceed ₩9,999,999')
     if (formData.categories.length === 0) errors.push('Select at least one category')
 
     if (errors.length > 0) {
@@ -85,10 +95,15 @@ export default function EditListingPage() {
         .update({
           title: formData.title.trim(),
           description: formData.description,
-          price: parseFloat(formData.price),
+          price: priceVal,
           categories: formData.categories,
-          condition: formData.condition,
+          condition: isServiceEdit ? 'good' : formData.condition,
           kakao_link: formData.kakaoLink.trim() || null,
+          ...(isServiceEdit && {
+            pricing_type: formData.pricingType,
+            visible_to_all: formData.visibleToAll,
+            gig_type: formData.gigType,
+          }),
         })
         .eq('id', params.id)
         .eq('seller_id', user?.id)
@@ -109,6 +124,7 @@ export default function EditListingPage() {
     }))
   }
 
+  const isService = formData.categories.includes('services')
   const titleLen = formData.title.length
   const descLen = formData.description.length
   const descColor = descLen >= 950 ? 'text-red-400' : descLen >= 800 ? 'text-amber-400' : 'text-gray-500'
@@ -175,9 +191,9 @@ export default function EditListingPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-3xl font-black text-white">Edit Listing</h1>
+          <h1 className="text-3xl font-black text-white">{isService ? 'Edit LabGig' : 'Edit Listing'}</h1>
         </div>
-        <p className="text-gray-500 text-sm mb-8 pl-12">Update your item details below</p>
+        <p className="text-gray-500 text-sm mb-8 pl-12">{isService ? 'Update your gig details below' : 'Update your item details below'}</p>
 
         {/* Error banner */}
         {error && (
@@ -217,7 +233,7 @@ export default function EditListingPage() {
             <div className="absolute inset-0 bg-linear-to-br from-white/5 via-transparent to-teal-500/5 rounded-3xl pointer-events-none" />
             <div className="relative space-y-5">
 
-              <h2 id="section-details" className="font-bold text-white text-base">Item Details</h2>
+              <h2 id="section-details" className="font-bold text-white text-base">{isService ? 'Gig Details' : 'Item Details'}</h2>
 
               {/* Title */}
               <div>
@@ -302,50 +318,120 @@ export default function EditListingPage() {
             </div>
           </section>
 
-          {/* ── Condition ────────────────────────────────────────────────────── */}
+          {/* ── Condition (physical items) / Gig settings (services) ─────────── */}
           <section aria-labelledby="section-condition" className="glass-strong rounded-3xl p-6 md:p-8 relative overflow-hidden">
             <div className="absolute inset-0 bg-linear-to-br from-white/5 via-transparent to-teal-500/5 rounded-3xl pointer-events-none" />
-            <div className="relative">
-              <h2 id="section-condition" className="font-bold text-white text-base mb-4">
-                Condition <span className="text-teal-400" aria-hidden="true">*</span>
-              </h2>
-              <fieldset>
-                <legend className="sr-only">Select item condition</legend>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  {CONDITIONS.map((cond) => {
-                    const isSelected = formData.condition === cond.id
-                    return (
-                      <label
-                        key={cond.id}
-                        className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl border cursor-pointer transition-all touch-manipulation ${
-                          isSelected
-                            ? 'border-teal-500/60 text-white'
-                            : 'border-white/10 text-gray-400 hover:border-white/20 hover:text-gray-300'
-                        }`}
-                        style={isSelected
-                          ? { background: 'rgba(20,184,166,0.12)' }
-                          : { background: 'rgba(255,255,255,0.04)' }}
+            <div className="relative space-y-5">
+              {isService ? (
+                <>
+                  {/* Gig Type */}
+                  <div>
+                    <h2 id="section-condition" className="font-bold text-white text-base mb-4">Gig Type</h2>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {GIG_TYPES.map((gt) => {
+                        const selected = formData.gigType === gt.id
+                        return (
+                          <button
+                            key={gt.id}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, gigType: gt.id })}
+                            className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold transition-all cursor-pointer touch-manipulation"
+                            style={{
+                              background: selected ? gt.bg : 'rgba(255,255,255,0.04)',
+                              border: selected ? `1.5px solid ${gt.color}60` : '1px solid rgba(255,255,255,0.1)',
+                              color: selected ? gt.color : '#9ca3af',
+                            }}
+                          >
+                            {gt.name}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  {/* Pricing Type */}
+                  <div>
+                    <h2 className="font-bold text-white text-base mb-4">Pricing Type</h2>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {SERVICE_PRICING_TYPES.map((pt) => {
+                        const selected = formData.pricingType === pt.id
+                        return (
+                          <button
+                            key={pt.id}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, pricingType: pt.id })}
+                            className="flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold transition-all cursor-pointer touch-manipulation"
+                            style={{
+                              background: selected ? 'rgba(20,184,166,0.12)' : 'rgba(255,255,255,0.04)',
+                              border: selected ? '1.5px solid rgba(20,184,166,0.45)' : '1px solid rgba(255,255,255,0.1)',
+                              color: selected ? 'white' : '#9ca3af',
+                            }}
+                          >
+                            <span>{pt.name}</span>
+                            <span className="text-[10px] text-gray-500">{pt.label}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  {/* Visibility toggle */}
+                  <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-bold text-white mb-0.5">Show to all universities</p>
+                        <p className="text-[10px] text-gray-500">
+                          {formData.visibleToAll ? 'Visible to students across all universities' : 'Only students from your university can see this gig'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, visibleToAll: !formData.visibleToAll })}
+                        className="relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 cursor-pointer"
+                        style={{ background: formData.visibleToAll ? 'rgba(20,184,166,0.5)' : 'rgba(255,255,255,0.15)' }}
                       >
-                        <input
-                          type="radio"
-                          name="condition"
-                          value={cond.id}
-                          checked={isSelected}
-                          onChange={() => setFormData({ ...formData, condition: cond.id })}
-                          className="sr-only"
+                        <div
+                          className="absolute top-0.5 w-5 h-5 rounded-full transition-transform duration-200"
+                          style={{
+                            background: formData.visibleToAll ? '#14b8a6' : '#6b7280',
+                            transform: formData.visibleToAll ? 'translateX(22px)' : 'translateX(2px)',
+                          }}
                         />
-                        <span className="text-base leading-none" aria-hidden="true">{cond.icon}</span>
-                        <span className="text-sm font-bold">{cond.name}</span>
-                        {isSelected && (
-                          <svg className="w-3.5 h-3.5 text-teal-400 ml-auto shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </label>
-                    )
-                  })}
-                </div>
-              </fieldset>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2 id="section-condition" className="font-bold text-white text-base mb-4">
+                    Condition <span className="text-teal-400" aria-hidden="true">*</span>
+                  </h2>
+                  <fieldset>
+                    <legend className="sr-only">Select item condition</legend>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                      {CONDITIONS.map((cond) => {
+                        const isSelected = formData.condition === cond.id
+                        return (
+                          <label
+                            key={cond.id}
+                            className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl border cursor-pointer transition-all touch-manipulation ${
+                              isSelected ? 'border-teal-500/60 text-white' : 'border-white/10 text-gray-400 hover:border-white/20 hover:text-gray-300'
+                            }`}
+                            style={isSelected ? { background: 'rgba(20,184,166,0.12)' } : { background: 'rgba(255,255,255,0.04)' }}
+                          >
+                            <input type="radio" name="condition" value={cond.id} checked={isSelected} onChange={() => setFormData({ ...formData, condition: cond.id })} className="sr-only" />
+                            <span className="text-base leading-none" aria-hidden="true">{cond.icon}</span>
+                            <span className="text-sm font-bold">{cond.name}</span>
+                            {isSelected && (
+                              <svg className="w-3.5 h-3.5 text-teal-400 ml-auto shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </fieldset>
+                </>
+              )}
             </div>
           </section>
 

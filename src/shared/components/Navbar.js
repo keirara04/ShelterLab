@@ -87,6 +87,18 @@ export default function Navbar({ selectedCategory, setSelectedCategory }) {
               <div className="w-px h-5 bg-white/20 mx-1" />
 
               <Link
+                href="/labgigs"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all text-teal-400 hover:bg-teal-400/10"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21h6" />
+                  <path d="M12 3a6 6 0 0 1 6 6c0 2.5-1.5 4.5-3 5.5V17H9v-2.5C7.5 13.5 6 11.5 6 9a6 6 0 0 1 6-6z" />
+                  <path d="M9 17h6" />
+                </svg>
+                LabGigs
+              </Link>
+
+              <Link
                 href="/pasarmalam"
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all text-yellow-400 hover:bg-yellow-400/10"
               >
@@ -164,6 +176,16 @@ export default function Navbar({ selectedCategory, setSelectedCategory }) {
                         >
                           <span className="text-base">L</span>
                           <span>My Listings</span>
+                        </Link>
+                        <Link
+                          href="/labgigs/dashboard"
+                          className="flex items-center gap-3 px-6 py-3 text-sm text-teal-400 hover:bg-teal-400/10 transition"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 21h6" /><path d="M12 3a6 6 0 0 1 6 6c0 2.5-1.5 4.5-3 5.5V17H9v-2.5C7.5 13.5 6 11.5 6 9a6 6 0 0 1 6-6z" /><path d="M9 17h6" />
+                          </svg>
+                          <span>My LabGigs</span>
                         </Link>
                         <Link
                           href="/sell"
@@ -301,6 +323,13 @@ export default function Navbar({ selectedCategory, setSelectedCategory }) {
                     onClick={() => setShowMobileMenu(false)}
                   >
                     My Listings
+                  </Link>
+                  <Link
+                    href="/labgigs/dashboard"
+                    className="block px-4 py-2 text-teal-400 hover:bg-teal-400/10 rounded-lg transition"
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    My LabGigs
                   </Link>
                   <Link
                     href="/favorites"

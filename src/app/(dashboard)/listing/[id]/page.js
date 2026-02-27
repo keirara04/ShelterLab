@@ -6,7 +6,19 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/shared/context/AuthContext'
 import { supabase } from '@/services/supabase'
-import { UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
+import { UNIVERSITIES, UNIVERSITY_LOGOS, GIG_TYPES, isServiceListing } from '@/services/utils/constants'
+
+function timeAgo(dateString) {
+  const diff = Date.now() - new Date(dateString).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `${days}d ago`
+  return new Date(dateString).toLocaleDateString('en', { month: 'short', day: 'numeric' })
+}
 
 export default function ListingDetailPage() {
   const params = useParams()
@@ -29,11 +41,70 @@ export default function ListingDetailPage() {
   const [reviewError, setReviewError] = useState(null)
   const [showReportModal, setShowReportModal] = useState(false)
 
+  // Gig comments
+  const [comments, setComments] = useState([])
+  const [commentContent, setCommentContent] = useState('')
+  const [submittingComment, setSubmittingComment] = useState(false)
+  const [commentError, setCommentError] = useState(null)
+
   useEffect(() => {
-    if (id) {
-      fetchListing()
-    }
+    if (id) fetchListing()
   }, [id])
+
+  useEffect(() => {
+    if (listing && isServiceListing(listing.categories)) {
+      fetchComments()
+    }
+  }, [listing?.id])
+
+  const fetchComments = async () => {
+    try {
+      const res = await fetch(`/api/gig-comments?listing_id=${id}`)
+      const data = await res.json()
+      if (data.success) setComments(data.data || [])
+    } catch { /* silent */ }
+  }
+
+  const handleSubmitComment = async (e) => {
+    e.preventDefault()
+    if (!commentContent.trim()) return
+    setSubmittingComment(true)
+    setCommentError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/gig-comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ listingId: id, content: commentContent.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setComments(prev => [...prev, data.data])
+      setCommentContent('')
+    } catch (err) {
+      setCommentError(err.message)
+    } finally {
+      setSubmittingComment(false)
+    }
+  }
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      await fetch('/api/gig-comments', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ commentId }),
+      })
+      setComments(prev => prev.filter(c => c.id !== commentId))
+    } catch { /* silent */ }
+  }
 
   const fetchListing = async () => {
     try {
@@ -317,24 +388,62 @@ export default function ListingDetailPage() {
                   </div>
                 </div>
 
-                <div className="text-3xl sm:text-4xl font-black text-emerald-400">
-                  ₩{listing.price.toLocaleString()}
-                </div>
+                {/* Price — varies by listing type */}
+                {(() => {
+                  const isGig = isServiceListing(listing.categories)
+                  const gigTypeInfo = isGig ? GIG_TYPES.find(g => g.id === listing.gig_type) || GIG_TYPES[0] : null
+                  const isNegotiable = isGig && listing.pricing_type === 'negotiable'
+                  const isLooking = isGig && listing.gig_type === 'looking_for'
+                  return (
+                    <>
+                      {isNegotiable || isLooking ? (
+                        <div className="text-3xl sm:text-4xl font-black" style={{ color: '#fbbf24' }}>
+                          {isLooking ? (listing.price > 0 ? `Budget: ₩${listing.price.toLocaleString()}` : 'Open Budget') : 'Negotiable'}
+                        </div>
+                      ) : (
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-3xl sm:text-4xl font-black text-emerald-400">₩{listing.price.toLocaleString()}</span>
+                          {isGig && listing.pricing_type === 'per_hour' && <span className="text-sm text-gray-400 font-bold">/hr</span>}
+                          {isGig && listing.pricing_type === 'per_session' && <span className="text-sm text-gray-400 font-bold">/session</span>}
+                        </div>
+                      )}
 
-                {/* Badges */}
-                <div className="flex gap-2 flex-wrap">
-                  <span className="px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/20 text-blue-300 text-xs font-bold">
-                    {listing.condition}
-                  </span>
-                  {listing.categories && listing.categories.map((cat) => (
-                    <span
-                      key={cat}
-                      className="px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/20 text-purple-300 text-xs font-bold"
-                    >
-                      {cat}
-                    </span>
-                  ))}
-                </div>
+                      {/* Badges */}
+                      <div className="flex gap-2 flex-wrap">
+                        {isGig ? (
+                          <>
+                            <span
+                              className="px-3 py-1 rounded-full text-xs font-bold"
+                              style={{ background: gigTypeInfo?.bg, color: gigTypeInfo?.color, border: `1px solid ${gigTypeInfo?.color}30` }}
+                            >
+                              {gigTypeInfo?.name}
+                            </span>
+                            <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(20,184,166,0.15)', color: '#5eead4', border: '1px solid rgba(20,184,166,0.2)' }}>
+                              LabGig
+                            </span>
+                            {!listing.visible_to_all && (
+                              <span className="px-3 py-1 rounded-full bg-gray-500/20 border border-gray-500/20 text-gray-400 text-xs font-bold">
+                                Campus Only
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/20 text-blue-300 text-xs font-bold">
+                            {listing.condition}
+                          </span>
+                        )}
+                        {listing.categories && listing.categories.filter(c => c !== 'services').map((cat) => (
+                          <span
+                            key={cat}
+                            className="px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/20 text-purple-300 text-xs font-bold"
+                          >
+                            {cat}
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  )
+                })()}
               </div>
             </div>
 
@@ -438,7 +547,9 @@ export default function ListingDetailPage() {
                             rel="noopener noreferrer"
                             className="block w-full py-3.5 px-4 bg-yellow-500/15 hover:bg-yellow-500/25 active:bg-yellow-500/35 border border-yellow-500/20 text-yellow-300 rounded-xl font-black transition text-center text-sm touch-manipulation min-h-12"
                           >
-                            Contact on Kakao
+                            {isServiceListing(listing.categories)
+                              ? (listing.gig_type === 'looking_for' ? 'Reach Out on Kakao' : 'Book on Kakao')
+                              : 'Contact on Kakao'}
                           </a>
                         )}
                         {!listing.kakao_link && (
@@ -567,6 +678,100 @@ export default function ListingDetailPage() {
 
           </div>
         </div>
+
+        {/* Discussion — gig listings only */}
+        {isServiceListing(listing.categories) && (
+          <div className="mt-8 max-w-2xl">
+            <div className="glass-strong rounded-3xl p-6 sm:p-7 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-teal-500/5 rounded-3xl pointer-events-none" />
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-5">
+                  <svg className="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  <h2 className="text-sm font-black text-white">Discussion</h2>
+                  <span className="text-xs text-gray-500">({comments.length})</span>
+                </div>
+
+                {/* Comments list */}
+                {comments.length > 0 ? (
+                  <div className="space-y-4 mb-5 pb-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                    {comments.map(comment => (
+                      <div key={comment.id} className="flex gap-3">
+                        <div className="shrink-0">
+                          {comment.profiles?.avatar_url ? (
+                            <img src={comment.profiles.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
+                          ) : (
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black text-black shrink-0"
+                              style={{ background: 'linear-gradient(135deg, #14b8a6, #5eead4)' }}>
+                              {comment.profiles?.full_name?.charAt(0)?.toUpperCase() || '?'}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <Link href={`/profile/${comment.user_id}`} className="text-xs font-bold text-teal-400 hover:underline underline-offset-2">
+                              {comment.profiles?.full_name || 'User'}
+                            </Link>
+                            <span className="text-[10px] text-gray-600">{timeAgo(comment.created_at)}</span>
+                            {user?.id === comment.user_id && (
+                              <button
+                                onClick={() => handleDeleteComment(comment.id)}
+                                className="ml-auto text-[10px] text-gray-600 hover:text-red-400 transition-colors cursor-pointer"
+                              >
+                                delete
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-300 leading-relaxed">{comment.content}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-600 text-sm mb-5">No comments yet. Start the conversation!</p>
+                )}
+
+                {/* Comment form */}
+                {isAuthenticated ? (
+                  <form onSubmit={handleSubmitComment} className="space-y-3">
+                    <textarea
+                      value={commentContent}
+                      onChange={e => setCommentContent(e.target.value)}
+                      placeholder="Ask a question or leave a comment…"
+                      maxLength={500}
+                      rows={2}
+                      className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none placeholder-gray-600 resize-none"
+                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                    />
+                    {commentError && <p className="text-red-400 text-xs">{commentError}</p>}
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-gray-600">{commentContent.length}/500</span>
+                      <button
+                        type="submit"
+                        disabled={submittingComment || !commentContent.trim()}
+                        className="px-4 py-2 rounded-xl text-xs font-black text-black transition-all disabled:opacity-40 hover:scale-105"
+                        style={{ background: 'linear-gradient(135deg, #14b8a6, #5eead4)' }}
+                      >
+                        {submittingComment ? 'Posting…' : 'Post'}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="flex items-center gap-3 py-3 px-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <svg className="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <p className="text-xs text-gray-500 flex-1">Sign in to join the discussion</p>
+                    <Link href={`/login?redirect=/listing/${id}`} className="text-xs font-bold text-teal-400 hover:underline">
+                      Sign in
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Report Modal */}

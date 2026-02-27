@@ -30,7 +30,7 @@ export const listingSchema = z.object({
         .min(0, 'Price must be positive')
         .max(999999, 'Price is too high'),
     categories: z
-        .array(z.enum(['tech', 'books', 'clothing', 'dorm', 'other']))
+        .array(z.enum(['tech', 'books', 'clothing', 'dorm', 'services', 'other']))
         .min(1, 'Select at least one category'),
     condition: z.enum(['new', 'like-new', 'good', 'fair', 'poor'], {
         errorMap: () => ({ message: 'Invalid condition' }),

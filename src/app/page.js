@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/shared/context/AuthContext'
-import { CATEGORIES, UNIVERSITIES, UNIVERSITY_LOGOS } from '@/services/utils/constants'
+import { CATEGORIES, UNIVERSITIES, UNIVERSITY_LOGOS, GIG_TYPES, isServiceListing } from '@/services/utils/constants'
 import AuthModal from '@/shared/components/AuthModal'
 import NotificationBell from '@/shared/components/NotificationBell'
 
@@ -144,6 +144,7 @@ export default function HomePage() {
       const params = new URLSearchParams()
       if (selectedCategory !== 'all') params.set('category', selectedCategory)
       if (selectedUniversity !== 'all') params.set('university', selectedUniversity)
+      if (profile?.university) params.set('viewer_university', profile.university)
       params.set('limit', 100) // Fetch up to 100 listings for pagination
       // Don't send search to API, we'll filter on frontend for better UX
 
@@ -220,7 +221,7 @@ export default function HomePage() {
               <path d="M12 17h.01" />
             </svg>
             <div className="flex-1 min-w-0 flex flex-col gap-1">
-              <p className="text-xs font-bold text-yellow-200">Version 0.1.2-beta</p>
+              <p className="text-xs font-bold text-yellow-200">Version 0.2.0-beta</p>
               <p className="text-xs text-yellow-200/70">Lag & bugs possible. <a href="mailto:admin@shelterlab.shop?subject=ShelterLab%20Bug%20Report" className="underline hover:text-yellow-100">Report</a></p>
               <p className="text-xs text-gray-400">Best experience on desktop</p>
             </div>
@@ -254,7 +255,7 @@ export default function HomePage() {
                       <path d="M12 17h.01" />
                     </svg>
                     <div className="flex items-center gap-2">
-                      <span className="text-yellow-200 font-semibold">Version 0.1.2-beta:</span>
+                      <span className="text-yellow-200 font-semibold">Version 0.2.0-beta:</span>
                       <span className="text-yellow-200/80">Site in development. May experience lag, bugs, or data loss.</span>
                       <a
                         href="mailto:admin@shelterlab.shop?subject=ShelterLab%20Bug%20Report"
@@ -302,6 +303,23 @@ export default function HomePage() {
                   <path d="M4 14 L1 9" />
                 </svg>
                 Pasar Malam
+              </Link>
+
+              <Link
+                href="/labgigs"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-bold transition-all duration-200"
+                style={{
+                  background: 'rgba(20,184,166,0.08)',
+                  border: '1px solid rgba(20,184,166,0.2)',
+                  color: '#14b8a6',
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21h6" />
+                  <path d="M12 3a6 6 0 0 1 6 6c0 2.5-1.5 4.5-3 5.5V17H9v-2.5C7.5 13.5 6 11.5 6 9a6 6 0 0 1 6-6z" />
+                  <path d="M9 17h6" />
+                </svg>
+                LabGigs
               </Link>
 
               <div className="w-px h-6 bg-white/15" />
@@ -797,6 +815,8 @@ export default function HomePage() {
         {/* Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
           {paginatedListings.map((listing) => {
+            const isGig = isServiceListing(listing.categories)
+            const gigTypeInfo = isGig ? GIG_TYPES.find(g => g.id === listing.gig_type) || GIG_TYPES[0] : null
             const cardClass = "group w-full text-left bg-white/8 border border-white/15 rounded-xl overflow-hidden transition-all duration-300 backdrop-blur-xl hover:bg-white/12 hover:border-white/25 hover:shadow-2xl hover:shadow-blue-500/10"
             const cardInner = (
               <>
@@ -820,9 +840,33 @@ export default function HomePage() {
                         </div>
                       )}
                     </>
+                  ) : isGig ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ background: 'linear-gradient(135deg, rgba(20,184,166,0.08), rgba(52,211,153,0.04))' }}>
+                      <svg className="w-9 h-9" style={{ color: `${gigTypeInfo?.color}60` }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {listing.gig_type === 'looking_for'
+                          ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        }
+                      </svg>
+                      <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: `${gigTypeInfo?.color}80` }}>
+                        LabGig
+                      </span>
+                    </div>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500/20 to-purple-500/20">
                       <span className="text-gray-400">No image</span>
+                    </div>
+                  )}
+
+                  {/* Gig type badge — shown on top of image */}
+                  {isGig && gigTypeInfo && (
+                    <div className="absolute top-2 left-2">
+                      <span
+                        className="px-2 py-0.5 rounded-md text-[10px] font-black backdrop-blur-sm"
+                        style={{ background: gigTypeInfo.bg, color: gigTypeInfo.color, border: `1px solid ${gigTypeInfo.color}30` }}
+                      >
+                        {gigTypeInfo.name}
+                      </span>
                     </div>
                   )}
 
@@ -844,15 +888,34 @@ export default function HomePage() {
                   <h3 className="font-bold text-white text-sm sm:text-base line-clamp-2 group-hover:text-blue-300 transition duration-300">
                     {listing.title}
                   </h3>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl sm:text-3xl font-black text-emerald-400">₩</span>
-                    <span className="text-xl sm:text-2xl font-black text-emerald-400">{(listing.price ?? 0).toLocaleString()}</span>
-                  </div>
+                  {/* Price display — varies by listing type */}
+                  {isGig && (listing.pricing_type === 'negotiable' || listing.gig_type === 'looking_for') ? (
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-lg sm:text-xl font-black" style={{ color: '#fbbf24' }}>
+                        {listing.gig_type === 'looking_for'
+                          ? (listing.price > 0 ? `Budget ₩${listing.price.toLocaleString()}` : 'Open Budget')
+                          : 'Negotiable'}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl sm:text-3xl font-black text-emerald-400">₩</span>
+                      <span className="text-xl sm:text-2xl font-black text-emerald-400">{(listing.price ?? 0).toLocaleString()}</span>
+                      {isGig && listing.pricing_type === 'per_hour' && <span className="text-xs text-gray-400 font-bold">/hr</span>}
+                      {isGig && listing.pricing_type === 'per_session' && <span className="text-xs text-gray-400 font-bold">/session</span>}
+                    </div>
+                  )}
                   <div className="flex gap-2 flex-wrap">
-                    <span className="px-2 py-1 rounded bg-blue-500/30 text-blue-300 text-xs font-bold">
-                      {listing.condition}
-                    </span>
-                    {listing.categories && listing.categories[0] && (
+                    {isGig ? (
+                      <span className="px-2 py-1 rounded text-xs font-bold" style={{ background: 'rgba(20,184,166,0.15)', color: '#5eead4' }}>
+                        LabGig
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 rounded bg-blue-500/30 text-blue-300 text-xs font-bold">
+                        {listing.condition}
+                      </span>
+                    )}
+                    {listing.categories && listing.categories[0] && !isGig && (
                       <span className="px-2 py-1 rounded bg-purple-500/30 text-purple-300 text-xs font-bold">
                         {listing.categories[0]}
                       </span>

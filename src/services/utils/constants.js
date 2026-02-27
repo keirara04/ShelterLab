@@ -7,8 +7,24 @@ export const CATEGORIES = [
   { id: 'books', name: 'Textbooks', icon: '' },
   { id: 'clothing', name: 'Fashion', icon: '' },
   { id: 'dorm', name: 'Dorm Essentials', icon: '' },
+  { id: 'services', name: 'LabGigs', icon: '' },
   { id: 'other', name: 'Miscellaneous', icon: '' },
 ]
+
+export const SERVICE_PRICING_TYPES = [
+  { id: 'flat', name: 'Flat Rate', label: '₩' },
+  { id: 'per_hour', name: 'Per Hour', label: '₩/hr' },
+  { id: 'per_session', name: 'Per Session', label: '₩/session' },
+  { id: 'negotiable', name: 'Negotiable', label: 'Negotiable' },
+]
+
+export const GIG_TYPES = [
+  { id: 'offering', name: 'Offering', color: '#34d399', bg: 'rgba(52,211,153,0.15)' },
+  { id: 'looking_for', name: 'Looking For', color: '#fbbf24', bg: 'rgba(251,191,36,0.15)' },
+]
+
+export const isServiceListing = (categories) =>
+  Array.isArray(categories) && categories.includes('services')
 
 export const CONDITIONS = [
   { id: 'new', name: 'New', icon: '', color: 'bg-green-500' },

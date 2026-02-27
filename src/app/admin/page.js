@@ -176,6 +176,9 @@ export default function AdminPage() {
         {/* Listing Management */}
         <AdminListings />
 
+        {/* LabGigs Management */}
+        <AdminLabGigs />
+
         {/* Push Notifications */}
         <div className="glass-strong rounded-3xl p-6 mb-6">
           <div className="flex items-start justify-between mb-4">
@@ -715,6 +718,213 @@ function AdminApprovedUsers() {
       {!loading && filteredUsers.length > 0 && (
         <div className="mt-6 pt-4 border-t border-white/5 text-xs text-gray-500 text-center">
           Showing {filteredUsers.length} of {totalCount} users
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ─── LabGigs Management ─── */
+const GIG_TYPE_LABELS = { offering: 'Offering', looking_for: 'Looking For' }
+const GIG_TYPE_COLORS = { offering: '#34d399', looking_for: '#fbbf24' }
+const PRICING_LABELS = { flat: 'Flat', per_hour: '/hr', per_session: '/session', negotiable: 'Neg.' }
+
+function AdminLabGigs() {
+  const [gigs, setGigs] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [gigTypeFilter, setGigTypeFilter] = useState('all')
+
+  const fetchGigs = () => {
+    setLoading(true)
+    fetch('/api/admin/listings?category=services')
+      .then((r) => r.json())
+      .then((d) => { if (d.success) setGigs(d.data || []) })
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { fetchGigs() }, [])
+
+  const deleteGig = async (listingId) => {
+    if (!confirm('Permanently delete this LabGig?')) return
+    setActionLoading(listingId)
+    await fetch('/api/admin/listings', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listingId }),
+    })
+    setGigs((prev) => prev.filter((g) => g.id !== listingId))
+    setActionLoading(null)
+  }
+
+  const filtered = gigs.filter((g) => {
+    const matchesSearch = !searchTerm ||
+      g.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      g.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesType = gigTypeFilter === 'all' || g.gig_type === gigTypeFilter
+    return matchesSearch && matchesType
+  })
+
+  const offeringCount = gigs.filter(g => g.gig_type === 'offering').length
+  const lookingForCount = gigs.filter(g => g.gig_type === 'looking_for').length
+
+  return (
+    <div className="glass-strong rounded-3xl p-6 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-5 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(20,184,166,0.15)' }}>
+            <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 21h6M12 3a6 6 0 0 1 6 6c0 2.5-1.5 4.5-3 5.5V17H9v-2.5C7.5 13.5 6 11.5 6 9a6 6 0 0 1 6-6z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-white">LabGigs Management</h3>
+            <p className="text-sm text-gray-400">Manage campus service listings</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-center px-3 py-1.5 rounded-xl" style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.15)' }}>
+            <p className="text-lg font-black text-emerald-400">{offeringCount}</p>
+            <p className="text-[10px] text-gray-400">Offering</p>
+          </div>
+          <div className="text-center px-3 py-1.5 rounded-xl" style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.15)' }}>
+            <p className="text-lg font-black text-amber-400">{lookingForCount}</p>
+            <p className="text-[10px] text-gray-400">Looking For</p>
+          </div>
+          <button
+            onClick={fetchGigs}
+            className="text-xs text-gray-400 hover:text-teal-400 transition font-bold px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/8"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <input
+          type="text"
+          placeholder="Search by title or seller..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 outline-none text-white placeholder-gray-500 text-sm transition focus:border-teal-500"
+        />
+        <div className="flex gap-2">
+          {['all', 'offering', 'looking_for'].map((type) => (
+            <button
+              key={type}
+              onClick={() => setGigTypeFilter(type)}
+              className="px-3 py-2 rounded-xl text-xs font-bold transition-all"
+              style={{
+                background: gigTypeFilter === type
+                  ? type === 'offering' ? 'rgba(52,211,153,0.15)' : type === 'looking_for' ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.1)'
+                  : 'rgba(255,255,255,0.04)',
+                border: gigTypeFilter === type
+                  ? type === 'offering' ? '1px solid rgba(52,211,153,0.3)' : type === 'looking_for' ? '1px solid rgba(251,191,36,0.3)' : '1px solid rgba(255,255,255,0.15)'
+                  : '1px solid rgba(255,255,255,0.07)',
+                color: gigTypeFilter === type
+                  ? type === 'offering' ? '#34d399' : type === 'looking_for' ? '#fbbf24' : '#fff'
+                  : '#9ca3af',
+              }}
+            >
+              {type === 'all' ? 'All' : type === 'offering' ? 'Offering' : 'Looking For'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-16 rounded-xl animate-pulse" style={{ background: 'rgba(255,255,255,0.03)' }} />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-10">
+          <svg className="w-10 h-10 text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 21h6M12 3a6 6 0 0 1 6 6c0 2.5-1.5 4.5-3 5.5V17H9v-2.5C7.5 13.5 6 11.5 6 9a6 6 0 0 1 6-6z" />
+          </svg>
+          <p className="text-gray-500 text-sm">{searchTerm || gigTypeFilter !== 'all' ? 'No gigs match your filters' : 'No LabGigs yet'}</p>
+        </div>
+      ) : (
+        <div className="space-y-2 max-h-120 overflow-y-auto pr-1">
+          {filtered.map((gig) => {
+            const gigColor = GIG_TYPE_COLORS[gig.gig_type] || '#9ca3af'
+            const gigLabel = GIG_TYPE_LABELS[gig.gig_type] || gig.gig_type
+            const pricingLabel = PRICING_LABELS[gig.pricing_type] || ''
+            const priceDisplay = gig.pricing_type === 'negotiable'
+              ? 'Negotiable'
+              : gig.gig_type === 'looking_for' && !gig.price
+                ? 'Open Budget'
+                : `₩${Number(gig.price).toLocaleString()}${pricingLabel !== 'Flat' && pricingLabel !== 'Neg.' ? pricingLabel : ''}`
+
+            return (
+              <div key={gig.id} className="flex items-center gap-3 rounded-xl p-3 transition-all" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                {/* Gig type indicator */}
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${gigColor}15` }}>
+                  {gig.gig_type === 'offering' ? (
+                    <svg className="w-4 h-4" fill="none" stroke={gigColor} strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke={gigColor} strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-white text-sm font-bold truncate">{gig.title}</p>
+                    <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md shrink-0" style={{ background: `${gigColor}15`, color: gigColor }}>
+                      {gigLabel}
+                    </span>
+                    {gig.visible_to_all && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md shrink-0" style={{ background: 'rgba(59,130,246,0.1)', color: '#60a5fa' }}>
+                        All Unis
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-gray-500 text-xs mt-0.5 truncate">
+                    {gig.profiles?.full_name || 'Unknown'}
+                    {gig.profiles?.university && <span className="text-teal-500 ml-1">· {gig.profiles.university}</span>}
+                    <span className="ml-1">· {priceDisplay}</span>
+                  </p>
+                </div>
+
+                {/* Date */}
+                <span className="text-[11px] text-gray-600 shrink-0 hidden sm:block">
+                  {new Date(gig.created_at).toLocaleDateString()}
+                </span>
+
+                {/* Actions */}
+                <Link
+                  href={`/listing/${gig.id}`}
+                  target="_blank"
+                  className="text-xs font-bold px-2.5 py-1.5 rounded-xl text-blue-400 transition shrink-0"
+                  style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.15)' }}
+                >
+                  View
+                </Link>
+                <button
+                  onClick={() => deleteGig(gig.id)}
+                  disabled={actionLoading === gig.id}
+                  className="text-xs font-bold px-2.5 py-1.5 rounded-xl text-red-400 hover:bg-red-500/15 transition disabled:opacity-40 flex-shrink-0"
+                  style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.12)' }}
+                >
+                  {actionLoading === gig.id ? '...' : 'Delete'}
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {!loading && filtered.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-white/5 text-xs text-gray-500 text-center">
+          Showing {filtered.length} of {gigs.length} LabGigs
         </div>
       )}
     </div>

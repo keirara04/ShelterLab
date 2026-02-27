@@ -11,8 +11,10 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
-    const searchTerm = searchParams.get('search') 
+    const searchTerm = searchParams.get('search')
     const university = searchParams.get('university')
+    const viewerUniversity = searchParams.get('viewer_university')
+    const gigTypeFilter = searchParams.get('gig_type')
     const page = parseInt(searchParams.get('page') || '0')
     const limit = parseInt(searchParams.get('limit') || '12')
 
@@ -39,6 +41,19 @@ export async function GET(request) {
 
     if (category && category !== 'all') {
       query = query.contains('categories', [category])
+    } else {
+      // Exclude LabGigs (service listings) from the general feed — they live on /labgigs only
+      query = query.not('categories', 'cs', '{"services"}')
+    }
+
+    // Hide fulfilled/closed gigs from the LabGigs feed
+    if (category === 'services') {
+      query = query.eq('is_sold', false)
+    }
+
+    // Filter by gig type (offering / looking_for) for LabGigs
+    if (gigTypeFilter && gigTypeFilter !== 'all') {
+      query = query.eq('gig_type', gigTypeFilter)
     }
 
     if (searchTerm) {
@@ -69,9 +84,22 @@ export async function GET(request) {
 
     if (error) throw error
 
+    // University-scoped filtering for service listings
+    // Physical items: always visible. Services: respect visible_to_all flag.
+    let filteredData = data
+    if (data && data.length > 0) {
+      filteredData = data.filter(listing => {
+        const isService = Array.isArray(listing.categories) && listing.categories.includes('services')
+        if (!isService) return true // physical items always visible
+        if (listing.visible_to_all) return true // opted-in to all universities
+        if (!viewerUniversity) return false // unauthenticated — hide uni-restricted services
+        return listing.profiles?.university === viewerUniversity
+      })
+    }
+
     return Response.json({
       success: true,
-      data,
+      data: filteredData,
       pagination: {
         total: count,
         page,
@@ -108,18 +136,27 @@ export async function POST(request) {
 
     // Parse request body
     const body = await request.json()
-    const { title, description, price, categories, condition, kakaoLink, imageUrls } = body
+    const { title, description, price, categories, condition, kakaoLink, imageUrls, pricingType, visibleToAll, gigType } = body
+    const isService = Array.isArray(categories) && categories.includes('services')
 
     // Server-side validation
     const errors = []
     const trimmedTitle = (title || '').trim()
     if (!trimmedTitle || trimmedTitle.length < 3) errors.push('Title must be at least 3 characters')
     if (trimmedTitle.length > 100) errors.push('Title must be 100 characters or less')
-    const parsedPrice = parseFloat(price)
-    if (!price || parsedPrice <= 0) errors.push('Price must be greater than 0')
-    if (parsedPrice > 9999999) errors.push('Price cannot exceed 9,999,999')
+    const parsedPrice = parseFloat(price) || 0
+    if (isService) {
+      // Services: price can be 0 for negotiable or looking_for
+      const allowZeroPrice = pricingType === 'negotiable' || gigType === 'looking_for'
+      if (!allowZeroPrice && parsedPrice <= 0) errors.push('Rate must be greater than 0')
+      if (parsedPrice > 9999999) errors.push('Rate cannot exceed 9,999,999')
+      if (!gigType || !['offering', 'looking_for'].includes(gigType)) errors.push('Gig type is required')
+    } else {
+      if (!price || parsedPrice <= 0) errors.push('Price must be greater than 0')
+      if (parsedPrice > 9999999) errors.push('Price cannot exceed 9,999,999')
+    }
     if (!categories || categories.length === 0) errors.push('At least one category is required')
-    if (!imageUrls || imageUrls.length === 0) errors.push('At least one image is required')
+    if (!isService && (!imageUrls || imageUrls.length === 0)) errors.push('At least one image is required')
     if (kakaoLink && !kakaoLink.trim().startsWith('https://open.kakao.com/o/')) {
       errors.push('Kakao link must start with https://open.kakao.com/o/')
     }
@@ -138,12 +175,15 @@ export async function POST(request) {
         seller_id: userId,
         title,
         description: description || '',
-        price: parseFloat(price),
+        price: parsedPrice,
         categories,
-        condition: condition || 'good',
-        image_urls: imageUrls,
+        condition: isService ? 'good' : (condition || 'good'),
+        image_urls: imageUrls || [],
         kakao_link: kakaoLink || null,
         expires_at: expiryDate.toISOString(),
+        pricing_type: isService ? (pricingType || 'flat') : null,
+        visible_to_all: isService ? (visibleToAll || false) : null,
+        gig_type: isService ? (gigType || 'offering') : null,
       })
       .select()
       .single()
@@ -161,13 +201,25 @@ export async function POST(request) {
       .single()
       .then(({ data: sellerProfile }) => {
         const sellerName = sellerProfile?.full_name || 'Someone'
-        const university = sellerProfile?.university || ''
-        const formattedPrice = `₩${parseFloat(data.price).toLocaleString()}`
+        const uni = sellerProfile?.university || ''
+        let formattedPrice
+        if (isService) {
+          if (data.pricing_type === 'negotiable' || data.gig_type === 'looking_for') {
+            formattedPrice = data.gig_type === 'looking_for' ? 'Looking For' : 'Negotiable'
+          } else {
+            const suffix = data.pricing_type === 'per_hour' ? '/hr' : data.pricing_type === 'per_session' ? '/session' : ''
+            formattedPrice = `₩${parseFloat(data.price).toLocaleString()}${suffix}`
+          }
+        } else {
+          formattedPrice = `₩${parseFloat(data.price).toLocaleString()}`
+        }
+        const tag = isService ? 'new-labgig' : 'new-listing'
+        const prefix = isService ? 'New LabGig' : 'New listing'
         return sendPushToAll({
-          title: `New listing: ${data.title} — ${formattedPrice}`,
-          body: `Listed by ${sellerName}${university ? ` (${university})` : ''}`,
-          tag: 'new-listing',
-          url: `/listing/${data.id}`,
+          title: `${prefix}: ${data.title} — ${formattedPrice}`,
+          body: `Posted by ${sellerName}${uni ? ` (${uni})` : ''}`,
+          tag,
+          url: isService ? `/labgigs` : `/listing/${data.id}`,
         })
       })
       .catch((err) => console.error('Push notification failed:', err))

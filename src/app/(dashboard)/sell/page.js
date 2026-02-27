@@ -179,7 +179,7 @@ export default function SellPage() {
             const trimmedTitle = formData.title.trim()
             if (!trimmedTitle || trimmedTitle.length < 3) errors.push('Title must be at least 3 characters')
             if (trimmedTitle.length > 100) errors.push('Title must be 100 characters or less')
-            const price = parseFloat(formData.price)
+            const price = parseFloat(formData.price) || 0
             if (!formData.price || price <= 0) errors.push('Price must be greater than 0')
             if (price > 9999999) errors.push('Price cannot exceed ₩9,999,999')
             if (formData.categories.length === 0) errors.push('Select at least one category')
@@ -194,8 +194,11 @@ export default function SellPage() {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) { setError('Session expired — please sign in again'); setLoading(false); return }
 
-            const uploadedUrls = await uploadImages()
-            if (!uploadedUrls || uploadedUrls.length === 0) { setLoading(false); return }
+            let uploadedUrls = []
+            if (imageFiles.length > 0) {
+                uploadedUrls = await uploadImages()
+                if (!uploadedUrls) { setLoading(false); return }
+            }
 
             const response = await fetch('/api/listings', {
                 method: 'POST',
@@ -206,7 +209,7 @@ export default function SellPage() {
                 body: JSON.stringify({
                     title: formData.title.trim(),
                     description: formData.description,
-                    price: parseFloat(formData.price),
+                    price: price,
                     categories: formData.categories,
                     condition: formData.condition,
                     kakaoLink: formData.kakaoLink.trim(),
@@ -465,7 +468,7 @@ export default function SellPage() {
                                                 Category <span className="text-teal-400">*</span>
                                             </label>
                                             <div className="grid grid-cols-2 gap-2">
-                                                {CATEGORIES.filter(cat => cat.id !== 'all').map(cat => {
+                                                {CATEGORIES.filter(cat => cat.id !== 'all' && cat.id !== 'services').map(cat => {
                                                     const selected = formData.categories?.[0] === cat.id
                                                     return (
                                                         <label
@@ -495,7 +498,7 @@ export default function SellPage() {
                                             </div>
                                         </div>
 
-                                        {/* Condition — pill buttons */}
+                                        {/* Condition */}
                                         <div>
                                             <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2.5">
                                                 Condition <span className="text-teal-400">*</span>
