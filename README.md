@@ -1,14 +1,14 @@
-ShelterLab 
+ShelterLab
 
 **Your Campus Marketplace** — A verified, safe peer-to-peer marketplace for university students to buy and sell items within their campus community.
 
-![Version](https://img.shields.io/badge/version-0.1.2--beta-yellow)
+![Version](https://img.shields.io/badge/version-0.2.0--beta-yellow)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Status](https://img.shields.io/badge/status-In%20Development-orange)
 
 ---
 
-## 🎯 What is ShelterLab?
+## What is ShelterLab?
 
 ShelterLab is a **full-stack web application** that enables university students to:
 - **Buy & Sell** used items (textbooks, furniture, electronics, clothing) within a trusted community
@@ -20,61 +20,77 @@ ShelterLab is a **full-stack web application** that enables university students 
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-### 🔐 University-Exclusive & Verified Community
+### University-Exclusive & Verified Community
 - University email-only signup (.ac.kr domains)
 - Admin-controlled approval workflow
 - Verified student badge on all activity
 - One account per person policy
 
-### 🛡️ Safety-First Design
+### Safety-First Design
 - On-campus only transactions (public, high-traffic areas)
 - Peer-to-peer cash only (ShelterLab doesn't handle payments)
 - 3-business-day fraud investigation & resolution
 - Permanent account blacklisting for confirmed scams
 - Police cooperation for serious offenses
 
-### ⭐ LabCred Trust System
+### LabCred Trust System
 - **Proprietary credibility scoring** reflecting marketplace activity
 - **4-tier progression:** New User → Trusted → Very Trusted → Power User
 - **Earn points** by completing sales, confirming purchases, receiving reviews
 - **Transparent scoring:** +5 pts (5-star), +3 pts (4-star), +1 pt (3-star), -5 pts (≤2-star)
 
-### 📱 Progressive Web App (PWA)
+### Progressive Web App (PWA)
 - Install as native app on iOS/Android home screen
 - Offline browsing with Service Worker caching
 - Real-time push notifications
 - Responsive design (mobile, tablet, desktop)
 
-### 🤖 AI-Powered Pricing Suggestions
+### AI-Powered Pricing Suggestions
 - Groq LLM (Mixtral-8x7b-32768) analyzes item details
 - Suggests realistic prices for used items in Korean Won
 - Context-aware for campus student market
 
-### 🎓 Multi-University Support
+### Multi-University Support
 - 10+ Korean universities pre-configured
 - Campus-specific listing feeds
 - University-exclusive marketplace feel
 - Top university stats in admin dashboard
 
-### 📊 Real-Time Admin Dashboard
+### Real-Time Admin Dashboard
 - Platform statistics (listings, users, sold items)
 - User approval workflow
 - Verified badge management
 - Admin notification broadcasting
 - Fraud investigation tools
 
-### 🔍 Advanced Search & Filtering
+### Advanced Search & Filtering
 - Full-text search (item name, description, seller)
 - Multi-category filtering
 - Price range filtering (min/max)
 - Condition-based filtering (new, like-new, good, fair, poor)
 - Sort options (newest, price low→high, price high→low)
 
+### LabGigs — Campus Service Marketplace *(New in v0.2.0)*
+- Students post **Offering** gigs (tutoring, PC assembly, language exchange, moving help, etc.) or **Looking For** requests
+- Gig types: **Offering** and **Looking For**
+- Flexible pricing: Flat rate, Per hour, Per session, or Negotiable
+- Visibility control: campus-only or all universities
+- Comments/discussion thread on every gig
+- Fulfilled / Found marking with one-click status toggle
+- Fully separated from physical item listings — own feed, own admin section
+
+### My LabGigs Dashboard *(New in v0.2.0)*
+- Personal gig management at `/labgigs/dashboard`
+- **Active vs Past** split — fulfilled gigs archived automatically
+- Stats overview: Total, Active, Fulfilled counts + Offering/Looking For donut chart
+- Random LabGig tip on every load
+- Inline edit, delete, and toggle-fulfilled actions per gig
+
 ---
 
-## 🏗️ Tech Stack
+## Tech Stack
 
 ### Frontend
 - **Next.js 16** — React framework with App Router & SSR
@@ -104,10 +120,10 @@ ShelterLab is a **full-stack web application** that enables university students 
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - Supabase account (free tier works)
 - Brevo account (for email)
@@ -131,7 +147,7 @@ ShelterLab is a **full-stack web application** that enables university students 
    ```bash
    cp .env.example .env.local
    ```
-   
+
    Fill in your credentials:
    ```env
    # Supabase
@@ -159,12 +175,21 @@ ShelterLab is a **full-stack web application** that enables university students 
    VAPID_SUBJECT=your_email@example.com
    ```
 
-4. **Run the development server**
+4. **Set up LabGigs database columns** (required for v0.2.0+)
+
+   Run the following SQL in your Supabase SQL editor:
+   ```sql
+   ALTER TABLE listings ADD COLUMN pricing_type text DEFAULT NULL;
+   ALTER TABLE listings ADD COLUMN visible_to_all boolean DEFAULT NULL;
+   ALTER TABLE listings ADD COLUMN gig_type text DEFAULT NULL;
+   ```
+
+5. **Run the development server**
    ```bash
    npm run dev
    ```
 
-5. **Open [http://localhost:3000](http://localhost:3000) in your browser**
+6. **Open [http://localhost:3000](http://localhost:3000) in your browser**
 
 ### Build for Production
 ```bash
@@ -174,17 +199,26 @@ npm start
 
 ---
 
-## 📋 Project Structure
+## Project Structure
 
 ```
 kodaefriendlyshelter/
 ├── src/
 │   ├── app/                 # Next.js App Router pages
 │   │   ├── (auth)/          # Auth pages (login, signup)
-│   │   ├── (dashboard)/     # Protected user pages (sell, profile, listings)
+│   │   ├── (dashboard)/     # Protected user pages
+│   │   │   ├── labgigs/     # LabGigs service marketplace
+│   │   │   │   ├── page.js      # Public gig feed (/labgigs)
+│   │   │   │   ├── new/         # Post a gig (/labgigs/new)
+│   │   │   │   ├── dashboard/   # My LabGigs management
+│   │   │   │   └── [id]/        # Individual gig detail
+│   │   │   ├── sell/        # Post a physical listing
+│   │   │   ├── my-listings/ # Physical item management
+│   │   │   └── ...
 │   │   ├── admin/           # Admin dashboard
 │   │   ├── api/             # API routes
 │   │   │   ├── listings/    # Marketplace listing APIs
+│   │   │   ├── gig-comments/# LabGigs comments CRUD
 │   │   │   ├── reviews/     # Review submission APIs
 │   │   │   ├── auth/        # Authentication APIs
 │   │   │   ├── admin/       # Admin-only APIs
@@ -211,15 +245,15 @@ kodaefriendlyshelter/
 
 ---
 
-## 🔐 Security Features
+## Security Features
 
-✅ **Authentication**
+**Authentication**
 - Supabase Auth with JWT tokens
 - University email-only verification (OTP via email)
 - Server-side auth verification (prevent client bypasses)
 - 15-minute OTP expiration
 
-✅ **Rate Limiting**
+**Rate Limiting**
 - 120 searches/minute per IP
 - 10 listings/hour per user
 - 10 reviews/hour per user
@@ -227,12 +261,12 @@ kodaefriendlyshelter/
 - 5 signups/hour per IP
 - Upstash Redis sliding window algorithm
 
-✅ **Database Security**
+**Database Security**
 - Supabase Row-Level Security (RLS) policies
 - Password hashing via Supabase Auth
 - Encrypted at rest & in transit (HTTPS)
 
-✅ **Compliance**
+**Compliance**
 - PIPA (Personal Information Protection Act) compliant
 - Chief Privacy Officer role for inquiries
 - 24-hour account deletion on request
@@ -241,7 +275,7 @@ kodaefriendlyshelter/
 
 ---
 
-## 📊 Key Metrics
+## Key Metrics
 
 | Metric | Value |
 |--------|-------|
@@ -256,7 +290,7 @@ kodaefriendlyshelter/
 
 ---
 
-## 🎯 Core Principles
+## Core Principles
 
 1. **Trust First** — LabCred system rewards active, honest users
 2. **Safety Always** — On-campus only, peer reviews, fraud blacklisting
@@ -266,20 +300,26 @@ kodaefriendlyshelter/
 
 ---
 
-## 🚦 Current Status
+## Current Status
 
-- **Version:** 0.1.2-beta
+- **Version:** 0.2.0-beta
 - **Status:** In Development
 - **Deployment:** Vercel (ready for production)
 
+### What's New in v0.2.0
+- LabGigs — full service/gig marketplace (Offering + Looking For)
+- My LabGigs Dashboard with stats and gig management
+- LabGigs admin management section (separate from physical listings)
+- Beta feedback banner on LabGigs feed
+
 ### Known Limitations
-- Pasar Malam feature (flash markets) coming soon
-- In-app messaging coming in v0.2
+- Pasar Malam (flash markets) — in development
+- In-app messaging planned for a future release
 - Optional payment integration planned for v1.0
 
 ---
 
-## 📞 Support & Contact
+## Support & Contact
 
 - **Bug Reports:** [admin@shelterlab.shop](mailto:admin@shelterlab.shop?subject=ShelterLab%20Bug%20Report)
 - **Feature Requests:** [admin@shelterlab.shop](mailto:admin@shelterlab.shop?subject=Feature%20Request)
@@ -288,7 +328,7 @@ kodaefriendlyshelter/
 
 ---
 
-## 📜 License
+## License
 
 This project is licensed under the **MIT License** — see [LICENSE](LICENSE) file for details.
 
@@ -296,7 +336,7 @@ You are free to use, modify, and distribute this project for personal and commer
 
 ---
 
-## 👤 Author
+## Author
 
 **[Hakeemi Ridza]**
 - GitHub: [@keirara04](https://github.com/keirara04)
@@ -305,7 +345,7 @@ You are free to use, modify, and distribute this project for personal and commer
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Built with [Next.js](https://nextjs.org/), [React](https://react.dev/), and [Tailwind CSS](https://tailwindcss.com/)
 - Powered by [Supabase](https://supabase.com/), [Groq](https://groq.com/), and [Upstash](https://upstash.com/)
@@ -313,7 +353,7 @@ You are free to use, modify, and distribute this project for personal and commer
 
 ---
 
-## 📋 Legal & Compliance
+## Legal & Compliance
 
 - [Terms of Use](/terms)
 - [Privacy Policy](/privacy)
@@ -323,6 +363,6 @@ You are free to use, modify, and distribute this project for personal and commer
 
 ---
 
-*Last Updated: February 20, 2026*
+*Last Updated: February 27, 2026*
 
-**Ready to contribute or have questions?** Open an issue or reach out at [admin@shelterlab.shop](mailto:admin@shelterlab.shop)"
+**Ready to contribute or have questions?** Open an issue or reach out at [admin@shelterlab.shop](mailto:admin@shelterlab.shop)
