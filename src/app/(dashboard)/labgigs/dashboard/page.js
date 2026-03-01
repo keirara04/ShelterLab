@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/shared/context/AuthContext'
 import { supabase } from '@/services/supabase'
 import { GIG_TYPES } from '@/services/utils/constants'
+import { formatTimeAgo, formatGigPrice } from '@/services/utils/helpers'
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 
 const TIPS = [
@@ -16,28 +17,6 @@ const TIPS = [
   "Negotiable pricing often attracts more inquiries than a fixed rate.",
   "Write a clear description — students are more likely to reach out when they know exactly what you offer.",
 ]
-
-function timeAgo(dateString) {
-  const diff = Date.now() - new Date(dateString).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  if (days < 30) return `${days}d ago`
-  return new Date(dateString).toLocaleDateString('en', { month: 'short', day: 'numeric' })
-}
-
-function formatPrice(gig) {
-  if (gig.pricing_type === 'negotiable' || gig.gig_type === 'looking_for') {
-    return gig.gig_type === 'looking_for'
-      ? (gig.price > 0 ? `₩${gig.price.toLocaleString()} budget` : 'Open Budget')
-      : 'Negotiable'
-  }
-  const suffix = gig.pricing_type === 'per_hour' ? '/hr' : gig.pricing_type === 'per_session' ? '/session' : ''
-  return `₩${(gig.price ?? 0).toLocaleString()}${suffix}`
-}
 
 function GigRow({ gig, onToggle, onDelete, deletingId, togglingId, router }) {
   const gtInfo = GIG_TYPES.find(t => t.id === gig.gig_type) || GIG_TYPES[0]
@@ -68,7 +47,7 @@ function GigRow({ gig, onToggle, onDelete, deletingId, togglingId, router }) {
           {gig.title}
         </span>
         <p className="text-[11px] text-gray-600 mt-0.5">
-          {timeAgo(gig.created_at)}
+          {formatTimeAgo(gig.created_at)}
           {gig.visible_to_all ? '' : ' · campus only'}
         </p>
       </div>
@@ -78,7 +57,7 @@ function GigRow({ gig, onToggle, onDelete, deletingId, togglingId, router }) {
         className="shrink-0 text-xs font-bold hidden sm:block"
         style={{ color: isFulfilled ? '#4b5563' : (priceAmber ? '#d97706' : '#34d399') }}
       >
-        {formatPrice(gig)}
+        {formatGigPrice(gig)}
       </span>
 
       {/* Actions */}
@@ -112,7 +91,7 @@ function GigRow({ gig, onToggle, onDelete, deletingId, togglingId, router }) {
         {/* Edit — only for active */}
         {!isFulfilled && (
           <Link
-            href={`/listing/${gig.id}/edit`}
+            href={`/labgigs/${gig.id}/edit`}
             title="Edit"
             className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
             style={{ color: '#6b7280' }}

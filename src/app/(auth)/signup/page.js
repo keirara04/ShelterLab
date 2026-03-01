@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/shared/context/AuthContext'
+import { supabase } from '@/services/supabase'
 import { UNIVERSITIES } from '@/services/utils/constants'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -17,6 +18,8 @@ function SignupContent() {
   const [showUniversityWarning, setShowUniversityWarning] = useState(false)
   const [showConfirmEmail, setShowConfirmEmail] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendSent, setResendSent] = useState(false)
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -86,6 +89,18 @@ function SignupContent() {
     setShowUniversityWarning(true)
   }
 
+  const handleResendEmail = async () => {
+    setResendLoading(true)
+    try {
+      await supabase.auth.resend({ type: 'signup', email: formData.email })
+      setResendSent(true)
+    } catch {
+      // silently fail — Supabase may throttle resends
+    } finally {
+      setResendLoading(false)
+    }
+  }
+
   const handleConfirmSignup = async () => {
     setShowUniversityWarning(false)
     setLoading(true)
@@ -148,9 +163,16 @@ function SignupContent() {
               >
                 Go to Sign In
               </Link>
+              <button
+                onClick={handleResendEmail}
+                disabled={resendLoading || resendSent}
+                className="block w-full py-2.5 rounded-lg font-bold text-gray-300 bg-white/5 hover:bg-white/10 transition text-center text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {resendSent ? '✓ Email resent' : resendLoading ? 'Sending…' : 'Resend email'}
+              </button>
               <Link
                 href="/"
-                className="block w-full py-2.5 rounded-lg font-bold text-gray-300 bg-white/5 hover:bg-white/10 transition text-center text-sm"
+                className="block w-full py-2.5 rounded-lg font-bold text-gray-400 hover:text-gray-300 transition text-center text-sm"
               >
                 Go Home
               </Link>

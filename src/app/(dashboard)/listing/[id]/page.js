@@ -7,18 +7,7 @@ import Image from 'next/image'
 import { useAuth } from '@/shared/context/AuthContext'
 import { supabase } from '@/services/supabase'
 import { UNIVERSITIES, UNIVERSITY_LOGOS, GIG_TYPES, isServiceListing } from '@/services/utils/constants'
-
-function timeAgo(dateString) {
-  const diff = Date.now() - new Date(dateString).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  if (days < 30) return `${days}d ago`
-  return new Date(dateString).toLocaleDateString('en', { month: 'short', day: 'numeric' })
-}
+import { formatTimeAgo } from '@/services/utils/helpers'
 
 export default function ListingDetailPage() {
   const params = useParams()
@@ -713,7 +702,7 @@ export default function ListingDetailPage() {
                             <Link href={`/profile/${comment.user_id}`} className="text-xs font-bold text-teal-400 hover:underline underline-offset-2">
                               {comment.profiles?.full_name || 'User'}
                             </Link>
-                            <span className="text-[10px] text-gray-600">{timeAgo(comment.created_at)}</span>
+                            <span className="text-[10px] text-gray-600">{formatTimeAgo(comment.created_at)}</span>
                             {user?.id === comment.user_id && (
                               <button
                                 onClick={() => handleDeleteComment(comment.id)}

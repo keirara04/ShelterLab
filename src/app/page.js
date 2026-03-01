@@ -19,9 +19,6 @@ export default function HomePage() {
   const [sortOption, setSortOption] = useState('newest') 
   const [showSortDropdown, setShowSortDropdown] = useState(false)
   const sortDropdownRef = useRef(null)
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 1000000 })
-  const [showPriceFilter, setShowPriceFilter] = useState(false)
-  const priceFilterRef = useRef(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [selectedListingId, setSelectedListingId] = useState(null)
@@ -74,17 +71,6 @@ export default function HomePage() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Close price filter on click outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (priceFilterRef.current && !priceFilterRef.current.contains(e.target)) {
-        setShowPriceFilter(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
   // Close notification panel on click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -129,7 +115,7 @@ export default function HomePage() {
   // Reset to page 1 when filters or search changes
   useEffect(() => {
     setCurrentPage(1)
-  }, [selectedCategory, searchQuery, selectedUniversity, priceRange])
+  }, [selectedCategory, searchQuery, selectedUniversity])
 
   // Fetch listings on mount and when filters change
   useEffect(() => {
@@ -164,10 +150,6 @@ export default function HomePage() {
 
   // Filter listings on frontend for search (category, seller, title)
   const filteredListings = useMemo(() => listings.filter((listing) => {
-    // Price filter
-    const price = listing.price ?? 0
-    if (price < priceRange.min || price > priceRange.max) return false
-
     if (!searchQuery.trim()) return true
 
     const query = searchQuery.toLowerCase()
@@ -176,7 +158,7 @@ export default function HomePage() {
     const category = listing.categories?.[0]?.toLowerCase() || ''
 
     return title.includes(query) || seller.includes(query) || category.includes(query)
-  }), [listings, searchQuery, priceRange])
+  }), [listings, searchQuery])
 
   // Apply sorting
   const sortedListings = useMemo(() => {
@@ -550,166 +532,6 @@ export default function HomePage() {
                     ))}
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* Price Filter */}
-            <div className="relative" ref={priceFilterRef}>
-              <button
-                onClick={() => setShowPriceFilter(!showPriceFilter)}
-                aria-expanded={showPriceFilter}
-                aria-haspopup="dialog"
-                className="flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer whitespace-nowrap"
-                style={{
-                  background: (priceRange.min > 0 || priceRange.max < 1000000) ? 'rgba(236,72,153,0.2)' : 'rgba(255,255,255,0.08)',
-                  border: (priceRange.min > 0 || priceRange.max < 1000000) ? '1px solid rgba(236,72,153,0.4)' : '1px solid rgba(255,255,255,0.15)',
-                  color: 'white',
-                  backdropFilter: 'blur(24px)',
-                }}
-              >
-
-                <span>Price</span>
-                <svg className={`w-3.5 h-3.5 opacity-60 transition-transform duration-200 ${showPriceFilter ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-
-              {/* Desktop Dropdown */}
-              {showPriceFilter && (
-                <div
-                  className="hidden sm:block absolute top-full left-0 mt-2 w-96 rounded-2xl p-5 z-50"
-                  style={{
-                    background: 'rgba(15,15,20,0.92)',
-                    backdropFilter: 'blur(40px) saturate(200%)',
-                    WebkitBackdropFilter: 'blur(40px) saturate(200%)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    boxShadow: '0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
-                  }}
-                >
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 mb-2">Min Price: ₩{priceRange.min.toLocaleString()}</label>
-                      <input
-                        type="range"
-                        min="0"
-                        max="1000000"
-                        step="10000"
-                        value={priceRange.min}
-                        onChange={(e) => setPriceRange({ ...priceRange, min: Math.min(Number(e.target.value), priceRange.max) })}
-                        className="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer"
-                        style={{
-                          background: `linear-gradient(to right, rgba(236,72,153,0.5) 0%, rgba(236,72,153,0.5) ${(priceRange.min / 1000000) * 100}%, rgba(255,255,255,0.1) ${(priceRange.min / 1000000) * 100}%, rgba(255,255,255,0.1) 100%)`
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-400 mb-2">Max Price: ₩{priceRange.max.toLocaleString()}</label>
-                      <input
-                        type="range"
-                        min="0"
-                        max="1000000"
-                        step="10000"
-                        value={priceRange.max}
-                        onChange={(e) => setPriceRange({ ...priceRange, max: Math.max(Number(e.target.value), priceRange.min) })}
-                        className="w-full h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer"
-                        style={{
-                          background: `linear-gradient(to right, rgba(236,72,153,0.5) 0%, rgba(236,72,153,0.5) ${(priceRange.max / 1000000) * 100}%, rgba(255,255,255,0.1) ${(priceRange.max / 1000000) * 100}%, rgba(255,255,255,0.1) 100%)`
-                        }}
-                      />
-                    </div>
-                    <button
-                      onClick={() => setShowPriceFilter(false)}
-                      className="w-full py-2 rounded-lg text-sm font-bold transition-all duration-200"
-                      style={{ background: 'rgba(236,72,153,0.2)', border: '1px solid rgba(236,72,153,0.4)', color: 'white' }}
-                    >
-                      Done
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Mobile Full-Screen Sheet */}
-              {showPriceFilter && (
-                <>
-                  <div
-                    className="sm:hidden fixed inset-0 z-40"
-                    style={{ background: 'rgba(0,0,0,0.4)' }}
-                    onClick={() => setShowPriceFilter(false)}
-                  />
-                  <div
-                    className="sm:hidden fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl p-6 pb-28 max-h-[85vh] overflow-y-auto"
-                    style={{
-                      background: 'linear-gradient(to bottom, rgba(15,15,20,0.98), rgba(10,10,15,0.98))',
-                      backdropFilter: 'blur(40px) saturate(200%)',
-                      WebkitBackdropFilter: 'blur(40px) saturate(200%)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-8">
-                      <h3 className="text-xl font-bold text-white">Set Price</h3>
-                      <button
-                        onClick={() => setShowPriceFilter(false)}
-                        className="p-2 hover:bg-white/5 transition-colors rounded-lg"
-                      >
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-
-                    <div className="space-y-7">
-                      {/* Min Price */}
-                      <div>
-                        <div className="flex items-baseline justify-between mb-4">
-                          <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Min</label>
-                          <div className="text-lg font-bold text-white">₩{priceRange.min.toLocaleString()}</div>
-                        </div>
-                        <input
-                          type="range"
-                          min="0"
-                          max="1000000"
-                          step="10000"
-                          value={priceRange.min}
-                          onChange={(e) => setPriceRange({ ...priceRange, min: Math.min(Number(e.target.value), priceRange.max) })}
-                          className="w-full h-1.5 bg-gray-700 rounded-full appearance-none cursor-pointer accent-blue-500"
-                        />
-                      </div>
-
-                      {/* Max Price */}
-                      <div>
-                        <div className="flex items-baseline justify-between mb-4">
-                          <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Max</label>
-                          <div className="text-lg font-bold text-white">₩{priceRange.max.toLocaleString()}</div>
-                        </div>
-                        <input
-                          type="range"
-                          min="0"
-                          max="1000000"
-                          step="10000"
-                          value={priceRange.max}
-                          onChange={(e) => setPriceRange({ ...priceRange, max: Math.max(Number(e.target.value), priceRange.min) })}
-                          className="w-full h-1.5 bg-gray-700 rounded-full appearance-none cursor-pointer accent-blue-500"
-                        />
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-3 pt-6">
-                        <button
-                          onClick={() => { setPriceRange({ min: 0, max: 1000000 }); setShowPriceFilter(false) }}
-                          className="flex-1 py-3 rounded-lg text-sm font-semibold transition-all duration-200 text-gray-300 hover:text-white hover:bg-white/5"
-                        >
-                          Reset
-                        </button>
-                        <button
-                          onClick={() => setShowPriceFilter(false)}
-                          className="flex-1 py-3 rounded-lg text-sm font-semibold transition-all duration-200 bg-white text-black hover:bg-gray-100"
-                        >
-                          Done
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </>
               )}
             </div>
 

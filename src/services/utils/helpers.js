@@ -175,6 +175,20 @@ export const compressImage = async (file) => {
 }
 
 /**
+ * Format a LabGig price with pricing type suffix (e.g. /hr, /session, Negotiable)
+ */
+export const formatGigPrice = (gig) => {
+  if (!gig) return ''
+  if (gig.pricing_type === 'negotiable' || gig.gig_type === 'looking_for') {
+    return gig.gig_type === 'looking_for'
+      ? (gig.price > 0 ? `Budget: ₩${gig.price.toLocaleString()}` : 'Open Budget')
+      : 'Negotiable'
+  }
+  const suffix = gig.pricing_type === 'per_hour' ? '/hr' : gig.pricing_type === 'per_session' ? '/session' : ''
+  return `₩${(gig.price ?? 0).toLocaleString()}${suffix}`
+}
+
+/**
  * Format a date as a human-readable "time ago" string
  */
 export const formatTimeAgo = (date) => {

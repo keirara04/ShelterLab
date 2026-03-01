@@ -75,6 +75,35 @@ export const profileUpdateSchema = z.object({
     avatarUrl: z.string().url().optional(),
 })
 
+// Physical marketplace listing
+export const physicalListingSchema = z.object({
+    title: z.string().min(3, 'Title must be at least 3 characters').max(100, 'Title must be 100 characters or less'),
+    description: z.string().optional().default(''),
+    price: z.number().positive('Price must be greater than 0').max(9999999, 'Price cannot exceed 9,999,999'),
+    categories: z.array(z.enum(['tech', 'books', 'clothing', 'dorm', 'services', 'other'])).min(1, 'At least one category is required'),
+    condition: z.enum(['new', 'like-new', 'good', 'fair', 'poor'], { errorMap: () => ({ message: 'Invalid condition' }) }),
+    imageUrls: z.array(z.string()).min(1, 'At least one image is required').max(5, 'Maximum 5 images allowed'),
+    kakaoLink: z.string().startsWith('https://open.kakao.com/o/', 'Kakao link must start with https://open.kakao.com/o/').or(z.literal('')).optional(),
+})
+
+// LabGig (service listing)
+export const serviceListingSchema = z.object({
+    title: z.string().min(3, 'Title must be at least 3 characters').max(100, 'Title must be 100 characters or less'),
+    description: z.string().optional().default(''),
+    price: z.number().min(0).max(9999999, 'Price cannot exceed 9,999,999'),
+    categories: z.array(z.enum(['tech', 'books', 'clothing', 'dorm', 'services', 'other'])).min(1, 'At least one category is required'),
+    gigType: z.enum(['offering', 'looking_for'], { errorMap: () => ({ message: 'Gig type is required' }) }),
+    pricingType: z.enum(['flat', 'per_hour', 'per_session', 'negotiable']).optional(),
+    visibleToAll: z.boolean().optional(),
+    kakaoLink: z.string().startsWith('https://open.kakao.com/o/', 'Kakao link must start with https://open.kakao.com/o/').or(z.literal('')).optional(),
+    imageUrls: z.array(z.string()).optional(),
+}).superRefine((data, ctx) => {
+    const allowZeroPrice = data.pricingType === 'negotiable' || data.gigType === 'looking_for'
+    if (!allowZeroPrice && data.price <= 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Rate must be greater than 0', path: ['price'] })
+    }
+})
+
 export default {
     signupSchema,
     loginSchema,
@@ -82,4 +111,6 @@ export default {
     reviewSchema,
     reportSchema,
     profileUpdateSchema,
+    physicalListingSchema,
+    serviceListingSchema,
 }

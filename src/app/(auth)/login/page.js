@@ -111,7 +111,12 @@ function LoginContent() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-400 mb-1.5">Password</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-gray-400">Password</label>
+                <Link href="/forgot-password" className="text-xs text-blue-400 hover:text-blue-300 transition font-medium">
+                  Forgot password?
+                </Link>
+              </div>
               <input
                 type="password"
                 placeholder="Your password"

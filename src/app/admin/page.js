@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/shared/context/AuthContext'
 import { supabase } from '@/services/supabase'
-import { UNIVERSITIES } from '@/services/utils/constants'
+import { UNIVERSITIES, REPORT_STATUS } from '@/services/utils/constants'
 import { formatTimeAgo } from '@/services/utils/helpers'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -178,6 +178,9 @@ export default function AdminPage() {
 
         {/* LabGigs Management */}
         <AdminLabGigs />
+
+        {/* Reports Moderation Queue */}
+        <AdminReports />
 
         {/* Push Notifications */}
         <div className="glass-strong rounded-3xl p-6 mb-6">
@@ -925,6 +928,197 @@ function AdminLabGigs() {
       {!loading && filtered.length > 0 && (
         <div className="mt-4 pt-3 border-t border-white/5 text-xs text-gray-500 text-center">
           Showing {filtered.length} of {gigs.length} LabGigs
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ─── Reports Moderation Queue ─── */
+const STATUS_STYLES = {
+  Pending:   { color: '#fbbf24', bg: 'rgba(251,191,36,0.1)',   border: 'rgba(251,191,36,0.25)' },
+  Reviewed:  { color: '#60a5fa', bg: 'rgba(59,130,246,0.1)',   border: 'rgba(59,130,246,0.25)' },
+  Resolved:  { color: '#34d399', bg: 'rgba(52,211,153,0.1)',   border: 'rgba(52,211,153,0.25)' },
+  Dismissed: { color: '#6b7280', bg: 'rgba(107,114,128,0.08)', border: 'rgba(107,114,128,0.2)' },
+}
+
+function AdminReports() {
+  const [reports, setReports] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [statusFilter, setStatusFilter] = useState('Pending')
+  const [actionLoading, setActionLoading] = useState(null)
+
+  const fetchReports = async (status = statusFilter) => {
+    setLoading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      const res = await fetch(`/api/reports?status=${status}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+      const json = await res.json()
+      if (json.success) setReports(json.data || [])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { fetchReports() }, [])
+
+  const handleStatusChange = (newFilter) => {
+    setStatusFilter(newFilter)
+    fetchReports(newFilter)
+  }
+
+  const resolveReport = async (reportId, newStatus) => {
+    setActionLoading(reportId + newStatus)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      await fetch('/api/reports', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ id: reportId, status: newStatus }),
+      })
+      setReports((prev) => prev.filter((r) => r.id !== reportId))
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const pendingCount = statusFilter === 'Pending' ? reports.length : null
+
+  return (
+    <div className="glass-strong rounded-3xl p-6 mb-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-5 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(239,68,68,0.15)' }}>
+            <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+            </svg>
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-xl font-black text-white">Reports Queue</h3>
+              {pendingCount > 0 && (
+                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
+                  {pendingCount} pending
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-gray-400">User-submitted content reports</p>
+          </div>
+        </div>
+        <button
+          onClick={() => fetchReports(statusFilter)}
+          className="text-xs text-gray-400 hover:text-teal-400 transition font-bold px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/8 self-start sm:self-auto"
+        >
+          Refresh
+        </button>
+      </div>
+
+      {/* Status filter tabs */}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {REPORT_STATUS.map((s) => {
+          const style = STATUS_STYLES[s] || {}
+          const active = statusFilter === s
+          return (
+            <button
+              key={s}
+              onClick={() => handleStatusChange(s)}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+              style={{
+                background: active ? style.bg : 'rgba(255,255,255,0.04)',
+                border: `1px solid ${active ? style.border : 'rgba(255,255,255,0.07)'}`,
+                color: active ? style.color : '#6b7280',
+              }}
+            >
+              {s}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Report list */}
+      {loading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: 'rgba(255,255,255,0.03)' }} />
+          ))}
+        </div>
+      ) : reports.length === 0 ? (
+        <div className="text-center py-10">
+          <svg className="w-10 h-10 text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-gray-500 text-sm">No {statusFilter.toLowerCase()} reports</p>
+        </div>
+      ) : (
+        <div className="space-y-3 max-h-120 overflow-y-auto pr-1">
+          {reports.map((report) => {
+            const style = STATUS_STYLES[report.status] || STATUS_STYLES.Pending
+            return (
+              <div key={report.id} className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  {/* Reason + meta */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="text-sm font-black text-white">{report.reason}</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: style.bg, color: style.color, border: `1px solid ${style.border}` }}>
+                        {report.status}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400 mb-2 line-clamp-2">{report.description}</p>
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-gray-500">
+                      {report.reporter?.full_name && (
+                        <span>Reporter: <span className="text-gray-400">{report.reporter.full_name}</span></span>
+                      )}
+                      {report.reported_user?.full_name && (
+                        <span>Against: <span className="text-red-400">{report.reported_user.full_name}</span></span>
+                      )}
+                      {report.listing?.title && (
+                        <span>Listing: <span className="text-gray-400">{report.listing.title}</span></span>
+                      )}
+                      <span>{formatTimeAgo(report.created_at)}</span>
+                    </div>
+                  </div>
+
+                  {/* Action buttons — only shown for Pending/Reviewed */}
+                  {(report.status === 'Pending' || report.status === 'Reviewed') && (
+                    <div className="flex gap-2 shrink-0">
+                      {report.status === 'Pending' && (
+                        <button
+                          onClick={() => resolveReport(report.id, 'Reviewed')}
+                          disabled={!!actionLoading}
+                          className="text-xs font-bold px-2.5 py-1.5 rounded-xl text-blue-400 transition disabled:opacity-40"
+                          style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)' }}
+                        >
+                          {actionLoading === report.id + 'Reviewed' ? '...' : 'Review'}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => resolveReport(report.id, 'Resolved')}
+                        disabled={!!actionLoading}
+                        className="text-xs font-bold px-2.5 py-1.5 rounded-xl text-emerald-400 transition disabled:opacity-40"
+                        style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)' }}
+                      >
+                        {actionLoading === report.id + 'Resolved' ? '...' : 'Resolve'}
+                      </button>
+                      <button
+                        onClick={() => resolveReport(report.id, 'Dismissed')}
+                        disabled={!!actionLoading}
+                        className="text-xs font-bold px-2.5 py-1.5 rounded-xl text-gray-400 transition disabled:opacity-40"
+                        style={{ background: 'rgba(107,114,128,0.08)', border: '1px solid rgba(107,114,128,0.2)' }}
+                      >
+                        {actionLoading === report.id + 'Dismissed' ? '...' : 'Dismiss'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

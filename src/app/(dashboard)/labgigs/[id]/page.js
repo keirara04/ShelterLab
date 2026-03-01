@@ -6,29 +6,7 @@ import Link from 'next/link'
 import { useAuth } from '@/shared/context/AuthContext'
 import { supabase } from '@/services/supabase'
 import { GIG_TYPES, UNIVERSITIES } from '@/services/utils/constants'
-
-function timeAgo(dateString) {
-  const diff = Date.now() - new Date(dateString).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  if (days < 30) return `${days}d ago`
-  return new Date(dateString).toLocaleDateString('en', { month: 'short', day: 'numeric' })
-}
-
-function formatPrice(listing) {
-  if (!listing) return ''
-  if (listing.pricing_type === 'negotiable' || listing.gig_type === 'looking_for') {
-    return listing.gig_type === 'looking_for'
-      ? (listing.price > 0 ? `Budget: ₩${listing.price.toLocaleString()}` : 'Open Budget')
-      : 'Negotiable'
-  }
-  const suffix = listing.pricing_type === 'per_hour' ? '/hr' : listing.pricing_type === 'per_session' ? '/session' : ''
-  return `₩${(listing.price ?? 0).toLocaleString()}${suffix}`
-}
+import { formatTimeAgo, formatGigPrice } from '@/services/utils/helpers'
 
 export default function LabGigDetailPage() {
   const params = useParams()
@@ -199,7 +177,7 @@ export default function LabGigDetailPage() {
               </>
             )}
             <span className="text-gray-700 text-xs">·</span>
-            <span className="text-xs text-gray-600">{timeAgo(listing.created_at)}</span>
+            <span className="text-xs text-gray-600">{formatTimeAgo(listing.created_at)}</span>
             {!listing.visible_to_all && (
               <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.05)', color: '#6b7280' }}>
                 Campus Only
@@ -219,7 +197,7 @@ export default function LabGigDetailPage() {
               {gtInfo.name}
             </span>
             <span className="text-lg font-black" style={{ color: isAmberPrice ? '#fbbf24' : '#34d399' }}>
-              {formatPrice(listing)}
+              {formatGigPrice(listing)}
             </span>
           </div>
 
@@ -373,7 +351,7 @@ export default function LabGigDetailPage() {
                       <Link href={`/profile/${comment.user_id}`} className="text-xs font-bold text-teal-400 hover:underline underline-offset-2">
                         {comment.profiles?.full_name || 'User'}
                       </Link>
-                      <span className="text-[10px] text-gray-600">{timeAgo(comment.created_at)}</span>
+                      <span className="text-[10px] text-gray-600">{formatTimeAgo(comment.created_at)}</span>
                       {user?.id === comment.user_id && (
                         <button
                           onClick={() => handleDeleteComment(comment.id)}

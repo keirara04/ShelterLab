@@ -2,6 +2,7 @@
 import { supabaseServer } from '@/services/supabaseServer'
 import { sendPushToAll } from '@/services/utils/sendPush'
 import { applyRateLimit, createListingLimiter, getClientIp, userSearchLimiter } from '@/services/utils/rateLimit'
+import { physicalListingSchema, serviceListingSchema } from '@/services/utils/validation'
 
 export async function GET(request) {
   try {
@@ -136,33 +137,16 @@ export async function POST(request) {
 
     // Parse request body
     const body = await request.json()
-    const { title, description, price, categories, condition, kakaoLink, imageUrls, pricingType, visibleToAll, gigType } = body
-    const isService = Array.isArray(categories) && categories.includes('services')
+    const isService = Array.isArray(body.categories) && body.categories.includes('services')
 
-    // Server-side validation
-    const errors = []
-    const trimmedTitle = (title || '').trim()
-    if (!trimmedTitle || trimmedTitle.length < 3) errors.push('Title must be at least 3 characters')
-    if (trimmedTitle.length > 100) errors.push('Title must be 100 characters or less')
-    const parsedPrice = parseFloat(price) || 0
-    if (isService) {
-      // Services: price can be 0 for negotiable or looking_for
-      const allowZeroPrice = pricingType === 'negotiable' || gigType === 'looking_for'
-      if (!allowZeroPrice && parsedPrice <= 0) errors.push('Rate must be greater than 0')
-      if (parsedPrice > 9999999) errors.push('Rate cannot exceed 9,999,999')
-      if (!gigType || !['offering', 'looking_for'].includes(gigType)) errors.push('Gig type is required')
-    } else {
-      if (!price || parsedPrice <= 0) errors.push('Price must be greater than 0')
-      if (parsedPrice > 9999999) errors.push('Price cannot exceed 9,999,999')
+    // Zod schema validation
+    const schema = isService ? serviceListingSchema : physicalListingSchema
+    const result = schema.safeParse({ ...body, price: parseFloat(body.price) || 0 })
+    if (!result.success) {
+      const message = result.error.errors.map((e) => e.message).join(', ')
+      return Response.json({ error: message }, { status: 400 })
     }
-    if (!categories || categories.length === 0) errors.push('At least one category is required')
-    if (!isService && (!imageUrls || imageUrls.length === 0)) errors.push('At least one image is required')
-    if (kakaoLink && !kakaoLink.trim().startsWith('https://open.kakao.com/o/')) {
-      errors.push('Kakao link must start with https://open.kakao.com/o/')
-    }
-    if (errors.length > 0) {
-      return Response.json({ error: errors.join(', ') }, { status: 400 })
-    }
+    const { title, description, price: parsedPrice, categories, condition, kakaoLink, imageUrls, pricingType, visibleToAll, gigType } = result.data
 
     // Calculate expiry date (90 days from now)
     const expiryDate = new Date()

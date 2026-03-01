@@ -5,20 +5,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/shared/context/AuthContext'
 import { GIG_TYPES, UNIVERSITIES } from '@/services/utils/constants'
+import { formatTimeAgo, formatGigPrice } from '@/services/utils/helpers'
 import AuthModal from '@/shared/components/AuthModal'
 import LogoHome from '@/shared/components/LogoHome'
-
-function timeAgo(dateString) {
-  const diff = Date.now() - new Date(dateString).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  if (days < 30) return `${days}d ago`
-  return new Date(dateString).toLocaleDateString('en', { month: 'short', day: 'numeric' })
-}
 
 export default function LabGigsPage() {
   const { isAuthenticated, profile, loading: authLoading } = useAuth()
@@ -106,16 +95,6 @@ export default function LabGigsPage() {
   }
 
   const getGigTypeInfo = (gigType) => GIG_TYPES.find(gt => gt.id === gigType) || GIG_TYPES[0]
-
-  const formatPrice = (gig) => {
-    if (gig.pricing_type === 'negotiable' || gig.gig_type === 'looking_for') {
-      return gig.gig_type === 'looking_for'
-        ? (gig.price > 0 ? `Budget: ₩${gig.price.toLocaleString()}` : 'Open Budget')
-        : 'Negotiable'
-    }
-    const suffix = gig.pricing_type === 'per_hour' ? '/hr' : gig.pricing_type === 'per_session' ? '/session' : ''
-    return `₩${(gig.price ?? 0).toLocaleString()}${suffix}`
-  }
 
   const isPriceAmber = (gig) => gig.pricing_type === 'negotiable' || gig.gig_type === 'looking_for'
 
@@ -367,7 +346,7 @@ export default function LabGigsPage() {
                         </>
                       )}
                       <span className="text-gray-700 text-xs">·</span>
-                      <span className="text-[11px] text-gray-600">{timeAgo(gig.created_at)}</span>
+                      <span className="text-[11px] text-gray-600">{formatTimeAgo(gig.created_at)}</span>
                       {!gig.visible_to_all && (
                         <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: 'rgba(255,255,255,0.05)', color: '#6b7280' }}>
                           Campus
@@ -393,7 +372,7 @@ export default function LabGigsPage() {
                             {gtInfo.name}
                           </span>
                           <span className="text-sm font-black" style={{ color: isPriceAmber(gig) ? '#fbbf24' : '#34d399' }}>
-                            {formatPrice(gig)}
+                            {formatGigPrice(gig)}
                           </span>
                         </div>
                         {/* Footer actions */}

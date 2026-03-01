@@ -569,9 +569,21 @@ export default function SellPage() {
                                                                 <span className="text-[10px] text-cyan-300 bg-cyan-500/15 px-2 py-0.5 rounded-full font-bold">AI</span>
                                                             )}
                                                         </div>
-                                                        <p className="text-sm text-white font-black mb-2">
-                                                            ₩{pricingSuggestion?.minPrice?.toLocaleString()} – ₩{pricingSuggestion?.maxPrice?.toLocaleString()}
-                                                        </p>
+                                                        <div className="flex items-center justify-between gap-3 mb-2">
+                                                            <p className="text-sm text-white font-black">
+                                                                ₩{pricingSuggestion?.minPrice?.toLocaleString()} – ₩{pricingSuggestion?.maxPrice?.toLocaleString()}
+                                                            </p>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const mid = Math.round((pricingSuggestion.minPrice + pricingSuggestion.maxPrice) / 2).toString()
+                                                                    setFormData(prev => ({ ...prev, price: mid }))
+                                                                }}
+                                                                className="shrink-0 text-[11px] font-bold text-teal-400 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 px-3 py-1 rounded-lg transition"
+                                                            >
+                                                                Apply midpoint
+                                                            </button>
+                                                        </div>
                                                         <p className="text-[11px] text-amber-400/80 leading-relaxed" style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '8px' }}>
                                                             Estimate only — verify with current market prices.
                                                         </p>
