@@ -8,6 +8,14 @@ import { CATEGORIES, UNIVERSITIES, UNIVERSITY_LOGOS, GIG_TYPES, isServiceListing
 import AuthModal from '@/shared/components/AuthModal'
 import NotificationBell from '@/shared/components/NotificationBell'
 
+const TIPS = [
+  { text: 'Always meet in a public spot on campus — a library entrance or café works great for both sides.' },
+  { text: 'Leave a rating after every trade. It only takes a second and keeps the community trustworthy.' },
+  { text: 'Message sellers early — popular listings on campus move fast.' },
+  { text: 'Write a clear description with honest condition notes. Buyers appreciate the transparency.' },
+  { text: 'Something feel off? Report the listing so the community stays safe for everyone.' },
+]
+
 export default function HomePage() {
   const { isAuthenticated, profile, user } = useAuth()
   const [listings, setListings] = useState([])
@@ -32,6 +40,10 @@ export default function HomePage() {
   const [notification, setNotification] = useState(null)
   const [showNotificationPanel, setShowNotificationPanel] = useState(false)
   const [hasUnreadNotification, setHasUnreadNotification] = useState(false)
+  const [showTips, setShowTips] = useState(true)
+  const [tipIndex, setTipIndex] = useState(0)
+  const tipTimerRef = useRef(null)
+  const tipHoveredRef = useRef(false)
 
   // Hide/show header on scroll — throttled: only calls setShowHeader when direction changes
   useEffect(() => {
@@ -90,6 +102,20 @@ export default function HomePage() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showNotificationPanel])
 
+  // Restore collapsed/expanded state from previous session
+  useEffect(() => {
+    setShowTips(localStorage.getItem('homepage_tips_open') !== 'false')
+  }, [])
+
+  // Auto-rotate tips every 4 s; pauses while user hovers the banner
+  useEffect(() => {
+    if (!showTips) return
+    tipTimerRef.current = setInterval(() => {
+      if (!tipHoveredRef.current) setTipIndex(i => (i + 1) % TIPS.length)
+    }, 5000)
+    return () => clearInterval(tipTimerRef.current)
+  }, [showTips])
+
   // Fetch notification on mount
   useEffect(() => {
     const fetchNotification = async () => {
@@ -121,6 +147,16 @@ export default function HomePage() {
   useEffect(() => {
     fetchListings()
   }, [selectedCategory, searchQuery, selectedUniversity])
+
+  function collapseTips() {
+    setShowTips(false)
+    localStorage.setItem('homepage_tips_open', 'false')
+  }
+
+  function expandTips() {
+    setShowTips(true)
+    localStorage.setItem('homepage_tips_open', 'true')
+  }
 
   const fetchListings = async () => {
     try {
@@ -508,23 +544,23 @@ export default function HomePage() {
                     )}
                   </button>
                   <div className="h-px mb-2" style={{ background: 'rgba(255,255,255,0.08)' }} />
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                     {UNIVERSITIES.map((u) => (
                       <button
                         key={u.id}
                         onClick={() => { setSelectedUniversity(u.id); setShowUniversityPicker(false) }}
-                        className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all duration-150"
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all duration-150 text-left w-full"
                         style={selectedUniversity === u.id
                           ? { background: 'rgba(20,184,166,0.2)', border: '1px solid rgba(20,184,166,0.4)' }
                           : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }
                         }
                       >
-                        <img src={UNIVERSITY_LOGOS[u.id]} alt="" width={32} height={32} className="w-8 h-8 object-contain rounded-full" />
-                        <span className="text-xs font-bold leading-tight text-center" style={{ color: selectedUniversity === u.id ? 'rgba(94,234,212,1)' : 'rgba(255,255,255,0.75)' }}>
+                        <img src={UNIVERSITY_LOGOS[u.id]} alt="" width={28} height={28} className="w-7 h-7 flex-shrink-0 object-contain rounded-full" />
+                        <span className="text-xs font-bold leading-tight flex-1" style={{ color: selectedUniversity === u.id ? 'rgba(94,234,212,1)' : 'rgba(255,255,255,0.75)' }}>
                           {u.name}
                         </span>
                         {selectedUniversity === u.id && (
-                          <svg className="w-3.5 h-3.5" style={{ color: 'rgba(94,234,212,1)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'rgba(94,234,212,1)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                           </svg>
                         )}
@@ -850,14 +886,14 @@ export default function HomePage() {
         {/* Empty State */}
         {!loading && listings.length === 0 && !error && (
           <div className="text-center py-12">
-            <h3 className="text-2xl font-black text-white mb-4">No listings yet</h3>
-            <p className="text-gray-400 mb-6">Create your first listing to get started</p>
+            <h3 className="text-2xl font-black text-white mb-4">Can't find the items that you're looking for?</h3>
+            <p className="text-gray-400 mb-6">Create your first listing to connect with the community!</p>
             {isAuthenticated && (
               <Link
                 href="/sell"
-                className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition"
+                className="inline-block px-6 py-3 bg-blue-600 hover:bg-yellow-900 text-white font-bold rounded-lg transition"
               >
-                Create Listing
+                Click here to sell!
               </Link>
             )}
           </div>
@@ -898,6 +934,81 @@ export default function HomePage() {
         onClose={() => setShowAuthModal(false)}
         redirectPath={selectedListingId ? `/listing/${selectedListingId}` : null}
       />
+
+      {/* Floating tips toast */}
+      <style>{`@keyframes tipProgress { from { width: 0% } to { width: 100% } }`}</style>
+      {showTips ? (
+        <div
+          className="fixed bottom-24 right-4 sm:bottom-6 sm:right-6 w-72 z-40 rounded-2xl overflow-hidden"
+          style={{
+            background: 'rgba(15,15,20,0.92)',
+            backdropFilter: 'blur(40px) saturate(200%)',
+            WebkitBackdropFilter: 'blur(40px) saturate(200%)',
+            border: '1px solid rgba(251,191,36,0.25)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)',
+          }}
+          onMouseEnter={() => { tipHoveredRef.current = true }}
+          onMouseLeave={() => { tipHoveredRef.current = false }}
+        >
+          <div className="px-4 pt-3 pb-2">
+            <div className="flex items-start justify-between gap-2 mb-1.5">
+              <p className="text-xs font-bold text-amber-300">Community Tip</p>
+              <button
+                onClick={collapseTips}
+                className="shrink-0 transition-colors cursor-pointer mt-0.5"
+                style={{ color: 'rgba(255,255,255,0.3)' }}
+                aria-label="Collapse tips"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 leading-relaxed">{TIPS[tipIndex].text}</p>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>{tipIndex + 1} / {TIPS.length}</span>
+              <button
+                onClick={() => setTipIndex(i => (i + 1) % TIPS.length)}
+                className="text-xs font-semibold transition-colors cursor-pointer"
+                style={{ color: 'rgba(251,191,36,0.7)' }}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+          <div style={{ height: '2px', background: 'rgba(255,255,255,0.06)' }}>
+            <div
+              key={tipIndex}
+              style={{
+                height: '100%',
+                background: 'rgba(251,191,36,0.7)',
+                animation: 'tipProgress 5s linear forwards',
+              }}
+            />
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={expandTips}
+          className="fixed bottom-24 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-1.5 px-3 py-2 rounded-full cursor-pointer transition-all duration-200"
+          style={{
+            background: 'rgba(15,15,20,0.92)',
+            backdropFilter: 'blur(40px)',
+            WebkitBackdropFilter: 'blur(40px)',
+            border: '1px solid rgba(251,191,36,0.25)',
+            color: 'rgba(251,191,36,0.85)',
+          }}
+          aria-label="Show community tips"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+          <span className="text-xs font-bold">Tips</span>
+          <svg className="w-3 h-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" />
+          </svg>
+        </button>
+      )}
 
     </div>
   )
